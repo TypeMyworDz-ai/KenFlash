@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext'; // Import useTheme
 import './MobileNavbar.css';
 
 function MobileNavbar() {
   const { isLoggedIn, userRole, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme(); // Use theme and toggleTheme from context
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
@@ -92,6 +94,11 @@ function MobileNavbar() {
                 <Link to="/subscribe" className="mobile-menu-item" onClick={closeAllMenus}>Subscribe</Link>
               </>
             )}
+
+            {/* Theme Toggle Button for Mobile */}
+            <button onClick={toggleTheme} className="mobile-menu-item theme-toggle-button">
+              {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+            </button>
             
             {/* Policy Dropdown for Mobile */}
             <div className="mobile-policy-dropdown">

@@ -35,16 +35,17 @@ function MobileHomePage() {
   }, []);
 
   const fetchContent = useCallback(async (isInitialFetch = false) => {
-    // Clarified order of operations with parentheses
     if (loading || (!hasMoreContent && !isInitialFetch)) return;
 
     setLoading(true);
     setError(null);
+    console.log('Fetching content...');
 
     try {
+      // Fetch photos - simplified select to avoid RLS issues with profiles join
       let photosQuery = supabase
         .from('photos')
-        .select('id, storage_path, caption, creator_id, created_at, profiles(nickname)')
+        .select('id, storage_path, caption, creator_id, created_at') // Removed profiles(nickname)
         .order('created_at', { ascending: false })
         .limit(CONTENT_FETCH_LIMIT);
 
@@ -53,11 +54,13 @@ function MobileHomePage() {
       }
 
       const { data: photosData, error: photosError } = await photosQuery;
+      console.log('Photos data:', photosData);
       if (photosError) throw photosError;
 
+      // Fetch videos - simplified select to avoid RLS issues with profiles join
       let videosQuery = supabase
         .from('videos')
-        .select('id, storage_path, thumbnail_path, title, creator_id, created_at, profiles(nickname)')
+        .select('id, storage_path, thumbnail_path, title, creator_id, created_at') // Removed profiles(nickname)
         .order('created_at', { ascending: false })
         .limit(CONTENT_FETCH_LIMIT);
 
@@ -66,6 +69,7 @@ function MobileHomePage() {
       }
 
       const { data: videosData, error: videosError } = await videosQuery;
+      console.log('Videos data:', videosData);
       if (videosError) throw videosError;
 
       const allContent = [
@@ -83,44 +87,69 @@ function MobileHomePage() {
       ];
 
       allContent.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      console.log('Combined content:', allContent);
 
       if (allContent.length === 0) {
         setHasMoreContent(false);
+        console.log('No more content to fetch.');
       } else {
+        // Fetch nicknames for the fetched content items
+        const creatorIds = [...new Set(allContent.map(item => item.creator_id))];
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, nickname')
+          .in('id', creatorIds);
+
+        if (profilesError) console.error('Error fetching profiles for nicknames:', profilesError);
+
+        const nicknamesMap = profilesData ? profilesData.reduce((acc, profile) => {
+          acc[profile.id] = profile.nickname;
+          return acc;
+        }, {}) : {};
+
+        const contentWithNicknames = allContent.map(item => ({
+          ...item,
+          profiles: { nickname: nicknamesMap[item.creator_id] || 'Creator' } // Attach nickname
+        }));
+
         setLastFetchedItemId(allContent[allContent.length - 1].id);
-      }
+        console.log('Content with nicknames:', contentWithNicknames);
 
-      const { data: adsData, error: adsError } = await supabase
-        .from('advertisements')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(10);
 
-      if (adsError) console.error('Error fetching ads:', adsError);
+        const { data: adsData, error: adsError } = await supabase
+          .from('advertisements')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(10); // Fetch a few random ads
 
-      let newFeedItems = [];
-      let adIndex = 0;
-      for (let i = 0; i < allContent.length; i++) {
-        newFeedItems.push(allContent[i]);
-        if (adsData && adsData.length > 0 && (i + 1) % AD_INSERT_FREQUENCY === 0) {
-          const randomAd = adsData[adIndex % adsData.length];
-          newFeedItems.push({
-            ...randomAd,
-            type: 'ad',
-            media_url: getPublicUrl(randomAd.media_path, AD_MEDIA_BUCKET)
-          });
-          adIndex++;
+        if (adsError) console.error('Error fetching ads:', adsError);
+        console.log('Ads data:', adsData);
+
+        let newFeedItems = [];
+        let adIndex = 0;
+        for (let i = 0; i < contentWithNicknames.length; i++) {
+          newFeedItems.push(contentWithNicknames[i]);
+          if (adsData && adsData.length > 0 && (i + 1) % AD_INSERT_FREQUENCY === 0) {
+            const randomAd = adsData[adIndex % adsData.length];
+            newFeedItems.push({
+              ...randomAd,
+              type: 'ad',
+              media_url: getPublicUrl(randomAd.media_path, AD_MEDIA_BUCKET)
+            });
+            adIndex++;
+          }
         }
-      }
 
-      setFeedContent(prev => isInitialFetch ? newFeedItems : [...prev, ...newFeedItems]);
+        setFeedContent(prev => isInitialFetch ? newFeedItems : [...prev, ...newFeedItems]);
+      }
 
     } catch (err) {
       setError(err.message || 'Failed to load content.');
       console.error('Error fetching mobile content:', err);
     } finally {
       setLoading(false);
+      console.log('Finished fetching content. Loading state set to false.');
     }
   }, [loading, hasMoreContent, lastFetchedItemId, getPublicUrl]);
 

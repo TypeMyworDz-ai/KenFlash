@@ -2,8 +2,8 @@
 .mobile-navbar {
   width: 100%;
   padding: 10px 20px;
-  background-color: #222;
-  color: white;
+  background-color: var(--navbar-background); /* Use theme variable */
+  color: var(--navbar-text); /* Use theme variable */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -14,12 +14,13 @@
   z-index: 999;
   height: 60px; /* Fixed height for mobile navbar */
   box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
 }
 
 .mobile-navbar-brand {
   font-size: 1.5em;
   font-weight: bold;
-  color: #007bff;
+  color: var(--primary-color); /* Use theme variable */
   text-decoration: none;
 }
 
@@ -28,7 +29,7 @@
   background: none;
   border: none;
   font-size: 2em;
-  color: white;
+  color: var(--navbar-text); /* Use theme variable */
   cursor: pointer;
   padding: 0;
   margin: 0;
@@ -51,7 +52,8 @@
 
 /* Mobile Menu Content (Slide-out panel) */
 .mobile-menu-content {
-  background-color: #333;
+  background-color: var(--card-background); /* Use theme variable */
+  color: var(--text-color); /* Use theme variable */
   width: 70%; /* Adjust width as needed */
   max-width: 300px;
   height: 100%;
@@ -82,7 +84,7 @@
   background: none;
   border: none;
   font-size: 2em;
-  color: white;
+  color: var(--text-color); /* Use theme variable */
   cursor: pointer;
 }
 
@@ -90,10 +92,10 @@
 .mobile-menu-item {
   display: block;
   padding: 12px 10px;
-  color: white;
+  color: var(--text-color); /* Use theme variable */
   text-decoration: none;
   font-size: 1.1em;
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid var(--card-border); /* Use theme variable */
   transition: background-color 0.2s ease;
   text-align: left;
   background: none; /* For buttons */
@@ -103,20 +105,21 @@
 }
 
 .mobile-menu-item:hover {
-  background-color: #555;
+  background-color: var(--secondary-color); /* Use theme variable */
+  color: white; /* Keep text white on hover for better contrast */
 }
 
 .mobile-menu-item.brand-item {
   font-size: 1.6em;
   font-weight: bold;
-  color: #007bff;
-  border-bottom: 2px solid #007bff;
+  color: var(--primary-color); /* Use theme variable */
+  border-bottom: 2px solid var(--primary-color); /* Use theme variable */
   margin-bottom: 15px;
   padding-left: 0;
 }
 
 .mobile-menu-item.logout-button {
-  background-color: #dc3545;
+  background-color: #dc3545; /* Specific color for logout, can be a theme variable too */
   color: white;
   border-radius: 5px;
   margin-top: 20px;
@@ -126,6 +129,27 @@
 .mobile-menu-item.logout-button:hover {
   background-color: #c82333;
 }
+
+/* Theme Toggle Button Styles for Mobile Navbar */
+.mobile-menu-item.theme-toggle-button {
+  background-color: var(--primary-color); /* Use primary color for toggle button */
+  color: white;
+  border-radius: 5px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: bold;
+  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobile-menu-item.theme-toggle-button:hover {
+  background-color: var(--secondary-color); /* Darker on hover */
+}
+
 
 /* Mobile Policy Dropdown */
 .mobile-policy-dropdown {
@@ -142,15 +166,16 @@
 .mobile-dropdown-menu {
   display: flex;
   flex-direction: column;
-  background-color: #444;
+  background-color: var(--card-background); /* Use theme variable */
   margin-top: 5px;
   border-radius: 5px;
-  overflow: hidden; /* Ensures rounded corners for children */
+  overflow: hidden;
+  border: 1px solid var(--card-border); /* Use theme variable */
 }
 
 .mobile-dropdown-item {
   padding: 10px 15px;
-  color: #eee;
+  color: var(--text-color); /* Use theme variable */
   text-decoration: none;
   font-size: 0.95em;
   text-align: left;
@@ -158,5 +183,6 @@
 }
 
 .mobile-dropdown-item:hover {
-  background-color: #666;
+  background-color: var(--secondary-color); /* Use theme variable */
+  color: white;
 }
