@@ -1,0 +1,83 @@
+.paystack-callback-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+  padding: 20px;
+}
+
+.status-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.status-icon {
+  font-size: 4em;
+  margin-bottom: 20px;
+}
+
+.verifying-status .status-icon {
+  color: #ffc107; /* Yellow for verifying */
+}
+
+.success-status .status-icon {
+  color: #28a745; /* Green for success */
+}
+
+.failed-status .status-icon {
+  color: #dc3545; /* Red for failed */
+}
+
+.status-card h2 {
+  font-size: 1.8em;
+  margin-bottom: 15px;
+  word-wrap: break-word;
+}
+
+.verifying-status {
+  color: #ffc107;
+}
+
+.success-status {
+  color: #28a745;
+}
+
+.failed-status {
+  color: #dc3545;
+}
+
+.status-card p {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 25px;
+}
+
+.status-card a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.status-card a:hover {
+  text-decoration: underline;
+}
+
+.back-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #0056b3;
+}

@@ -7,15 +7,16 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import UserSignupPage from './pages/UserSignupPage';
-import UserVerificationPage from './pages/UserVerificationPage'; // Corrected import path
+import UserVerificationPage from './pages/UserVerificationPage';
 import UserSignupSuccessPage from './pages/UserSignupSuccessPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import PaystackCallback from './pages/PaystackCallback'; // Import the new PaystackCallback component
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
 import UploadPhotosPage from './pages/UploadPhotosPage';
-import UploadVideosPage from './pages/UploadVideosPage';
+import UploadVideosPage from './pages/Upload/VideosPage';
 import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -37,7 +38,7 @@ import AdminCreatorContentPage from './pages/AdminCreatorContentPage';
 import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
-import AdminManageAdsPage from './pages/AdminManageAdsPage'; // New import for AdminManageAdsPage
+import AdminManageAdsPage from './pages/AdminManageAdsPage';
 
 // Component to handle traffic logging
 function TrafficLogger() {
@@ -73,21 +74,9 @@ function TrafficLogger() {
 }
 
 function App() {
-  useEffect(() => {
-    const testConnection = async () => {
-      try {
-        const { data, error } = await supabase.from('test_table').select();
-        if (error) {
-          console.log('Supabase connection test - Error (expected, table doesn\'t exist yet):', error.message);
-        } else {
-          console.log('Supabase connection successful! Data:', data);
-        }
-      } catch (err) {
-        console.log('Supabase connection test failed unexpectedly:', err.message);
-      }
-    };
-    testConnection();
-  }, []);
+  // Removed the testConnection useEffect to eliminate 'test_table' errors.
+  // The traffic_logs error (409 Conflict) is a separate issue that needs to be addressed
+  // in your Supabase RLS policies or backend logic, outside of this current task.
 
   return (
     <Router>
@@ -114,11 +103,12 @@ function App() {
               <Route path="/messages" element={<CreatorMessagesPage />} />
               <Route path="/admin-messages" element={<AdminMessagesPage />} />
               <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-              <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} /> {/* New route for AdminManageAdsPage */}
+              <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} />
               <Route path="/profile/:userId" element={<UserProfileViewPage />} />
               <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} />
               <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} />
               <Route path="/subscribe" element={<SubscriptionPage />} />
+              <Route path="/paystack-callback" element={<PaystackCallback />} /> {/* New route for Paystack Callback */}
               <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
