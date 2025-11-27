@@ -9,13 +9,12 @@ import SubscriptionPromptModal from '../components/SubscriptionPromptModal';
 import './MobileHomePage.css';
 
 const AD_MEDIA_BUCKET = 'ad-media';
+const AVATAR_BUCKET = 'avatars'; // Assuming your avatars are in an 'avatars' bucket
 const CONTENT_FETCH_LIMIT = 5;
 const AD_INSERT_FREQUENCY = 3;
 const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3;
 
 function MobileHomePage() {
-  console.log('MobileHomePage component rendering...'); // Added console.log for render check
-
   const navigate = useNavigate();
   const { isVisitorSubscribed } = useAuth();
   const { theme } = useTheme();
@@ -27,8 +26,11 @@ function MobileHomePage() {
   const [lastFetchedItemId, setLastFetchedItemId] = useState(null);
   const [scrollCount, setScrollCount] = useState(0);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [visibleItemIndex, setVisibleItemIndex] = useState(0);
 
   const containerRef = useRef(null);
+  const itemRefs = useRef([]);
 
   const getPublicUrl = useCallback((path, bucketName) => {
     if (!path) return null;
@@ -37,22 +39,14 @@ function MobileHomePage() {
   }, []);
 
   const fetchContent = useCallback(async (isInitialFetch = false) => {
-    console.log('fetchContent called. isInitialFetch:', isInitialFetch, 'loading:', loading, 'hasMoreContent:', hasMoreContent);
-
-    // Corrected guarding condition:
-    // Only return if already loading AND it's not the initial fetch,
-    // OR if no more content AND it's not the initial fetch.
     if ((loading && !isInitialFetch) || (!hasMoreContent && !isInitialFetch)) {
-      console.log('fetchContent: Guard condition met, returning early.');
       return;
     }
 
-    setLoading(true); // Set loading true only after passing the initial guard
+    setLoading(true);
     setError(null);
-    console.log('Fetching content...');
 
     try {
-      // Fetch photos - simplified select to avoid RLS issues with profiles join
       let photosQuery = supabase
         .from('photos')
         .select('id, storage_path, caption, creator_id, created_at')
@@ -64,10 +58,8 @@ function MobileHomePage() {
       }
 
       const { data: photosData, error: photosError } = await photosQuery;
-      console.log('Photos data:', photosData, 'Photos error:', photosError);
       if (photosError) throw photosError;
 
-      // Fetch videos - simplified select to avoid RLS issues with profiles join
       let videosQuery = supabase
         .from('videos')
         .select('id, storage_path, thumbnail_path, title, creator_id, created_at')
@@ -79,7 +71,6 @@ function MobileHomePage() {
       }
 
       const { data: videosData, error: videosError } = await videosQuery;
-      console.log('Videos data:', videosData, 'Videos error:', videosError);
       if (videosError) throw videosError;
 
       const allContent = [
@@ -97,56 +88,52 @@ function MobileHomePage() {
       ];
 
       allContent.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      console.log('Combined content (before nicknames):', allContent);
 
       if (allContent.length === 0) {
         setHasMoreContent(false);
-        console.log('No more content to fetch.');
       } else {
-        // Fetch nicknames for the fetched content items
         const creatorIds = [...new Set(allContent.map(item => item.creator_id))];
         let profilesData = [];
         let profilesError = null;
         if (creatorIds.length > 0) {
           const { data, error } = await supabase
             .from('profiles')
-            .select('id, nickname')
-            .in('id', creatorIds);
+            .select('id, nickname, avatar_url');
           profilesData = data;
           profilesError = error;
         }
         
-        console.log('Profiles data for nicknames:', profilesData, 'Profiles error:', profilesError);
-        if (profilesError) console.error('Error fetching profiles for nicknames:', profilesError);
+        if (profilesError) console.error('Error fetching profiles for nicknames/avatars:', profilesError);
 
-        const nicknamesMap = profilesData ? profilesData.reduce((acc, profile) => {
-          acc[profile.id] = profile.nickname;
+        const profilesMap = profilesData ? profilesData.reduce((acc, profile) => {
+          acc[profile.id] = { nickname: profile.nickname, avatar_url: profile.avatar_url };
           return acc;
         }, {}) : {};
 
-        const contentWithNicknames = allContent.map(item => ({
+        const contentWithCreatorInfo = allContent.map(item => ({
           ...item,
-          profiles: { nickname: nicknamesMap[item.creator_id] || 'Creator' } // Attach nickname
+          creatorInfo: {
+            id: item.creator_id,
+            nickname: profilesMap[item.creator_id]?.nickname || 'Creator',
+            avatar_url: getPublicUrl(profilesMap[item.creator_id]?.avatar_url, AVATAR_BUCKET) || null
+          }
         }));
 
         setLastFetchedItemId(allContent[allContent.length - 1].id);
-        console.log('Content with nicknames:', contentWithNicknames);
-
 
         const { data: adsData, error: adsError } = await supabase
           .from('advertisements')
           .select('*')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
-          .limit(10); // Fetch a few random ads
+          .limit(10);
 
         if (adsError) console.error('Error fetching ads:', adsError);
-        console.log('Ads data:', adsData);
 
         let newFeedItems = [];
         let adIndex = 0;
-        for (let i = 0; i < contentWithNicknames.length; i++) {
-          newFeedItems.push(contentWithNicknames[i]);
+        for (let i = 0; i < contentWithCreatorInfo.length; i++) {
+          newFeedItems.push(contentWithCreatorInfo[i]);
           if (adsData && adsData.length > 0 && (i + 1) % AD_INSERT_FREQUENCY === 0) {
             const randomAd = adsData[adIndex % adsData.length];
             newFeedItems.push({
@@ -166,33 +153,58 @@ function MobileHomePage() {
       console.error('Error fetching mobile content (catch block):', err);
     } finally {
       setLoading(false);
-      console.log('Finished fetching content. Loading state set to false.');
     }
   }, [loading, hasMoreContent, lastFetchedItemId, getPublicUrl]);
 
+  // Initial content fetch
   useEffect(() => {
-    console.log('MobileHomePage useEffect for fetchContent running.'); // Added log
     fetchContent(true);
   }, [fetchContent]);
 
+  // Intersection Observer for video playback control and infinite scroll
   useEffect(() => {
-    console.log('MobileHomePage useEffect for scroll handling running.'); // Added log
     const container = containerRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 200 && !loading && hasMoreContent) {
-        setScrollCount(prev => prev + 1);
-        fetchContent();
+    // Capture the current value of itemRefs.current for the cleanup function
+    const currentItemRefs = itemRefs.current; 
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.dataset.index, 10);
+            setVisibleItemIndex(index);
+
+            // Trigger infinite scroll when the last visible item is near the end
+            if (index === feedContent.length - 1 && !loading && hasMoreContent) {
+              setScrollCount(prev => prev + 1);
+              fetchContent();
+            }
+          }
+        });
+      },
+      {
+        root: containerRef.current,
+        rootMargin: '0px',
+        threshold: 0.75,
       }
+    );
+
+    currentItemRefs.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      currentItemRefs.forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+      observer.disconnect(); // Disconnect the observer explicitly
     };
+  }, [feedContent, loading, hasMoreContent, fetchContent]);
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [loading, hasMoreContent, fetchContent]);
-
+  // Subscription prompt logic for free users
   useEffect(() => {
-    console.log('MobileHomePage useEffect for subscription prompt running. isVisitorSubscribed:', isVisitorSubscribed, 'scrollCount:', scrollCount); // Added log
     if (!isVisitorSubscribed && scrollCount >= SCROLLS_BEFORE_SUBSCRIPTION_PROMPT) {
       setShowSubscriptionPrompt(true);
     }
@@ -207,8 +219,23 @@ function MobileHomePage() {
     closeSubscriptionPrompt();
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
   return (
     <div className={`mobile-homepage-container ${theme}`} ref={containerRef}>
+      {/* Transparent Search Bar */}
+      <div className="mobile-search-bar-container">
+        <input
+          type="text"
+          placeholder="Search Creators"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="mobile-creator-search-input"
+        />
+      </div>
+
       {error && <p className="error-message">{error}</p>}
 
       {feedContent.length === 0 && !loading && !error ? (
@@ -216,11 +243,22 @@ function MobileHomePage() {
       ) : (
         <div className="content-feed">
           {feedContent.map((item, index) => {
-            if (item.type === 'ad') {
-              return <MobileAdCard key={`ad-${item.id}-${index}`} ad={item} />;
-            } else {
-              return <MobileContentCard key={`${item.type}-${item.id}-${index}`} item={item} />;
-            }
+            const isActive = index === visibleItemIndex;
+            return (
+              <div ref={(el) => (itemRefs.current[index] = el)} key={`${item.type}-${item.id}-${index}`} data-index={index} className="scroll-snap-item">
+                {item.type === 'ad' ? (
+                  <MobileAdCard ad={item} isActive={isActive} />
+                ) : (
+                  <MobileContentCard
+                    item={item}
+                    isActive={isActive}
+                    isVisitorSubscribed={isVisitorSubscribed}
+                    setShowSubscriptionPrompt={setShowSubscriptionPrompt}
+                    onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}/photos`)}
+                  />
+                )}
+              </div>
+            );
           })}
         </div>
       )}

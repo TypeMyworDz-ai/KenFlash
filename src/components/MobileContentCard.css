@@ -1,15 +1,13 @@
-/* Mobile Content Card Container */
+/* Mobile Content Card Container (re-defined for clarity and consistency) */
 .mobile-content-card {
   width: 100%;
   max-width: 450px; /* Consistent with MobileHomePage.css */
-  height: calc(100vh - 60px); /* Consistent with MobileHomePage.css */
-  margin-bottom: 10px;
-  border-radius: 10px;
+  height: 100%; /* Fill the scroll-snap-item wrapper */
+  border-radius: 0; /* No rounded corners for full screen effect */
   overflow: hidden;
   position: relative;
-  scroll-snap-align: start;
   background-color: var(--card-background); /* Uses theme variable */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* No shadow for full screen effect */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -34,6 +32,7 @@
   padding: 20px 15px 10px;
   text-align: left;
   box-sizing: border-box;
+  z-index: 10; /* Ensure overlay is above media */
 }
 
 .mobile-content-overlay h3 {
@@ -46,4 +45,50 @@
   margin: 0;
   font-size: 0.9em;
   color: #ccc;
+}
+
+/* Profile Avatar Styles */
+.mobile-creator-avatar-container {
+  position: absolute;
+  bottom: 15px; /* Adjust vertical position */
+  left: 15px; /* Adjust horizontal position */
+  width: 50px; /* Avatar size */
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid white; /* White border around avatar */
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for placeholder */
+  z-index: 11; /* Ensure avatar is above overlay */
+}
+
+.mobile-creator-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-creator-avatar-placeholder {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+}
+
+.mobile-creator-avatar-lock {
+  position: absolute;
+  bottom: -5px; /* Position slightly below avatar */
+  right: -5px; /* Position slightly to the right */
+  background-color: var(--primary-color); /* Themed background */
+  color: white;
+  border-radius: 50%;
+  padding: 3px;
+  font-size: 0.8em;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 12; /* Ensure lock is above avatar */
 }
