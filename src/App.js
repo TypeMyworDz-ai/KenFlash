@@ -13,10 +13,10 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
 import SubscriptionPage from './pages/SubscriptionPage';
-import PaystackCallback from './pages/PaystackCallback'; // Import the new PaystackCallback component
+import PaystackCallback from './pages/PaystackCallback';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
 import UploadPhotosPage from './pages/UploadPhotosPage';
-import UploadVideosPage from './pages/Upload/VideosPage';
+import UploadVideosPage from './pages/UploadVideosPage'; // Corrected import path
 import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -74,10 +74,6 @@ function TrafficLogger() {
 }
 
 function App() {
-  // Removed the testConnection useEffect to eliminate 'test_table' errors.
-  // The traffic_logs error (409 Conflict) is a separate issue that needs to be addressed
-  // in your Supabase RLS policies or backend logic, outside of this current task.
-
   return (
     <Router>
       <AuthProvider>
@@ -108,7 +104,7 @@ function App() {
               <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} />
               <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} />
               <Route path="/subscribe" element={<SubscriptionPage />} />
-              <Route path="/paystack-callback" element={<PaystackCallback />} /> {/* New route for Paystack Callback */}
+              <Route path="/paystack-callback" element={<PaystackCallback />} />
               <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
