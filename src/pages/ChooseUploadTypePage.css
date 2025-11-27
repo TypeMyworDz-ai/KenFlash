@@ -1,0 +1,80 @@
+.choose-upload-type-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.choose-upload-type-container h2 {
+  color: #343a40; /* Dark grey */
+  margin-bottom: 20px;
+  font-size: 2.2em;
+}
+
+.choose-upload-type-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.upload-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  justify-content: center;
+}
+
+.upload-option-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.upload-option-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+  height: 100%; /* Ensure cards have equal height */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.upload-option-card-link:hover .upload-option-card {
+  transform: translateY(-8px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.upload-option-card h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.upload-option-card p {
+  color: #666;
+  font-size: 1em;
+  line-height: 1.5;
+  flex-grow: 1; /* Allow paragraph to take available space */
+}
+
+.choose-upload-button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: 20px; /* Space from description */
+}
+
+.choose-upload-button:hover {
+  background-color: #0056b3;
+}

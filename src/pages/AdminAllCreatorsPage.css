@@ -1,0 +1,109 @@
+.admin-all-creators-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-all-creators-container h2 {
+  color: #dc3545; /* Admin color */
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.admin-all-creators-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.approved-creators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+  align-items: stretch; /* Ensure cards have equal height */
+}
+
+.creator-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  height: 100%;
+}
+
+.approved-creator-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.creator-card-link:hover .approved-creator-card {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.creator-avatar-container {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.creator-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.approved-creator-card h4 {
+  color: #333;
+  font-size: 1.3em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.approved-creator-card p {
+  color: #666;
+  font-size: 0.9em;
+  line-height: 1.4;
+  margin-bottom: 15px;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.view-profile-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: auto;
+}
+
+.view-profile-button:hover {
+  background-color: #0056b3;
+}

@@ -1,0 +1,298 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { useNavigate } from 'react-router-dom';
+import './MyViewsPage.css';
+
+function MyViewsPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Summary stats
+  const [totalViews, setTotalViews] = useState(0);
+  const [viewsThisMonth, setViewsThisMonth] = useState(0);
+  const [viewsThisWeek, setViewsThisWeek] = useState(0);
+  const [viewsToday, setViewsToday] = useState(0);
+  
+  // Breakdown stats
+  const [photoViews, setPhotoViews] = useState(0);
+  const [videoViews, setVideoViews] = useState(0);
+  
+  // Detailed data
+  const [dailyViews, setDailyViews] = useState([]);
+  const [monthlyViews, setMonthlyViews] = useState([]);
+  const [topContent, setTopContent] = useState([]);
+
+  useEffect(() => {
+    const fetchViewsData = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) {
+        navigate('/login');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+        
+        const weekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
+        // 1. Total views all-time
+        const { count: totalCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id);
+        setTotalViews(totalCount || 0);
+
+        // 2. Views today
+        const { count: todayCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id)
+          .gte('viewed_at', todayStart);
+        setViewsToday(todayCount || 0);
+
+        // 3. Views this week
+        const { count: weekCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id)
+          .gte('viewed_at', weekStart);
+        setViewsThisWeek(weekCount || 0);
+
+        // 4. Views this month
+        const { count: monthCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id)
+          .gte('viewed_at', monthStart);
+        setViewsThisMonth(monthCount || 0);
+
+        // 5. Views by content type
+        const { count: photoCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id)
+          .eq('content_type', 'photo');
+        setPhotoViews(photoCount || 0);
+
+        const { count: videoCount } = await supabase
+          .from('views')
+          .select('id', { count: 'exact' })
+          .eq('creator_id', authUser.id)
+          .eq('content_type', 'video');
+        setVideoViews(videoCount || 0);
+
+        // 6. Daily views (last 30 days)
+        const { data: dailyData } = await supabase
+          .from('views')
+          .select('viewed_at')
+          .eq('creator_id', authUser.id)
+          .gte('viewed_at', new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+        const dailyBreakdown = {};
+        dailyData?.forEach(view => {
+          const date = new Date(view.viewed_at).toLocaleDateString();
+          dailyBreakdown[date] = (dailyBreakdown[date] || 0) + 1;
+        });
+        setDailyViews(Object.entries(dailyBreakdown).map(([date, count]) => ({ date, count })).sort((a, b) => new Date(a.date) - new Date(b.date)));
+
+        // 7. Monthly views (all-time)
+        const { data: monthlyData } = await supabase
+          .from('views')
+          .select('viewed_at')
+          .eq('creator_id', authUser.id);
+
+        const monthlyBreakdown = {};
+        monthlyData?.forEach(view => {
+          const date = new Date(view.viewed_at);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] || 0) + 1;
+        });
+        setMonthlyViews(Object.entries(monthlyBreakdown).map(([month, count]) => ({ month, count })).sort());
+
+        // 8. Top performing content
+        const { data: allViews } = await supabase
+          .from('views')
+          .select('content_id, content_type')
+          .eq('creator_id', authUser.id);
+
+        const contentViewCount = {};
+        allViews?.forEach(view => {
+          const key = `${view.content_type}-${view.content_id}`;
+          contentViewCount[key] = (contentViewCount[key] || 0) + 1;
+        });
+
+        const topContentList = Object.entries(contentViewCount)
+          .map(([key, count]) => {
+            const [type, id] = key.split('-');
+            return { id, type, count };
+          })
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        setTopContent(topContentList);
+
+      } catch (err) {
+        setError(err.message || 'Failed to fetch views data');
+        console.error('Error fetching views:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchViewsData();
+  }, [navigate]);
+
+  if (loading) {
+    return <div className="my-views-container"><p>Loading views data...</p></div>;
+  }
+
+  if (error) {
+    return <div className="my-views-container"><p className="error-message">{error}</p></div>;
+  }
+
+  return (
+    <div className="my-views-container">
+      <h2>My Views</h2>
+      <p>Monitor your content's performance and track your total views.</p>
+
+      {/* Summary Cards */}
+      <div className="views-stats-grid">
+        <div className="views-card">
+          <h3>Total Views</h3>
+          <p className="views-number">{totalViews.toLocaleString()}</p>
+          <p className="views-description">All-time views across all content</p>
+        </div>
+
+        <div className="views-card">
+          <h3>Views This Month</h3>
+          <p className="views-number">{viewsThisMonth.toLocaleString()}</p>
+          <p className="views-description">Views accumulated this month</p>
+        </div>
+
+        <div className="views-card">
+          <h3>Views This Week</h3>
+          <p className="views-number">{viewsThisWeek.toLocaleString()}</p>
+          <p className="views-description">Views in the last 7 days</p>
+        </div>
+
+        <div className="views-card">
+          <h3>Views Today</h3>
+          <p className="views-number">{viewsToday.toLocaleString()}</p>
+          <p className="views-description">Views accumulated today</p>
+        </div>
+      </div>
+
+      {/* Content Type Breakdown */}
+      <div className="views-breakdown-section">
+        <h3>Views by Content Type</h3>
+        <div className="breakdown-grid">
+          <div className="breakdown-card">
+            <h4>📸 Photo Views</h4>
+            <p className="breakdown-number">{photoViews.toLocaleString()}</p>
+            <p className="breakdown-percentage">{totalViews > 0 ? ((photoViews / totalViews) * 100).toFixed(1) : 0}% of total</p>
+          </div>
+          <div className="breakdown-card">
+            <h4>🎥 Video Views</h4>
+            <p className="breakdown-number">{videoViews.toLocaleString()}</p>
+            <p className="breakdown-percentage">{totalViews > 0 ? ((videoViews / totalViews) * 100).toFixed(1) : 0}% of total</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly Views */}
+      <div className="views-chart-section">
+        <h3>Views Per Month (All-Time)</h3>
+        {monthlyViews.length > 0 ? (
+          <div className="views-table-wrapper">
+            <table className="views-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyViews.map((item, idx) => (
+                  <tr key={idx}>
+                    <td>{item.month}</td>
+                    <td>{item.count.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>No monthly data available</p>
+        )}
+      </div>
+
+      {/* Daily Views Last 30 Days */}
+      <div className="views-chart-section">
+        <h3>Views Per Day (Last 30 Days)</h3>
+        {dailyViews.length > 0 ? (
+          <div className="views-table-wrapper">
+            <table className="views-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyViews.map((item, idx) => (
+                  <tr key={idx}>
+                    <td>{item.date}</td>
+                    <td>{item.count.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>No daily data available</p>
+        )}
+      </div>
+
+      {/* Top Performing Content */}
+      <div className="views-chart-section">
+        <h3>Top Performing Content</h3>
+        {topContent.length > 0 ? (
+          <div className="views-table-wrapper">
+            <table className="views-table">
+              <thead>
+                <tr>
+                  <th>Content Type</th>
+                  <th>Content ID</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topContent.map((item, idx) => (
+                  <tr key={idx}>
+                    <td>{item.type === 'photo' ? '📸 Photo' : '🎥 Video'}</td>
+                    <td>{item.id.substring(0, 8)}...</td>
+                    <td>{item.count.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>No content views yet</p>
+        )}
+      </div>
+
+      <p className="views-footer">Keep creating amazing content to grow your audience!</p>
+    </div>
+  );
+}
+
+export default MyViewsPage;

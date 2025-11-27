@@ -1,0 +1,169 @@
+.admin-manage-viewers-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.admin-manage-viewers-container h2 {
+  color: #dc3545;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.admin-manage-viewers-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+/* Block Viewer Section */
+.block-viewer-section {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 50px;
+  text-align: left;
+}
+
+.block-viewer-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.block-viewer-form .form-group {
+  margin-bottom: 20px;
+}
+
+.block-viewer-form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.block-viewer-form input[type="email"],
+.block-viewer-form input[type="text"],
+.block-viewer-form input[type="tel"], /* Added styling for tel input for phone number */
+.block-viewer-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 1em;
+}
+
+.block-viewer-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.block-button {
+  background-color: #dc3545;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.block-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.block-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Blocked Viewers List Section */
+.blocked-viewers-list-section {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+}
+
+.blocked-viewers-list-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.blocked-viewers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.blocked-viewer-card {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.blocked-viewer-card h4 {
+  color: #333;
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.blocked-viewer-card p {
+  color: #666;
+  font-size: 0.9em;
+  line-height: 1.4;
+  margin-bottom: 10px;
+  flex-grow: 1;
+}
+
+.unblock-button {
+  background-color: #ffc107;
+  color: #333;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.unblock-button:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
+.unblock-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}

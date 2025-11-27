@@ -1,0 +1,112 @@
+.admin-dashboard-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-dashboard-container h2 {
+  color: #dc3545;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.admin-dashboard-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+  align-items: stretch; /* Crucial: Ensures grid items stretch to fill the row height */
+}
+
+/* Base style for all admin cards */
+.admin-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Distribute content vertically */
+  flex-grow: 1; /* Allow the card to grow and fill the height of its parent (the Link) */
+  min-height: 180px; /* Added a min-height for baseline consistency */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Hover effect for clickable admin cards */
+.admin-card-link:hover .admin-card {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  cursor: pointer; /* Indicate clickable */
+}
+
+/* Styling for clickable admin cards (like Content Moderation) */
+.admin-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex; /* Makes the link itself a flex item */
+  height: 100%; /* Ensures the link fills its grid cell */
+}
+
+.admin-card h3 {
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+.admin-card p {
+  color: #666;
+  font-size: 0.95em;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  flex-grow: 1; /* Allows paragraph to push buttons to bottom */
+}
+
+.admin-card-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%; /* Full width button */
+  margin-top: auto; /* Pushes button to the bottom of the flex container */
+}
+
+.admin-card-button:hover {
+  background-color: #0056b3;
+}
+
+.admin-card-button.disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.admin-card-button.disabled:hover {
+  background-color: #cccccc;
+}
+
+/* Removed specific styles for .card-content-scroll, .user-approval-item, .item-actions, .view-docs-button, .approve-button */
+/* These styles are now only relevant for AdminPendingCreatorsPage.css */

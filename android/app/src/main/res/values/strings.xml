@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KenFlash</string>
+    <string name="title_activity_main">KenFlash</string>
+    <string name="package_name">com.kenflash.app</string>
+    <string name="custom_url_scheme">com.kenflash.app</string>
+</resources>

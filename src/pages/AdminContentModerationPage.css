@@ -1,0 +1,110 @@
+.admin-content-moderation-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-content-moderation-container h2 {
+  color: #007bff; /* Blue for content moderation */
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.admin-content-moderation-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+.content-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  text-align: left;
+}
+
+.content-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.content-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block; /* Remove extra space below image */
+}
+
+.video-thumbnail-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000; /* Dark background for video thumbnail */
+}
+
+.play-icon-overlay {
+  position: absolute;
+  font-size: 3em;
+  color: white;
+  text-shadow: 0 0 10px rgba(0,0,0,0.5);
+  pointer-events: none; /* Allows clicks to pass through to the card */
+}
+
+
+.content-details {
+  padding: 15px;
+}
+
+.content-details h4 {
+  color: #333;
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.content-details p {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.takedown-button {
+  background-color: #dc3545; /* Red for take down */
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.takedown-button:hover {
+  background-color: #c82333;
+}

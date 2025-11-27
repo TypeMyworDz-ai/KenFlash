@@ -1,0 +1,287 @@
+.creator-photos-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.creator-photos-container h2 {
+  color: #17a2b8;
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.creator-photos-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.photo-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 60px;
+  align-items: stretch; /* Ensure cards have equal height */
+}
+
+.photo-group-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+  position: relative; /* For overlay */
+  display: flex; /* For flex layout of content */
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* Fill grid cell height */
+}
+
+.photo-group-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.group-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.group-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px; /* Same height as thumbnail */
+  background-color: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.photo-group-card:hover .group-overlay {
+  opacity: 1;
+}
+
+.group-icon {
+  font-size: 3em;
+  margin-bottom: 5px;
+}
+
+.group-overlay p {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.group-details {
+  padding: 15px;
+  flex-grow: 1; /* Allows details to take up space */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.group-caption {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.upload-date {
+  color: #999;
+  font-size: 0.9em;
+  margin: 0;
+}
+
+
+/* Lightbox/Slideshow Styles (from PhotoSlideshowModal.css) */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  background-color: #000;
+  border-radius: 10px;
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+
+.lightbox-content .close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  font-size: 2.5em;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  z-index: 2001;
+}
+
+.lightbox-content .close-button:hover {
+  background-color: #ffffff;
+}
+
+.slideshow-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
+.slideshow-image {
+  max-width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border: 1px solid #333;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.slideshow-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px 20px;
+  border-radius: 5px;
+}
+
+.slideshow-controls .nav-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  font-size: 1.5em;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.slideshow-controls .nav-button:hover {
+  background-color: #0056b3;
+}
+
+.photo-counter {
+  color: white;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.slideshow-caption {
+  color: white;
+  font-size: 1em;
+  margin-top: 15px;
+  text-align: center;
+  max-width: 80%;
+}
+
+
+/* Suggested Photos Section */
+.suggested-section {
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.suggested-section h3 {
+  color: #007bff;
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.suggested-section p {
+  color: #555;
+  font-size: 1em;
+  margin-bottom: 30px;
+}
+
+.suggested-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.suggested-photo-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.suggested-photo-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.suggested-photo {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.suggested-details {
+  padding: 10px;
+}
+
+.suggested-creator-name {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  font-size: 0.95em;
+}
+
+.suggested-caption {
+  font-size: 0.85em;
+  color: #666;
+  margin: 0;
+}

@@ -1,0 +1,112 @@
+.verification-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.verification-form {
+  background-color: #f9f9f9;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  text-align: left;
+  margin-top: 20px;
+}
+
+.verification-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.verification-form p {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  background-color: white;
+}
+
+.form-group input[type="file"]::file-selector-button {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+  background-color: #0056b3;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  margin-top: 25px;
+  margin-bottom: 25px;
+}
+
+.terms-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2); /* Make checkbox slightly larger */
+}
+
+.terms-checkbox label {
+  font-size: 15px;
+  color: #555;
+}
+
+.terms-checkbox a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.terms-checkbox a:hover {
+  text-decoration: underline;
+}
+
+.confirm-button {
+  background-color: #28a745; /* Green color for confirm */
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.confirm-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #218838;
+}

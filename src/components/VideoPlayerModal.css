@@ -1,0 +1,64 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.video-player-modal-content {
+  background-color: #1a1a1a; /* Dark background for video */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.close-modal-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 2em;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.close-modal-button:hover {
+  color: #cccccc;
+}
+
+.video-player {
+  width: 100%;
+  max-width: 800px; /* Max width for the video player */
+  height: auto;
+  max-height: 70vh; /* Max height relative to viewport */
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: block; /* Ensures no extra space below video */
+}
+
+.video-title {
+  color: #ffffff;
+  font-size: 1.5em;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.video-creator-name {
+  color: #cccccc;
+  font-size: 1em;
+  text-align: center;
+}

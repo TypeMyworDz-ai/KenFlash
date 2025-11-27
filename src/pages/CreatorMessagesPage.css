@@ -1,0 +1,227 @@
+.creator-messages-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 70vh; /* Ensure it's tall enough */
+}
+
+.creator-messages-container h2 {
+  font-size: 2em;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.creator-messages-container .error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 5px solid #dc3545;
+  font-size: 0.95em;
+  text-align: left;
+}
+
+.chat-box {
+  flex-grow: 1; /* Allows chat box to fill available space */
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden; /* Ensures messages don't overflow */
+  background-color: #fcfcfc;
+}
+
+.messages-display {
+  flex-grow: 1; /* Allows message display to take most space */
+  padding: 20px;
+  overflow-y: auto; /* Enable scrolling for messages */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.no-messages {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+  padding: 10px 15px;
+  border-radius: 15px;
+  word-wrap: break-word; /* Ensure long words break */
+  overflow-wrap: break-word; /* Ensure long words break */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.message.sent {
+  align-self: flex-end; /* Align to the right for sent messages */
+  background-color: #007bff; /* Blue for sent messages */
+  color: white;
+  border-bottom-right-radius: 2px; /* Pointy corner for sent */
+}
+
+.message.received {
+  align-self: flex-start; /* Align to the left for received messages */
+  background-color: #e2e6ea; /* Light grey for received messages */
+  color: #333;
+  border-bottom-left-radius: 2px; /* Pointy corner for received */
+}
+
+.message-text {
+  margin: 0;
+  font-size: 0.95em;
+  line-height: 1.4;
+}
+
+.message-time {
+  font-size: 0.75em;
+  color: rgba(255, 255, 255, 0.7); /* Lighter color for time in sent message */
+  align-self: flex-end;
+  margin-top: 5px;
+}
+
+.message.received .message-time {
+  color: #6c757d; /* Darker color for time in received message */
+}
+
+
+.message-input-form {
+  display: flex;
+  padding: 15px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f0f2f5;
+}
+
+.message-input-form input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 25px;
+  font-size: 1em;
+  margin-right: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-input-form input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.message-input-form button {
+  background-color: #28a745; /* Green send button */
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 25px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.message-input-form button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.message-input-form button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .creator-messages-container {
+    padding: 20px;
+    margin: 20px auto;
+    min-height: 85vh;
+  }
+
+  .creator-messages-container h2 {
+    font-size: 1.8em;
+  }
+
+  .chat-box {
+    border-radius: 8px;
+  }
+
+  .messages-display {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .message {
+    max-width: 85%;
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+
+  .message-time {
+    font-size: 0.7em;
+  }
+
+  .message-input-form {
+    padding: 10px;
+  }
+
+  .message-input-form input {
+    padding: 10px 12px;
+    font-size: 0.9em;
+  }
+
+  .message-input-form button {
+    padding: 10px 15px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .creator-messages-container {
+    padding: 15px;
+    margin: 10px auto;
+    min-height: 90vh;
+  }
+
+  .creator-messages-container h2 {
+    font-size: 1.5em;
+  }
+
+  .messages-display {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .message {
+    max-width: 95%;
+    font-size: 0.85em;
+  }
+
+  .message-input-form {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .message-input-form input {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .message-input-form button {
+    width: 100%;
+  }
+}

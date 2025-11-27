@@ -1,0 +1,175 @@
+.admin-view-profile-container {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-view-profile-container h2 {
+  color: #dc3545; /* Admin color */
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  text-align: center; /* Keep heading centered */
+}
+
+.admin-view-profile-container > p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+  text-align: center; /* Keep intro paragraph centered */
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.profile-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+  align-items: stretch; /* Ensure cards have equal height */
+  justify-content: center; /* Center the grid items if there's extra space */
+}
+
+.profile-card-section {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Distributes space between content and pushes action group down */
+  height: 100%; /* Ensure card takes full height of its grid cell */
+}
+
+.profile-image-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.profile-card-section h3 {
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  text-align: center; /* Keep section headings centered */
+}
+
+.profile-card-section p {
+  color: #666;
+  font-size: 0.95em;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  flex-shrink: 0; /* Prevent paragraphs from shrinking if space is tight */
+}
+/* Ensure strong tags inside paragraphs don't affect flex behavior */
+.profile-card-section p strong {
+  color: #333;
+  display: inline; /* Ensure strong behaves as inline content */
+}
+
+
+/* Container for action buttons within a card section */
+.profile-card-section .action-buttons-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Space between buttons */
+  margin-top: auto; /* Pushes the entire button group to the bottom */
+  align-items: stretch; /* Ensure buttons in the group stretch if needed */
+  flex-grow: 0; /* Prevent the button group itself from growing */
+}
+
+.admin-action-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%; /* Make buttons take full width of their container */
+  display: block; /* Ensure buttons stack vertically */
+  text-decoration: none; /* Remove underline for Link components */
+  text-align: center; /* Center text in Link buttons */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.admin-action-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.admin-action-button.success-button {
+  background-color: #28a745;
+}
+.admin-action-button.success-button:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.admin-action-button.warn-button {
+  background-color: #ffc107;
+  color: #333;
+}
+.admin-action-button.warn-button:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
+.admin-action-button.delete-button {
+  background-color: #dc3545;
+}
+.admin-action-button.delete-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.admin-action-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  color: #666;
+}
+
+/* Responsive adjustments for grid */
+@media (max-width: 992px) {
+  .profile-details-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Allow two larger columns */
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-view-profile-container {
+    padding: 20px;
+  }
+  .profile-details-grid {
+    grid-template-columns: 1fr; /* Stack cards on very small screens */
+    gap: 20px;
+  }
+  .profile-card-section {
+    padding: 15px;
+  }
+  .profile-card-section h3 {
+    font-size: 1.3em;
+  }
+  .profile-card-section p {
+    font-size: 0.9em;
+  }
+  .admin-action-button {
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+}

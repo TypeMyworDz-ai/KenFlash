@@ -1,0 +1,362 @@
+.subscription-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.subscription-container h2 {
+  color: #007bff;
+  margin-bottom: 20px;
+  font-size: 2.5em;
+}
+
+.subscription-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 40px;
+}
+
+/* Anonymity Information Section */
+.anonymity-info {
+  background-color: #f0f8ff; /* Light blue background */
+  border: 1px solid #a8d9ff;
+  border-radius: 8px;
+  padding: 20px 25px;
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.anonymity-info p {
+  font-size: 0.95em;
+  color: #333;
+  line-height: 1.6;
+  margin: 0; /* Override default paragraph margin */
+}
+
+.anonymity-info a {
+  color: #007bff;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.anonymity-info a:hover {
+  color: #0056b3;
+}
+
+/* Email input group - always visible for new subscriptions */
+.email-input-group {
+  margin-bottom: 30px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.email-input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.email-input-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.email-input-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Subscription Plans Grid */
+.subscription-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.subscription-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.subscription-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border-color: #007bff; /* Highlight border on hover */
+}
+
+.subscription-card h3 {
+  color: #333;
+  font-size: 2em;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.subscription-card .price {
+  font-size: 2.8em;
+  font-weight: bold;
+  color: #28a745; /* Green color for price */
+  margin-bottom: 25px;
+}
+
+.subscription-card ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+  text-align: left;
+  flex-grow: 1; /* Push button to bottom */
+}
+
+.subscription-card ul li {
+  margin-bottom: 10px;
+  color: #666;
+  font-size: 1.05em;
+  display: flex;
+  align-items: center;
+}
+
+.subscription-card ul li::before {
+  content: '✔';
+  color: #28a745;
+  margin-right: 10px;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.subscribe-button {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); /* Blue gradient button */
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.subscribe-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.subscribe-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Already Subscribed Section (Card style) */
+.existing-subscriber-section {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  margin: 50px auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.existing-subscriber-section:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.existing-subscriber-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.existing-subscriber-section p {
+  font-size: 1em;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.existing-subscriber-section .email-input-group {
+  margin-bottom: 25px;
+}
+
+.unlock-button {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%); /* Green gradient */
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.unlock-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.unlock-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.back-to-subscribe-button {
+  background-color: #6c757d; /* Grey button to go back */
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-subscribe-button:hover:not(:disabled) {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Toggle Existing Subscriber Button (as a link below plans) */
+.toggle-existing-subscriber-section {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.toggle-existing-subscriber-button {
+  background: none;
+  border: none;
+  color: #007bff; /* Blue link style */
+  font-size: 1.1em;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  padding: 0;
+}
+
+.toggle-existing-subscriber-button:hover {
+  color: #0056b3;
+}
+
+.subscription-message {
+  margin-top: 20px;
+  font-size: 1.1em;
+  color: #28a745;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .subscription-container {
+    padding: 20px;
+  }
+
+  .subscription-container h2 {
+    font-size: 2em;
+  }
+
+  .subscription-options-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .subscription-card {
+    padding: 25px;
+  }
+
+  .subscription-card h3 {
+    font-size: 1.8em;
+  }
+
+  .subscription-card .price {
+    font-size: 2.2em;
+  }
+
+  .subscribe-button, .unlock-button, .back-to-subscribe-button {
+    padding: 12px 25px;
+    font-size: 1.1em;
+  }
+
+  .existing-subscriber-section {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .subscription-container {
+    padding: 15px;
+  }
+
+  .subscription-container h2 {
+    font-size: 1.8em;
+  }
+
+  .subscription-card h3 {
+    font-size: 1.5em;
+  }
+
+  .subscription-card .price {
+    font-size: 2em;
+  }
+
+  .subscribe-button, .unlock-button, .back-to-subscribe-button {
+    padding: 10px 20px;
+    font-size: 1em;
+  }
+
+  .existing-subscriber-section {
+    padding: 20px;
+  }
+
+  .existing-subscriber-section h3 {
+    font-size: 1.5em;
+  }
+
+  .toggle-existing-subscriber-button {
+    font-size: 1em;
+  }
+
+  .anonymity-info {
+    padding: 15px 20px;
+    margin-bottom: 30px;
+  }
+
+  .anonymity-info p {
+    font-size: 0.9em;
+  }
+}

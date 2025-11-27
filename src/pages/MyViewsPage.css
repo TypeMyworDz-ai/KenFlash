@@ -1,0 +1,239 @@
+.my-views-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.my-views-container h2 {
+  color: #6f42c1;
+  margin-bottom: 20px;
+  font-size: 2.2em;
+}
+
+.my-views-container p {
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 30px;
+}
+
+/* Summary Cards */
+.views-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  justify-content: center;
+  margin-bottom: 50px;
+}
+
+.views-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.views-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.views-card h3 {
+  color: white;
+  font-size: 1.1em;
+  margin-bottom: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.views-card .views-number {
+  font-size: 2.8em;
+  font-weight: bold;
+  color: #FFD700;
+  margin-bottom: 10px;
+}
+
+.views-card .views-description {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+/* Breakdown Section */
+.views-breakdown-section {
+  margin-bottom: 50px;
+  text-align: left;
+}
+
+.views-breakdown-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+.breakdown-card {
+  background-color: #f8f9fa;
+  border-left: 5px solid #6f42c1;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.breakdown-card h4 {
+  color: #333;
+  font-size: 1.3em;
+  margin-bottom: 15px;
+}
+
+.breakdown-card .breakdown-number {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.breakdown-card .breakdown-percentage {
+  font-size: 1em;
+  color: #666;
+  font-weight: 600;
+}
+
+/* Chart Sections */
+.views-chart-section {
+  margin-bottom: 50px;
+  text-align: left;
+}
+
+.views-chart-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.views-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.views-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+
+.views-table thead {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.views-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.views-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  color: #555;
+  font-size: 0.95em;
+}
+
+.views-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.views-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #721c24;
+  font-size: 0.95em;
+}
+
+.views-footer {
+  margin-top: 40px;
+  font-style: italic;
+  color: #777;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .my-views-container {
+    padding: 20px;
+  }
+
+  .my-views-container h2 {
+    font-size: 1.8em;
+  }
+
+  .views-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .views-card .views-number {
+    font-size: 2.2em;
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .views-table th,
+  .views-table td {
+    padding: 10px;
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-views-container {
+    padding: 15px;
+  }
+
+  .my-views-container h2 {
+    font-size: 1.5em;
+  }
+
+  .views-card .views-number {
+    font-size: 1.8em;
+  }
+
+  .breakdown-card .breakdown-number {
+    font-size: 2em;
+  }
+
+  .views-table th,
+  .views-table td {
+    padding: 8px;
+    font-size: 0.75em;
+  }
+}
