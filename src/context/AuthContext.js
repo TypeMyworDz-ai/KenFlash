@@ -59,18 +59,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('isUserApproved', approvedStatus.toString());
   };
 
-  const subscribeVisitor = (email, planDuration) => {
+  const subscribeVisitor = (email, planName) => { // Changed planDuration to planName
     const now = new Date();
     let expiryTime;
 
-    // Updated subscription durations
-    if (planDuration === '12-Hours') {
-      expiryTime = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours
-    } else if (planDuration === '1-Day') {
-      expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 day
+    // Handle the '1 Day Plan' specifically
+    if (planName === '1 Day Plan') {
+      expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
     } else {
-      // Fallback or error handling for unknown planDuration
-      console.error("Unknown plan duration provided:", planDuration);
+      // Fallback or error handling for unknown plan names
+      console.error("Unknown plan duration provided:", planName);
       return; 
     }
 
