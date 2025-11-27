@@ -2,10 +2,11 @@
 .mobile-homepage-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* Align items to stretch vertically to enable proper scroll snapping */
+  align-items: stretch;
   justify-content: flex-start;
-  min-height: 100vh;
-  padding-top: 60px; /* Adjust for fixed mobile navbar height */
+  height: 100vh; /* Make container full viewport height for snapping */
+  padding-top: 0; /* No padding-top here, navbar is fixed */
   background-color: var(--background-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -17,8 +18,10 @@
 
 /* Transparent Search Bar Container */
 .mobile-search-bar-container {
-  position: absolute; /* Position over content */
+  position: fixed; /* Fixed position so it scrolls with the view but stays at top */
   top: 70px; /* Below navbar, adjust as needed */
+  left: 50%;
+  transform: translateX(-50%); /* Center horizontally */
   width: 90%; /* Occupy most of the width */
   max-width: 400px; /* Max width for consistency */
   z-index: 990; /* Below navbar, above content */
@@ -48,7 +51,7 @@
   outline: none;
   border-color: var(--primary-color);
   background-color: rgba(0, 0, 0, 0.6); /* Slightly darker on focus */
-  box-shadow: 0 0 0 2px var(--primary-color-alpha); /* Use a themed focus ring */
+  box-shadow: 0 0 0 2px var(--primary-color); /* Use a themed focus ring */
 }
 
 /* Content Feed Container */
@@ -57,19 +60,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 20px; /* Space at the bottom */
+  /* Removed padding-bottom here, rely on individual item height */
 }
 
-/* Individual Content Card (Photo/Video/Ad) */
-.scroll-snap-item { /* New wrapper for scroll snapping */
+/* Individual Content Card (Photo/Video/Ad) Wrapper for scroll snapping */
+.scroll-snap-item {
   width: 100%;
   max-width: 450px;
-  height: calc(100vh - 60px); /* Fill screen height minus navbar */
-  margin-bottom: 0; /* No margin between snapped items */
+  height: 100vh; /* Each item takes full viewport height */
   scroll-snap-align: start; /* Snap to the start of the item */
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0; /* Prevent items from shrinking */
 }
 
 .mobile-content-card,
@@ -88,16 +91,14 @@
   color: var(--text-color);
 }
 
-.mobile-content-card img,
-.mobile-content-card video {
+.mobile-content-media {
   width: 100%;
   height: 100%;
   object-fit: contain; /* Ensure full content is visible, letterboxing if needed */
   display: block;
 }
 
-.mobile-ad-card img,
-.mobile-ad-card video {
+.mobile-ad-media {
   width: 100%;
   height: 100%;
   object-fit: cover; /* Ads typically fill the space */
@@ -115,6 +116,7 @@
   padding: 20px 15px 10px;
   text-align: left;
   box-sizing: border-box;
+  z-index: 10;
 }
 
 .mobile-content-overlay h3,
@@ -142,19 +144,20 @@
   width: 100%;
   max-width: 450px;
   scroll-snap-align: start; /* Make messages snap too */
-  height: calc(100vh - 60px); /* Fill screen height */
+  height: 100vh; /* Fill screen height */
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 }
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 480px) {
   .mobile-homepage-container {
-    padding-top: 50px; /* Adjust for potentially smaller navbar on very small devices */
+    /* No padding-top needed here, if navbar is fixed */
   }
   .mobile-search-bar-container {
-    top: 60px; /* Adjust search bar position */
+    top: 60px; /* Adjust search bar position below mobile navbar */
   }
   .scroll-snap-item,
   .mobile-content-card,
@@ -163,6 +166,6 @@
   .end-of-feed-message,
   .no-content-message,
   .error-message {
-    height: calc(100vh - 50px); /* Adjust height for very small devices */
+    height: 100vh; /* Ensure full viewport height */
   }
 }

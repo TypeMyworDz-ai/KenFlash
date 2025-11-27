@@ -6,30 +6,34 @@ function MobileContentCard({
   isActive, 
   isVisitorSubscribed, 
   setShowSubscriptionPrompt, 
-  onNavigateToCreatorProfile 
+  onNavigateToCreatorProfile // This prop will now navigate to the creator's main profile page
 }) {
   // --- React Hooks must be called unconditionally at the top level ---
   const videoRef = useRef(null);
 
   useEffect(() => {
-    if (videoRef.current && item && item.type === 'video') { // Only apply to video elements
+    if (videoRef.current && item && item.type === 'video') {
       if (isActive) {
-        videoRef.current.play().catch(e => console.error("Error playing video:", e)); // Add catch for autoplay policy
+        // Attempt to play, catch potential autoplay policy errors
+        videoRef.current.play().catch(e => console.error("Error playing video:", e));
       } else {
         videoRef.current.pause();
         videoRef.current.currentTime = 0; // Reset video to start when not active
       }
     }
-  }, [isActive, item]); // Depend on isActive and item (to ensure ref is current)
+  }, [isActive, item]); // Depend on isActive and item for correctness
   // --- End of Hooks section ---
 
   if (!item) return null; // Early return after Hooks
 
   const handleProfileClick = () => {
-    if (isVisitorSubscribed) {
-      onNavigateToCreatorProfile(item.creatorInfo.id);
-    } else {
-      setShowSubscriptionPrompt(true);
+    if (item.creatorInfo && item.creatorInfo.id) {
+      if (isVisitorSubscribed) {
+        // Navigate to the creator's main profile page, where they can choose photos or videos
+        onNavigateToCreatorProfile(item.creatorInfo.id); 
+      } else {
+        setShowSubscriptionPrompt(true); // Show subscription prompt for unsubscribed users
+      }
     }
   };
 
@@ -45,8 +49,8 @@ function MobileContentCard({
           className="mobile-content-media"
           muted
           loop
-          playsInline
-          controlsList="nodownload nofullscreen noremoteplayback"
+          playsInline // Important for mobile browsers to autoplay inline
+          controlsList="nodownload nofullscreen noremoteplayback" // Restrict controls
         >
           Your browser does not support the video tag.
         </video>
@@ -61,7 +65,7 @@ function MobileContentCard({
         <p className="mobile-content-creator">By: {item.creatorInfo?.nickname || 'Unknown Creator'}</p>
       </div>
 
-      {/* Profile Avatar */}
+      {/* Profile Avatar (Positioned on the right bottom) */}
       {item.creatorInfo && item.creatorInfo.id && (
         <div className="mobile-creator-avatar-container" onClick={handleProfileClick}>
           {item.creatorInfo.avatar_url ? (

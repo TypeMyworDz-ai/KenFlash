@@ -51,7 +51,7 @@
 .mobile-creator-avatar-container {
   position: absolute;
   bottom: 15px; /* Adjust vertical position */
-  left: 15px; /* Adjust horizontal position */
+  right: 15px; /* Position on the RIGHT */
   width: 50px; /* Avatar size */
   height: 50px;
   border-radius: 50%;
@@ -82,7 +82,7 @@
 .mobile-creator-avatar-lock {
   position: absolute;
   bottom: -5px; /* Position slightly below avatar */
-  right: -5px; /* Position slightly to the right */
+  left: -5px; /* Position slightly to the LEFT of the avatar (relative to its container) */
   background-color: var(--primary-color); /* Themed background */
   color: white;
   border-radius: 50%;

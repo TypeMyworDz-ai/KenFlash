@@ -166,7 +166,6 @@ function MobileHomePage() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Capture the current value of itemRefs.current for the cleanup function
     const currentItemRefs = itemRefs.current; 
 
     const observer = new IntersectionObserver(
@@ -176,7 +175,6 @@ function MobileHomePage() {
             const index = parseInt(entry.target.dataset.index, 10);
             setVisibleItemIndex(index);
 
-            // Trigger infinite scroll when the last visible item is near the end
             if (index === feedContent.length - 1 && !loading && hasMoreContent) {
               setScrollCount(prev => prev + 1);
               fetchContent();
@@ -199,7 +197,7 @@ function MobileHomePage() {
       currentItemRefs.forEach((ref) => {
         if (ref) observer.unobserve(ref);
       });
-      observer.disconnect(); // Disconnect the observer explicitly
+      observer.disconnect();
     };
   }, [feedContent, loading, hasMoreContent, fetchContent]);
 
@@ -254,7 +252,8 @@ function MobileHomePage() {
                     isActive={isActive}
                     isVisitorSubscribed={isVisitorSubscribed}
                     setShowSubscriptionPrompt={setShowSubscriptionPrompt}
-                    onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}/photos`)}
+                    // Changed to general creator profile page
+                    onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}`)} 
                   />
                 )}
               </div>
