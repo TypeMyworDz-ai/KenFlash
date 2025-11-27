@@ -1,50 +1,41 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { useAuth } from '../context/AuthContext'; // Assuming AuthContext has subscribeVisitor
+import { useAuth } from '../context/AuthContext';
 import './PaystackCallback.css';
 
-const PLAN_NAME = '1 Day Plan'; // Consistent plan name
-const PLAN_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const PLAN_NAME = '1 Day Plan';
+const PLAN_DURATION_MS = 24 * 60 * 60 * 1000;
 
 function PaystackCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { subscribeVisitor } = useAuth(); // Destructure subscribeVisitor from useAuth
+  const { subscribeVisitor } = useAuth();
 
-  const [paymentStatus, setPaymentStatus] = useState('verifying'); // 'verifying', 'success', 'failed'
+  const [paymentStatus, setPaymentStatus] = useState('verifying');
   const [message, setMessage] = useState('Verifying your payment and activating subscription...');
   const [redirecting, setRedirecting] = useState(false);
 
   const handleVerificationAndSubscription = useCallback(async () => {
-    if (redirecting) return; // Prevent multiple executions
+    if (redirecting) return;
 
     const reference = searchParams.get('trxref') || searchParams.get('reference');
-    const status = searchParams.get('status'); // Paystack might return a status in the URL
+    const status = searchParams.get('status');
 
     if (!reference) {
       setPaymentStatus('failed');
       setMessage('Payment reference not found. Please contact support.');
       setRedirecting(true);
-      setTimeout(() => navigate('/subscribe'), 5000); // Redirect back to subscribe page
+      setTimeout(() => navigate('/subscribe'), 5000);
       return;
     }
 
-    // In a real production application, this verification step should ideally
-    // be done on your backend server to securely confirm the payment with Paystack
-    // and prevent fraud. For this client-side example, we will simulate verification
-    // based on the presence of a reference and assume success.
-
-    if (status === 'success' || reference) { // Assuming success if reference is present
+    if (status === 'success' || reference) {
       setPaymentStatus('verifying');
       setMessage('Payment reference received. Updating your subscription...');
 
-      // Extract email from local storage or session if stored during initiation
-      // For a robust solution, you might pass email via metadata in Paystack redirect
-      // or associate it with the transaction reference on your backend.
-      // For now, let's assume the email is passed as a query param or stored.
-      // If not, you might need to prompt the user for it or fetch from AuthContext.
-      const userEmail = searchParams.get('email') || localStorage.getItem('pendingSubscriptionEmail');
+      // **PRIORITIZE retrieving email from local storage**
+      const userEmail = localStorage.getItem('pendingSubscriptionEmail') || searchParams.get('email');
 
       if (!userEmail) {
         setPaymentStatus('failed');
@@ -67,7 +58,7 @@ function PaystackCallback() {
             transaction_ref: reference,
             status: 'active',
           },
-        ]).select(); // Use .select() to get the inserted data
+        ]).select();
 
         if (error) {
           console.error('Supabase subscription update error:', error);
@@ -77,9 +68,9 @@ function PaystackCallback() {
         if (data && data.length > 0) {
           setPaymentStatus('success');
           setMessage('Subscription activated successfully! Redirecting to homepage...');
-          subscribeVisitor(userEmail, PLAN_NAME); // Update AuthContext
+          subscribeVisitor(userEmail, PLAN_NAME);
           setRedirecting(true);
-          localStorage.removeItem('pendingSubscriptionEmail'); // Clean up
+          localStorage.removeItem('pendingSubscriptionEmail'); // Clean up after successful subscription
           setTimeout(() => navigate('/'), 3000);
         } else {
           throw new Error('No data returned from subscription insert.');

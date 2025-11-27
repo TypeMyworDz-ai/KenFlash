@@ -17,9 +17,6 @@ function SubscriptionPage() {
   const [showExistingSubscriberSection, setShowExistingSubscriberSection] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Removed PaystackPop.setup related logic (useEffect, useRef, isPaystackLoaded, handlePaystackCallback, handlePaystackClose)
-  // as we are now redirecting to a hosted page.
-
   const handleSubscribe = async () => {
     if (!email) {
       alert('Please enter your email to subscribe.');
@@ -29,8 +26,10 @@ function SubscriptionPage() {
     setLoading(true);
     setMessage(`Redirecting to Paystack for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) payment for ${email}...`);
 
-    // Construct the Paystack hosted page URL with email pre-filled
-    // Paystack's hosted pages often support passing email as a query parameter
+    // Save the email to local storage before redirecting
+    localStorage.setItem('pendingSubscriptionEmail', email);
+
+    // Construct the Paystack hosted page URL with email pre-filled (optional, but good practice)
     const paymentUrl = `${PAYSTACK_HOSTED_PAGE_URL}?email=${encodeURIComponent(email)}`;
     
     // Redirect the user to the Paystack hosted payment page
