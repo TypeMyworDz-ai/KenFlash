@@ -1,10 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
 import { supabase } from './supabaseClient';
 import './App.css';
 import Navbar from './components/Navbar';
+import MobileNavbar from './components/MobileNavbar';
 import HomePage from './pages/HomePage';
+import MobileHomePage from './pages/MobileHomePage';
 import LoginPage from './pages/LoginPage';
 import UserSignupPage from './pages/UserSignupPage';
 import UserVerificationPage from './pages/UserVerificationPage';
@@ -16,7 +19,7 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import PaystackCallback from './pages/PaystackCallback';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
 import UploadPhotosPage from './pages/UploadPhotosPage';
-import UploadVideosPage from './pages/UploadVideosPage'; // Corrected import path
+import UploadVideosPage from './pages/UploadVideosPage';
 import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -39,6 +42,8 @@ import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
 import AdminManageAdsPage from './pages/AdminManageAdsPage';
+import { Capacitor } from '@capacitor/core';
+
 
 // Component to handle traffic logging
 function TrafficLogger() {
@@ -74,52 +79,65 @@ function TrafficLogger() {
 }
 
 function App() {
+  const [isAndroid, setIsAndroid] = useState(false);
+
+  useEffect(() => {
+    setIsAndroid(Capacitor.isNativePlatform('android'));
+  }, []);
+
+  // Determine which Navbar to render
+  const CurrentNavbar = isAndroid ? MobileNavbar : Navbar;
+  // Determine which HomePage to render
+  const CurrentHomePage = isAndroid ? MobileHomePage : HomePage;
+
   return (
     <Router>
       <AuthProvider>
-        <div className="App">
-          <Navbar />
-          <div className="content">
-            <TrafficLogger />
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/user-signup" element={<UserSignupPage />} />
-              <Route path="/user-verification" element={<UserVerificationPage />} />
-              <Route path="/user-signup-success" element={<UserSignupSuccessPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/user-dashboard" element={<UserDashboardPage />} />
-              <Route path="/choose-upload-type" element={<ChooseUploadTypePage />} />
-              <Route path="/upload-photos" element={<UploadPhotosPage />} />
-              <Route path="/upload-videos" element={<UploadVideosPage />} />
-              <Route path="/my-views" element={<MyViewsPage />} />
-              <Route path="/my-content" element={<MyContentPage />} />
-              <Route path="/profile-settings" element={<ProfileSettingsPage />} />
-              <Route path="/my-profile" element={<MyProfilePage />} />
-              <Route path="/messages" element={<CreatorMessagesPage />} />
-              <Route path="/admin-messages" element={<AdminMessagesPage />} />
-              <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-              <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} />
-              <Route path="/profile/:userId" element={<UserProfileViewPage />} />
-              <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} />
-              <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} />
-              <Route path="/subscribe" element={<SubscriptionPage />} />
-              <Route path="/paystack-callback" element={<PaystackCallback />} />
-              <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
-              <Route path="/terms" element={<TermsOfServicePage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/payment-history" element={<PaymentHistoryPage />} />
-              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
-              <Route path="/admin-content-moderation" element={<AdminContentModerationPage />} />
-              <Route path="/admin-pending-creators" element={<AdminPendingCreatorsPage />} />
-              <Route path="/admin-manage-viewers" element={<AdminManageViewersPage />} />
-              <Route path="/admin-creator-profile/:creatorId" element={<AdminViewCreatorProfilePage />} />
-              <Route path="/admin-all-creators" element={<AdminAllCreatorsPage />} />
-              <Route path="/admin-creator-content/:creatorId" element={<AdminCreatorContentPage />} />
-              <Route path="/admin-payment-overviews" element={<AdminPaymentOverviewsPage />} />
-            </Routes>
+        <ThemeProvider> {/* Wrap the entire application with ThemeProvider */}
+          <div className="App">
+            <CurrentNavbar />
+            <div className="content">
+              <TrafficLogger />
+              <Routes>
+                <Route path="/" element={<CurrentHomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/user-signup" element={<UserSignupPage />} />
+                <Route path="/user-verification" element={<UserVerificationPage />} />
+                <Route path="/user-signup-success" element={<UserSignupSuccessPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/user-dashboard" element={<UserDashboardPage />} />
+                <Route path="/choose-upload-type" element={<ChooseUploadTypePage />} />
+                <Route path="/upload-photos" element={<UploadPhotosPage />} />
+                <Route path="/upload-videos" element={<UploadVideosPage />} />
+                <Route path="/my-views" element={<MyViewsPage />} />
+                <Route path="/my-content" element={<MyContentPage />} />
+                <Route path="/profile-settings" element={<ProfileSettingsPage />} />
+                <Route path="/my-profile" element={<MyProfilePage />} />
+                <Route path="/messages" element={<CreatorMessagesPage />} />
+                <Route path="/admin-messages" element={<AdminMessagesPage />} />
+                <Route path="/admin-traffic" element={<AdminTrafficPage />} />
+                <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} />
+                <Route path="/profile/:userId" element={<UserProfileViewPage />} />
+                <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} />
+                <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} />
+                <Route path="/subscribe" element={<SubscriptionPage />} />
+                <Route path="/paystack-callback" element={<PaystackCallback />} />
+                <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
+                <Route path="/terms" element={<TermsOfServicePage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/payment-history" element={<PaymentHistoryPage />} />
+                <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+                <Route path="/admin-content-moderation" element={<AdminContentModerationPage />} />
+                <Route path="/admin-pending-creators" element={<AdminPendingCreatorsPage />} />
+                <Route path="/admin-manage-viewers" element={<AdminManageViewersPage />} />
+                <Route path="/admin-creator-profile/:creatorId" element={<AdminViewCreatorProfilePage />} />
+                <Route path="/admin-all-creators" element={<AdminAllCreatorsPage />} />
+                <Route path="/admin-creator-content/:creatorId" element={<AdminCreatorContentPage />} />
+                <Route path="/admin-payment-overviews" element={<AdminPaymentOverviewsPage />} />
+              </Routes>
+            </div>
           </div>
-        </div>
+        </ThemeProvider> {/* End of ThemeProvider */}
       </AuthProvider>
     </Router>
   );

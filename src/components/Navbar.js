@@ -1,33 +1,32 @@
-import React, { useState, useRef } from 'react'; // Import useRef
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext'; // Import useTheme
 import './Navbar.css';
 
 function Navbar() {
   const { isLoggedIn, userRole, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme(); // Use theme and toggleTheme from context
   const navigate = useNavigate();
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
-  const dropdownTimeoutRef = useRef(null); // Ref to store the timeout ID
+  const dropdownTimeoutRef = useRef(null);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  // Function to open the dropdown
   const openPolicyDropdown = () => {
-    clearTimeout(dropdownTimeoutRef.current); // Clear any pending close
+    clearTimeout(dropdownTimeoutRef.current);
     setIsPolicyDropdownOpen(true);
   };
 
-  // Function to close the dropdown with a delay
   const closePolicyDropdown = () => {
     dropdownTimeoutRef.current = setTimeout(() => {
       setIsPolicyDropdownOpen(false);
-    }, 200); // 200ms delay
+    }, 200);
   };
 
-  // Function to close all dropdowns immediately on navigation
   const closeAllDropdownsImmediately = () => {
     clearTimeout(dropdownTimeoutRef.current);
     setIsPolicyDropdownOpen(false);
@@ -47,9 +46,14 @@ function Navbar() {
   return (
     <nav className="navbar">
       <Link to={getBrandRedirectPath()} className="navbar-brand" onClick={closeAllDropdownsImmediately}>
-        KenyaFlashing
+        KenFlash
       </Link>
       <div className="navbar-links">
+        {/* Theme Toggle Button */}
+        <button onClick={toggleTheme} className="navbar-item theme-toggle-button">
+          {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        </button>
+
         {isLoggedIn ? (
           <button onClick={handleLogout} className="navbar-item logout-button">Logout</button>
         ) : (
@@ -59,7 +63,6 @@ function Navbar() {
             <Link to="/subscribe" className="navbar-item pricing-link" onClick={closeAllDropdownsImmediately}>Pricing</Link>
           </>
         )}
-        {/* Policy Dropdown - now uses onMouseEnter/Leave on the parent div */}
         <div 
           className="dropdown" 
           onMouseEnter={openPolicyDropdown} 

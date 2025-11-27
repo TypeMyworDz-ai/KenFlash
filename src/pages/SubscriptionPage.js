@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../supabaseClient'; // Keep if used elsewhere, but not for Paystack redirect
+// Removed: import { supabase } from '../supabaseClient'; // No longer directly used in this component
 import './SubscriptionPage.css';
 
 // Paystack Hosted Payment Page URL
 const PAYSTACK_HOSTED_PAGE_URL = 'https://paystack.shop/pay/kenyaflash1day-access';
-const PLAN_AMOUNT_KES = 20; // Fixed amount for the single plan in KES
-const PLAN_NAME = '1 Day Plan'; // Corrected plan name
+const PLAN_AMOUNT_KES = 20;
+const PLAN_NAME = '1 Day Plan';
 
 function SubscriptionPage() {
   const navigate = useNavigate();
-  const { subscribeVisitor, checkExistingSubscription } = useAuth();
+  // Removed: subscribeVisitor from destructuring as it's no longer called directly here
+  const { checkExistingSubscription } = useAuth(); 
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [showExistingSubscriberSection, setShowExistingSubscriberSection] = useState(false);
@@ -26,17 +27,11 @@ function SubscriptionPage() {
     setLoading(true);
     setMessage(`Redirecting to Paystack for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) payment for ${email}...`);
 
-    // Save the email to local storage before redirecting
     localStorage.setItem('pendingSubscriptionEmail', email);
 
-    // Construct the Paystack hosted page URL with email pre-filled (optional, but good practice)
     const paymentUrl = `${PAYSTACK_HOSTED_PAGE_URL}?email=${encodeURIComponent(email)}`;
     
-    // Redirect the user to the Paystack hosted payment page
     window.location.href = paymentUrl;
-
-    // Note: The loading state and message will not be relevant after redirection
-    // The payment success/failure will be handled by the /paystack-callback page
   };
 
   const handleExistingSubscriberCheck = async () => {
@@ -137,7 +132,7 @@ function SubscriptionPage() {
             className="toggle-existing-subscriber-button"
             onClick={() => {
               setShowExistingSubscriberSection(true);
-              setEmail(''); // Clear email when switching
+              setEmail('');
             }}
             disabled={loading}
           >

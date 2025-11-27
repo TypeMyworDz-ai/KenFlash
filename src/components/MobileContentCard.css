@@ -1,0 +1,49 @@
+/* Mobile Content Card Container */
+.mobile-content-card {
+  width: 100%;
+  max-width: 450px; /* Consistent with MobileHomePage.css */
+  height: calc(100vh - 60px); /* Consistent with MobileHomePage.css */
+  margin-bottom: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  scroll-snap-align: start;
+  background-color: var(--card-background); /* Uses theme variable */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-color); /* Uses theme variable */
+}
+
+.mobile-content-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensure full content is visible, letterboxing if needed */
+  display: block;
+}
+
+.mobile-content-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+  color: white;
+  padding: 20px 15px 10px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.mobile-content-overlay h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.2em;
+  color: white;
+}
+
+.mobile-content-overlay p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #ccc;
+}

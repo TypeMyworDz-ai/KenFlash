@@ -1,10 +1,57 @@
+/* Base styles for HTML and Body */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   overflow-x: hidden;
   font-family: Arial, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for theme changes */
 }
+
+/* Theme variables for Light Mode */
+body.light {
+  --background-color: #f0f2f5;
+  --text-color: #333;
+  --card-background: #ffffff;
+  --card-border: #e0e0e0;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --navbar-background: #222; /* Navbar often stays dark for contrast */
+  --navbar-text: white;
+  --input-background: #ffffff;
+  --input-border: #ddd;
+  --placeholder-color: #666;
+  --error-background: #f8d7da;
+  --error-border: #f5c6cb;
+  --error-text: #dc3545;
+  --link-color: #007bff;
+}
+
+/* Theme variables for Dark Mode */
+body.dark {
+  --background-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --card-background: #2c2c2c;
+  --card-border: #444444;
+  --primary-color: #66b3ff; /* Lighter blue for dark mode */
+  --secondary-color: #adb5bd;
+  --navbar-background: #121212; /* Even darker for dark mode navbar */
+  --navbar-text: white;
+  --input-background: #3a3a3a;
+  --input-border: #555;
+  --placeholder-color: #aaa;
+  --error-background: #4a2d2f;
+  --error-border: #6a3d3f;
+  --error-text: #ff6b6b;
+  --link-color: #66b3ff;
+}
+
+/* Apply theme variables globally */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
 
 .App {
   text-align: center;
@@ -22,3 +69,48 @@ html, body {
   flex-grow: 1;
   box-sizing: border-box;
 }
+
+/* General styles using theme variables */
+.navbar {
+  background-color: var(--navbar-background);
+  color: var(--navbar-text);
+}
+
+.navbar-brand {
+  color: var(--primary-color) !important; /* !important to override specificity if needed */
+}
+
+/* Example: Apply theme to cards if they don't have specific overrides */
+.subscription-card,
+.preview-card,
+.ad-banner-card {
+  background-color: var(--card-background);
+  border-color: var(--card-border);
+  color: var(--text-color);
+}
+
+.email-input-group input,
+.creator-search-input {
+  background-color: var(--input-background);
+  border-color: var(--input-border);
+  color: var(--text-color);
+}
+
+.email-input-group input::placeholder,
+.creator-search-input::placeholder {
+  color: var(--placeholder-color);
+}
+
+.error-message {
+  background-color: var(--error-background);
+  border-color: var(--error-border);
+  color: var(--error-text);
+}
+
+a {
+  color: var(--link-color);
+}
+
+/* Additional elements in other components might need specific theming */
+/* This is a starting point, individual components' CSS will override/extend these */
+
