@@ -14,6 +14,8 @@ const AD_INSERT_FREQUENCY = 3;
 const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3;
 
 function MobileHomePage() {
+  console.log('MobileHomePage component rendering...'); // Added console.log for render check
+
   const navigate = useNavigate();
   const { isVisitorSubscribed } = useAuth();
   const { theme } = useTheme();
@@ -35,9 +37,17 @@ function MobileHomePage() {
   }, []);
 
   const fetchContent = useCallback(async (isInitialFetch = false) => {
-    if (loading || (!hasMoreContent && !isInitialFetch)) return;
+    console.log('fetchContent called. isInitialFetch:', isInitialFetch, 'loading:', loading, 'hasMoreContent:', hasMoreContent);
 
-    setLoading(true);
+    // Corrected guarding condition:
+    // Only return if already loading AND it's not the initial fetch,
+    // OR if no more content AND it's not the initial fetch.
+    if ((loading && !isInitialFetch) || (!hasMoreContent && !isInitialFetch)) {
+      console.log('fetchContent: Guard condition met, returning early.');
+      return;
+    }
+
+    setLoading(true); // Set loading true only after passing the initial guard
     setError(null);
     console.log('Fetching content...');
 
@@ -45,7 +55,7 @@ function MobileHomePage() {
       // Fetch photos - simplified select to avoid RLS issues with profiles join
       let photosQuery = supabase
         .from('photos')
-        .select('id, storage_path, caption, creator_id, created_at') // Removed profiles(nickname)
+        .select('id, storage_path, caption, creator_id, created_at')
         .order('created_at', { ascending: false })
         .limit(CONTENT_FETCH_LIMIT);
 
@@ -54,13 +64,13 @@ function MobileHomePage() {
       }
 
       const { data: photosData, error: photosError } = await photosQuery;
-      console.log('Photos data:', photosData);
+      console.log('Photos data:', photosData, 'Photos error:', photosError);
       if (photosError) throw photosError;
 
       // Fetch videos - simplified select to avoid RLS issues with profiles join
       let videosQuery = supabase
         .from('videos')
-        .select('id, storage_path, thumbnail_path, title, creator_id, created_at') // Removed profiles(nickname)
+        .select('id, storage_path, thumbnail_path, title, creator_id, created_at')
         .order('created_at', { ascending: false })
         .limit(CONTENT_FETCH_LIMIT);
 
@@ -69,7 +79,7 @@ function MobileHomePage() {
       }
 
       const { data: videosData, error: videosError } = await videosQuery;
-      console.log('Videos data:', videosData);
+      console.log('Videos data:', videosData, 'Videos error:', videosError);
       if (videosError) throw videosError;
 
       const allContent = [
@@ -87,7 +97,7 @@ function MobileHomePage() {
       ];
 
       allContent.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      console.log('Combined content:', allContent);
+      console.log('Combined content (before nicknames):', allContent);
 
       if (allContent.length === 0) {
         setHasMoreContent(false);
@@ -95,11 +105,18 @@ function MobileHomePage() {
       } else {
         // Fetch nicknames for the fetched content items
         const creatorIds = [...new Set(allContent.map(item => item.creator_id))];
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, nickname')
-          .in('id', creatorIds);
-
+        let profilesData = [];
+        let profilesError = null;
+        if (creatorIds.length > 0) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, nickname')
+            .in('id', creatorIds);
+          profilesData = data;
+          profilesError = error;
+        }
+        
+        console.log('Profiles data for nicknames:', profilesData, 'Profiles error:', profilesError);
         if (profilesError) console.error('Error fetching profiles for nicknames:', profilesError);
 
         const nicknamesMap = profilesData ? profilesData.reduce((acc, profile) => {
@@ -146,7 +163,7 @@ function MobileHomePage() {
 
     } catch (err) {
       setError(err.message || 'Failed to load content.');
-      console.error('Error fetching mobile content:', err);
+      console.error('Error fetching mobile content (catch block):', err);
     } finally {
       setLoading(false);
       console.log('Finished fetching content. Loading state set to false.');
@@ -154,10 +171,12 @@ function MobileHomePage() {
   }, [loading, hasMoreContent, lastFetchedItemId, getPublicUrl]);
 
   useEffect(() => {
+    console.log('MobileHomePage useEffect for fetchContent running.'); // Added log
     fetchContent(true);
   }, [fetchContent]);
 
   useEffect(() => {
+    console.log('MobileHomePage useEffect for scroll handling running.'); // Added log
     const container = containerRef.current;
     if (!container) return;
 
@@ -173,6 +192,7 @@ function MobileHomePage() {
   }, [loading, hasMoreContent, fetchContent]);
 
   useEffect(() => {
+    console.log('MobileHomePage useEffect for subscription prompt running. isVisitorSubscribed:', isVisitorSubscribed, 'scrollCount:', scrollCount); // Added log
     if (!isVisitorSubscribed && scrollCount >= SCROLLS_BEFORE_SUBSCRIPTION_PROMPT) {
       setShowSubscriptionPrompt(true);
     }
