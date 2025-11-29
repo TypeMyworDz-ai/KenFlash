@@ -23,11 +23,41 @@
   white-space: nowrap;
   margin-right: 20px;
   transition: opacity 0.2s ease;
+  display: flex; /* Changed to flex to align icon, logo, and slogan vertically */
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Center items horizontally within the brand area */
+  gap: 5px; /* Small gap between icon, logo, and slogan */
 }
 
 .navbar-brand:hover {
   opacity: 0.8;
 }
+
+/* Styling for the Home Icon */
+.home-icon {
+  width: 28px; /* Set a specific width for the icon */
+  height: 28px; /* Set a specific height for the icon */
+  color: var(--navbar-text); /* Set icon color to match navbar text, or a distinct color */
+  transition: color 0.3s ease;
+  margin-bottom: 2px; /* Small space below the icon */
+}
+
+.navbar-slogan { /* Renamed from navbar-tagline */
+  font-size: 0.7em; /* Smaller font size for the slogan */
+  font-weight: 600; /* Bolder weight for better visibility */
+  color: var(--navbar-text); /* Use navbar text color for consistency */
+  margin-top: 2px; /* Small space between logo and slogan */
+  opacity: 1; /* Ensure full opacity */
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.2); /* Subtle shadow for better pop */
+}
+
+/* New styling for Draftey Logo placeholder, assuming it exists in Navbar.js */
+.draftey-logo {
+  height: 30px; /* Set a fixed height for the logo */
+  width: auto; /* Maintain aspect ratio */
+  margin-bottom: 2px; /* Small space below the logo */
+}
+
 
 .navbar-links {
   display: flex;
@@ -163,6 +193,20 @@
   .navbar-brand {
     font-size: 18px;
     margin-right: 15px;
+    gap: 3px; /* Adjust gap for smaller screens */
+  }
+
+  .home-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .draftey-logo {
+    height: 25px;
+  }
+
+  .navbar-slogan {
+    font-size: 0.65em;
   }
 
   .navbar-links {
@@ -191,6 +235,6 @@
 @media (max-width: 480px) {
   /* Hide the desktop navbar on very small screens, MobileNavbar will take over */
   .navbar {
-    display: none; 
+    display: none;
   }
 }

@@ -25,7 +25,7 @@ function MyProfilePage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, avatar_path') // Explicitly select avatar_path, or just '*' if it's already included. Changed to '*' to fetch all columns but ensuring avatar_path is used below.
           .eq('id', authUser.id)
           .single();
 
@@ -37,10 +37,10 @@ function MyProfilePage() {
             email: authUser.email
           });
 
-          if (data.avatar_url) {
+          if (data.avatar_path) { // Changed from avatar_url to avatar_path
             const { data: urlData } = supabase.storage
               .from('avatars')
-              .getPublicUrl(data.avatar_url);
+              .getPublicUrl(data.avatar_path); // Changed from avatar_url to avatar_path
             setAvatarUrl(urlData.publicUrl);
           } else {
             const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || 'Creator')}&background=random&color=fff`;

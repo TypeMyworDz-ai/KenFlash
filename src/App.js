@@ -15,6 +15,7 @@ import UserSignupSuccessPage from './pages/UserSignupSuccessPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
+import SingleContentPage from './pages/SingleContentPage'; // New Import
 import SubscriptionPage from './pages/SubscriptionPage';
 import PaystackCallback from './pages/PaystackCallback';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
@@ -24,15 +25,15 @@ import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import CreatorPhotosPage from './pages/CreatorPhotosPage';
-import CreatorVideosPage from './pages/CreatorVideosPage';
+// Removed: import CreatorPhotosPage from './pages/CreatorPhotosPage';
+// Removed: import CreatorVideosPage from './pages/CreatorVideosPage';
 import PaymentHistoryPage from './pages/PaymentHistoryPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import MyProfilePage from './pages/MyProfilePage';
 import CreatorMessagesPage from './pages/CreatorMessagesPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminContentModerationPage from './pages/AdminContentModerationPage';
-import AdminPendingCreatorsPage from './pages/AdminPendingCreatorsPage';
+import AdminPendingCreatorsPage from './pages/AdminPendingCreatorsPage'; // Corrected Import Path
 import AdminManageViewersPage from './pages/AdminManageViewersPage';
 import MyContentPage from './pages/MyContentPage';
 import AdminViewCreatorProfilePage from './pages/AdminViewCreatorProfilePage';
@@ -118,8 +119,11 @@ function App() {
                 <Route path="/admin-traffic" element={<AdminTrafficPage />} />
                 <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} />
                 <Route path="/profile/:userId" element={<UserProfileViewPage />} />
-                <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} />
-                <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} />
+                {/* New route for individual content display */}
+                <Route path="/content/:contentId" element={<SingleContentPage />} /> 
+                {/* Removed old routes for CreatorPhotosPage and CreatorVideosPage */}
+                {/* <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} /> */}
+                {/* <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} /> */}
                 <Route path="/subscribe" element={<SubscriptionPage />} />
                 <Route path="/paystack-callback" element={<PaystackCallback />} />
                 <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />

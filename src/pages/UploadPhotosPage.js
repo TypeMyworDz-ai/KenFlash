@@ -32,14 +32,17 @@ function UploadPhotosPage() {
         throw new Error('User not authenticated. Please log in.');
       }
       const creatorId = user.id;
-      const groupId = uuidv4();
+
+      // Generate a group ID only if more than one photo is selected
+      const groupId = selectedPhotos.length > 1 ? uuidv4() : null;
 
       const uploadedPhotoPaths = [];
 
       for (const photoFile of selectedPhotos) {
         const fileExtension = photoFile.name.split('.').pop();
-        const filePath = `public/${creatorId}/photos/${groupId}/${uuidv4()}.${fileExtension}`;
+        const filePath = `public/${creatorId}/photos/${uuidv4()}.${fileExtension}`;
 
+        console.log('[UploadPhotosPage] Attempting to upload file to path:', filePath);
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('content')
           .upload(filePath, photoFile, {
@@ -48,24 +51,37 @@ function UploadPhotosPage() {
           });
 
         if (uploadError) {
+          console.error('[UploadPhotosPage] Error uploading photo to storage:', uploadError);
           throw uploadError;
         }
+        console.log('[UploadPhotosPage] Photo uploaded to storage. uploadData:', uploadData);
+        console.log('[UploadPhotosPage] Uploaded file path (uploadData.path):', uploadData.path);
         uploadedPhotoPaths.push(uploadData.path);
       }
 
-      const photoMetadata = uploadedPhotoPaths.map(path => ({
-        creator_id: creatorId,
-        storage_path: path,
-        group_id: groupId,
-        caption: caption,
-        is_active: true,
-      }));
+      // Debugging: Log uploadedPhotoPaths before mapping
+      console.log('[UploadPhotosPage] uploadedPhotoPaths before map:', uploadedPhotoPaths);
+
+      const photoMetadata = uploadedPhotoPaths.map(path => {
+        const metadataItem = {
+          creator_id: creatorId,
+          storage_path: String(path), // Explicitly convert to String to prevent any ambiguity
+          group_id: groupId,
+          caption: caption || null,
+          is_active: true,
+        };
+        console.log('[UploadPhotosPage] Inside map - metadataItem before return:', metadataItem); // CRITICAL DEBUGGING
+        return metadataItem;
+      });
+
+      console.log('[UploadPhotosPage] Photo metadata prepared for insertion (final check):', photoMetadata);
 
       const { error: insertError } = await supabase
         .from('photos')
         .insert(photoMetadata);
 
       if (insertError) {
+        console.error('[UploadPhotosPage] ERROR during photo metadata insertion:', insertError);
         throw insertError;
       }
 
@@ -76,7 +92,7 @@ function UploadPhotosPage() {
       navigate('/my-content'); // Redirect to My Content Page
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during photo upload.');
-      console.error('Photo upload error:', err);
+      console.error('[UploadPhotosPage] Photo upload process error (caught):', err);
     } finally {
       setLoading(false);
     }

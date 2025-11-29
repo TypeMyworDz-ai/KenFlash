@@ -44,9 +44,13 @@ function MobileNavbar() {
 
   return (
     <nav className="mobile-navbar">
-      <Link to={getBrandRedirectPath()} className="mobile-navbar-brand" onClick={closeAllMenus}>
-        KenFlash
+      {/* Home icon on the left */}
+      <Link to="/" className="mobile-home-icon" onClick={closeAllMenus}>
+        🏠
       </Link>
+      {/* App name "Draftee" in the center */}
+      <div className="mobile-navbar-brand-center">Draftee</div>
+      {/* Hamburger menu on the right */}
       <button className="hamburger-menu" onClick={toggleMenu}>
         &#9776; {/* Hamburger icon */}
       </button>
@@ -56,7 +60,7 @@ function MobileNavbar() {
           <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-menu-button" onClick={toggleMenu}>&times;</button>
             <Link to={getBrandRedirectPath()} className="mobile-menu-item brand-item" onClick={closeAllMenus}>
-              KenFlash
+              Draftee
             </Link>
             {isLoggedIn ? (
               <>

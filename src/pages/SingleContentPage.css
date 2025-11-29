@@ -1,0 +1,105 @@
+.single-content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  max-width: 800px; /* Max width for content area */
+  margin: 70px auto 20px auto; /* Adjust margin for fixed navbar */
+  background-color: var(--background-color); /* Use theme variable */
+  min-height: calc(100vh - 90px); /* Adjust min-height considering navbar */
+  box-sizing: border-box;
+  color: var(--text-color); /* Use theme variable */
+}
+
+.back-button {
+  align-self: flex-start; /* Position to the left */
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+  text-decoration: none; /* Ensure it looks like a button, not just text */
+}
+
+.back-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.content-display {
+  width: 100%;
+  background-color: var(--card-background); /* Use theme variable */
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Ensures media fits within rounded corners */
+  margin-bottom: 20px;
+  padding-bottom: 20px; /* Space below content */
+}
+
+.single-content-media {
+  width: 100%;
+  height: auto;
+  display: block; /* Remove extra space below image/video */
+  max-height: 70vh; /* Limit height for large screens */
+  object-fit: contain; /* Ensure entire media is visible */
+  background-color: black; /* Background for media area */
+}
+
+.content-title {
+  font-size: 1.8em;
+  color: var(--heading-color); /* Use theme variable */
+  margin: 20px 20px 10px 20px;
+  text-align: center;
+}
+
+.content-caption {
+  font-size: 1em;
+  color: var(--text-color); /* Use theme variable */
+  margin: 0 20px 20px 20px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.error-message {
+  color: var(--error-color);
+  background-color: var(--error-background);
+  border: 1px solid var(--error-border);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  text-align: center;
+  font-size: 1.1em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .single-content-container {
+    padding: 15px;
+    margin-top: 60px; /* Adjust for mobile navbar height */
+  }
+
+  .back-button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+
+  .content-title {
+    font-size: 1.5em;
+    margin: 15px 15px 8px 15px;
+  }
+
+  .content-caption {
+    font-size: 0.9em;
+    margin: 0 15px 15px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-title {
+    font-size: 1.3em;
+  }
+}

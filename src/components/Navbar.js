@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext'; // Import useTheme
+import { useTheme } from '../context/ThemeContext';
 import './Navbar.css';
 
 function Navbar() {
   const { isLoggedIn, userRole, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme(); // Use theme and toggleTheme from context
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
   const dropdownTimeoutRef = useRef(null);
@@ -36,7 +36,7 @@ function Navbar() {
     if (isLoggedIn) {
       if (userRole === 'admin') {
         return '/admin-dashboard';
-      } else if (userRole === 'creator') {
+      } else if (userRole === 'normal_creator' || userRole === 'premium_creator') {
         return '/user-dashboard';
       }
     }
@@ -46,7 +46,11 @@ function Navbar() {
   return (
     <nav className="navbar">
       <Link to={getBrandRedirectPath()} className="navbar-brand" onClick={closeAllDropdownsImmediately}>
-        KenFlash
+        {/* Home Icon */}
+        <svg className="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
       </Link>
       <div className="navbar-links">
         {/* Theme Toggle Button */}

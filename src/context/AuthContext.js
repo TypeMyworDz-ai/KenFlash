@@ -9,6 +9,8 @@ export const AuthProvider = ({ children }) => {
     return storedLoginStatus === 'true';
   });
 
+  const [user, setUser] = useState(null);
+
   const [userRole, setUserRole] = useState(() => {
     return localStorage.getItem('userRole') || 'none';
   });
@@ -50,6 +52,22 @@ export const AuthProvider = ({ children }) => {
     checkSubscriptionValidity();
   }, []);
 
+  // Fetch current user on app load
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          setUser(authUser);
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err.message);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
   const login = (role, approvedStatus = false) => {
     setIsLoggedIn(true);
     localStorage.setItem('isLoggedIn', 'true');
@@ -59,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('isUserApproved', approvedStatus.toString());
   };
 
-  const subscribeVisitor = (email, planName) => { // Changed planDuration to planName
+  const subscribeVisitor = (email, planName) => {
     const now = new Date();
     let expiryTime;
 
@@ -69,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       // Fallback or error handling for unknown plan names
       console.error("Unknown plan duration provided:", planName);
-      return; 
+      return;
     }
 
     setIsVisitorSubscribed(true);
@@ -110,13 +128,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('userRole');
     setIsUserApproved(false);
     localStorage.removeItem('isUserApproved');
-    // Note: We don't clear isVisitorSubscribed here, as a visitor might log out
-    // but still be subscribed anonymously based on localStorage check in useEffect.
-    // The useEffect handles expiry.
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userRole, isUserApproved, isVisitorSubscribed, visitorEmail, login, subscribeVisitor, checkExistingSubscription, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, userRole, isUserApproved, isVisitorSubscribed, visitorEmail, login, subscribeVisitor, checkExistingSubscription, logout }}>
       {children}
     </AuthContext.Provider>
   );

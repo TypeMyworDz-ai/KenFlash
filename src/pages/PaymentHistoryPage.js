@@ -67,7 +67,7 @@ function PaymentHistoryPage() {
   }, [navigate]);
 
   const totalEarned = paymentHistory.reduce((sum, payment) => sum + parseFloat(payment.earnings_kes || 0), 0);
-  const upcomingPayment = Math.floor(currentMonthViews / 1000) * 10;
+  const upcomingPayment = Math.floor(currentMonthViews / 1000) * 100; // Updated from 10 to 100
 
   if (loading) {
     return <div className="payment-history-container"><p>Loading payment history...</p></div>;
@@ -142,7 +142,7 @@ function PaymentHistoryPage() {
         <div className="info-cards">
           <div className="info-card">
             <h4>Earning Rate</h4>
-            <p>You earn 10 KES for every 1,000 combined views of your photos and videos from subscribed viewers.</p>
+            <p>You earn 100 KES for every 1,000 combined views of your photos and videos from subscribed viewers.</p> {/* Updated from 10 KES to 100 KES */}
           </div>
           <div className="info-card">
             <h4>Payment Frequency</h4>

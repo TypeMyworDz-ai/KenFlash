@@ -42,6 +42,7 @@ function UploadVideosPage() {
       const fileExtension = selectedVideo.name.split('.').pop();
       const filePath = `public/${creatorId}/videos/${uuidv4()}.${fileExtension}`;
 
+      console.log('[UploadVideosPage] Attempting to upload video to path:', filePath); // Debugging
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('content')
         .upload(filePath, selectedVideo, {
@@ -50,23 +51,29 @@ function UploadVideosPage() {
         });
 
       if (uploadError) {
+        console.error('[UploadVideosPage] Error uploading video to storage:', uploadError); // Debugging
         throw uploadError;
       }
       const storagePath = uploadData.path;
+      console.log('[UploadVideosPage] Video uploaded to storage. uploadData:', uploadData); // Debugging
+      console.log('[UploadVideosPage] Uploaded video path (storagePath):', storagePath); // Debugging
+
+      const videoMetadata = {
+        creator_id: creatorId,
+        storage_path: storagePath,
+        title: videoTitle,
+        caption: caption,
+        is_active: true,
+      };
+
+      console.log('[UploadVideosPage] Video metadata prepared for insertion:', videoMetadata); // Debugging
 
       const { error: insertError } = await supabase
         .from('videos')
-        .insert([
-          {
-            creator_id: creatorId,
-            storage_path: storagePath,
-            title: videoTitle,
-            caption: caption,
-            is_active: true,
-          },
-        ]);
+        .insert([videoMetadata]);
 
       if (insertError) {
+        console.error('[UploadVideosPage] Error inserting video metadata:', insertError); // Debugging
         throw insertError;
       }
 
@@ -79,7 +86,7 @@ function UploadVideosPage() {
 
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during video upload.');
-      console.error('Video upload error:', err);
+      console.error('[UploadVideosPage] Video upload process error:', err); // Debugging
     } finally {
       setLoading(false);
     }

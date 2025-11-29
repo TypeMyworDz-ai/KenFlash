@@ -30,7 +30,7 @@ function ProfileSettingsPage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('bio, avatar_url, nickname')
+          .select('bio, avatar_path, nickname') // Changed from avatar_url to avatar_path
           .eq('id', authUser.id)
           .single();
 
@@ -39,10 +39,10 @@ function ProfileSettingsPage() {
         if (data) {
           setBio(data.bio || '');
           
-          if (data.avatar_url) {
+          if (data.avatar_path) { // Changed from avatar_url to avatar_path
             const { data: urlData } = supabase.storage
               .from('avatars')
-              .getPublicUrl(data.avatar_url);
+              .getPublicUrl(data.avatar_path); // Changed from avatar_url to avatar_path
             setPreviewUrl(urlData.publicUrl);
           } else {
             const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || 'Creator')}&background=random&color=fff`;
@@ -96,10 +96,10 @@ function ProfileSettingsPage() {
 
         if (uploadError) throw uploadError;
 
-        // Update avatar_url in profiles
+        // Update avatar_path in profiles
         const { error: updateAvatarError } = await supabase
           .from('profiles')
-          .update({ avatar_url: fileName })
+          .update({ avatar_path: fileName }) // Changed from avatar_url to avatar_path
           .eq('id', authUserId);
 
         if (updateAvatarError) throw updateAvatarError;
@@ -167,7 +167,7 @@ function ProfileSettingsPage() {
           maxLength={500}
           placeholder="Share your story, interests, or what makes your content unique..."
           className="bio-textarea"
-        />
+        ></textarea>
         <p className="character-count">{bio.length} / 500 characters</p>
       </div>
 

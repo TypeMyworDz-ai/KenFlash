@@ -5,7 +5,7 @@
   background-color: var(--navbar-background); /* Use theme variable */
   color: var(--navbar-text); /* Use theme variable */
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Distribute items */
   align-items: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   position: fixed;
@@ -17,11 +17,28 @@
   transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
 }
 
-.mobile-navbar-brand {
+/* Home Icon on the left */
+.mobile-home-icon {
+  font-size: 1.8em; /* Slightly larger for visibility */
+  color: var(--primary-color); /* Use theme variable for consistent branding */
+  text-decoration: none;
+  display: flex; /* To center the icon vertically if needed */
+  align-items: center;
+  height: 100%; /* Take full height of navbar */
+  padding-right: 10px; /* Space between icon and potential content */
+}
+
+/* Centered App Name */
+.mobile-navbar-brand-center {
   font-size: 1.5em;
   font-weight: bold;
   color: var(--primary-color); /* Use theme variable */
   text-decoration: none;
+  /* To truly center it regardless of other elements, we can use absolute positioning */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 /* Hamburger Menu Icon */
@@ -34,6 +51,7 @@
   padding: 0;
   margin: 0;
   line-height: 1; /* Align icon vertically */
+  margin-left: auto; /* Pushes it to the far right */
 }
 
 /* Mobile Menu Overlay */

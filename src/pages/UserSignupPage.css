@@ -1,0 +1,115 @@
+/* src/pages/UserSignupPage.css */
+
+.user-signup-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px); /* Adjust based on your Navbar height */
+  padding: 20px;
+  background-color: var(--background-color); /* Assuming a global theme variable */
+  color: var(--text-color); /* Assuming a global theme variable */
+  text-align: center;
+}
+
+.signup-title {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  color: var(--primary-color); /* You might want to define a primary color in your App.css */
+}
+
+.signup-tagline {
+  font-size: 1.2em;
+  margin-bottom: 30px;
+  color: var(--secondary-text-color); /* Assuming a secondary text color */
+}
+
+.creator-type-selection {
+  background-color: var(--card-background-color); /* Assuming a card background color */
+  border-radius: 10px;
+  padding: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+.selection-prompt {
+  font-size: 1.1em;
+  margin-bottom: 25px;
+  color: var(--text-color);
+}
+
+.creator-type-button {
+  width: 100%;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-weight: bold;
+}
+
+.creator-type-button.normal {
+  background-color: #007bff; /* Example blue */
+  color: white;
+}
+
+.creator-type-button.normal:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.creator-type-button.premium {
+  background-color: #28a745; /* Example green */
+  color: white;
+}
+
+.creator-type-button.premium:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.premium-creator-option {
+  margin-top: 15px;
+}
+
+.premium-info {
+  font-size: 0.9em;
+  color: var(--secondary-text-color); /* Lighter text for informational notes */
+  margin-top: 10px;
+  line-height: 1.4;
+  text-align: left;
+  padding: 0 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .user-signup-page-container {
+    padding: 15px;
+  }
+
+  .signup-title {
+    font-size: 2em;
+  }
+
+  .signup-tagline {
+    font-size: 1em;
+    margin-bottom: 20px;
+  }
+
+  .creator-type-selection {
+    padding: 30px 20px;
+  }
+
+  .selection-prompt {
+    font-size: 1em;
+    margin-bottom: 20px;
+  }
+
+  .creator-type-button {
+    font-size: 1em;
+    padding: 12px 15px;
+  }
+}

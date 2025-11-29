@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import './UserSignupForm.css';
 
-function UserSignupForm() {
+function UserSignupForm({ creatorType }) {
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -15,10 +15,13 @@ function UserSignupForm() {
     mpesaNumber: '',
     password: '',
     confirmPassword: '',
+    dateOfBirth: '',
+    agreedToTerms: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [nicknameError, setNicknameError] = useState(null);
+  const [ageError, setAgeError] = useState(null);
 
   const debounceTimeout = useRef(null);
 
@@ -48,11 +51,31 @@ function UserSignupForm() {
     }
   }, []);
 
+  const validateAge = (dob) => {
+    if (!dob) {
+      setAgeError('Date of Birth is required.');
+      return false;
+    }
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      setAgeError('You must be at least 18 years old to sign up.');
+      return false;
+    }
+    setAgeError(null);
+    return true;
+  };
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
 
     if (name === 'nickname') {
@@ -61,6 +84,9 @@ function UserSignupForm() {
         checkNicknameUniqueness(value);
       }, 500);
     }
+    if (name === 'dateOfBirth') {
+      validateAge(value);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -68,9 +94,30 @@ function UserSignupForm() {
     setLoading(true);
     setError(null);
     setNicknameError(null);
+    setAgeError(null);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match!");
+      setLoading(false);
+      return;
+    }
+
+    // Age validation only for normal creators
+    if (creatorType === 'normal' && !validateAge(formData.dateOfBirth)) {
+      setLoading(false);
+      return;
+    }
+
+    // Mpesa Number validation only for premium creators
+    if (creatorType === 'premium' && !formData.mpesaNumber) {
+      setError("Mpesa Number is required for premium creators.");
+      setLoading(false);
+      return;
+    }
+
+    // Terms and Conditions must be agreed to for both creator types
+    if (!formData.agreedToTerms) {
+      setError("You must agree to the Terms & Conditions and Privacy Policy.");
       setLoading(false);
       return;
     }
@@ -100,7 +147,11 @@ function UserSignupForm() {
       }
 
       if (authData.user) {
-        // 2. Create profile entry in 'profiles' table, now including email and role
+        // Determine role and approval status based on creatorType
+        const role = creatorType === 'premium' ? 'premium_creator' : 'normal_creator';
+        const isApproved = creatorType === 'normal';
+
+        // 2. Create profile entry in 'profiles' table
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -108,10 +159,12 @@ function UserSignupForm() {
               id: authData.user.id,
               official_name: formData.officialName,
               nickname: formData.nickname,
-              mpesa_number: formData.mpesaNumber,
+              mpesa_number: creatorType === 'premium' ? formData.mpesaNumber : null,
               email: formData.email,
-              role: 'creator', // Set the role to 'creator' for new sign-ups
-              is_approved: false,
+              role: role,
+              is_approved: isApproved,
+              creator_type: role,
+              date_of_birth: creatorType === 'normal' ? formData.dateOfBirth : null,
             },
           ]);
 
@@ -120,12 +173,21 @@ function UserSignupForm() {
         }
 
         console.log('User registered and profile created:', authData.user);
-        login('creator', false);
-        navigate('/user-verification');
+        login(role, isApproved);
+
+        if (creatorType === 'normal') {
+          navigate('/user-dashboard');
+        } else {
+          navigate('/user-verification');
+        }
       } else {
         setError("Registration successful! Please check your email to verify your account before proceeding.");
-        login('creator', false);
-        navigate('/user-verification');
+        login(creatorType === 'premium' ? 'premium_creator' : 'normal_creator', creatorType === 'normal');
+        if (creatorType === 'normal') {
+          navigate('/user-dashboard');
+        } else {
+          navigate('/user-verification');
+        }
       }
 
     } catch (err) {
@@ -138,11 +200,11 @@ function UserSignupForm() {
 
   return (
     <div className="signup-form-container">
-      <h2>Sign Up as Content Creator</h2>
-      <p>Join KenyaFlashing and share your creativity! Ensure your nickname is unique.</p>
+      <h2 className="signup-title">{creatorType === 'premium' ? 'Sign Up as Premium Creator' : 'Sign Up as Free Creator'}</h2>
+      <p className="signup-tagline">Join Draftey and share your creativity! Ensure your nickname is unique.</p>
       <form onSubmit={handleSubmit} className="signup-form">
         <div className="form-group">
-          <label htmlFor="officialName">One Mpesa registered Name:</label>
+          <label htmlFor="officialName">{creatorType === 'normal' ? 'Name:' : 'One Mpesa registered Name:'}</label>
           <input
             type="text"
             id="officialName"
@@ -178,18 +240,50 @@ function UserSignupForm() {
           />
           {nicknameError && <p className="error-message nickname-error">{nicknameError}</p>}
         </div>
-        <div className="form-group">
-          <label htmlFor="mpesaNumber">Mpesa Number:</label>
+        {creatorType === 'normal' && (
+          <div className="form-group">
+            <label htmlFor="dateOfBirth">Date of Birth:</label>
+            <input
+              type="date"
+              id="dateOfBirth"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
+            {ageError && <p className="error-message">{ageError}</p>}
+          </div>
+        )}
+        <div className="form-group checkbox-group">
           <input
-            type="tel"
-            id="mpesaNumber"
-            name="mpesaNumber"
-            value={formData.mpesaNumber}
+            type="checkbox"
+            id="agreedToTerms"
+            name="agreedToTerms"
+            checked={formData.agreedToTerms}
             onChange={handleChange}
-            required
             disabled={loading}
           />
+          <label htmlFor="agreedToTerms">
+            I agree to the{' '}
+            <Link to="/terms" className="policy-link">Terms & Conditions</Link> and{' '}
+            <Link to="/privacy" className="policy-link">Privacy Policy</Link>
+          </label>
         </div>
+        {creatorType === 'premium' && (
+          <div className="form-group">
+            <label htmlFor="mpesaNumber">Mpesa Number:</label>
+            <input
+              type="tel"
+              id="mpesaNumber"
+              name="mpesaNumber"
+              value={formData.mpesaNumber}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
+          </div>
+        )}
         <div className="form-group">
           <label htmlFor="password">Password:</label>
           <input
@@ -214,8 +308,12 @@ function UserSignupForm() {
             disabled={loading}
           />
         </div>
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="submit-button" disabled={loading || nicknameError}>
+        {error && <p className="error-message full-width-error">{error}</p>}
+        <button
+          type="submit"
+          className="submit-button"
+          disabled={loading || nicknameError || (creatorType === 'normal' && ageError) || !formData.agreedToTerms}
+        >
           {loading ? 'Registering...' : 'Next'}
         </button>
       </form>
