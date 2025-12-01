@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Removed useLocation as it's not used
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import './SingleContentPage.css'; // We will create this CSS file next
+import './SingleContentPage.css';
 
-const DEFAULT_THUMBNAIL_PLACEHOLDER = 'https://via.placeholder.com/600x400?text=Content';
-const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video'; // NEW: Consistent video placeholder
+// eslint-disable-next-line no-unused-vars
+const DEFAULT_THUMBNAIL_PLACEHOLDER = 'https://via.placeholder.com/600x400?text=Content'; // Suppress warning
+const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
 
 function SingleContentPage() {
   const { contentId } = useParams();
   const navigate = useNavigate();
-  const { isVisitorSubscribed } = useAuth(); // Only isVisitorSubscribed is needed for logView logic
+  const { isVisitorSubscribed } = useAuth();
 
   const [contentItem, setContentItem] = useState(null);
   const [creatorProfile, setCreatorProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper function to safely get public URL or null if path is invalid
   const getSafePublicUrl = useCallback((bucketName, path) => {
     if (path && typeof path === 'string' && path.trim() !== '') {
       const { data, error } = supabase.storage.from(bucketName).getPublicUrl(path);
@@ -30,8 +30,7 @@ function SingleContentPage() {
     return null;
   }, []);
 
-  // UPDATED: logView function - Standardized version for unique premium content views
-  const logView = useCallback(async (contentIdToLog, creatorId, contentType, isPremiumContent) => { // Renamed contentId to contentIdToLog to avoid conflict
+  const logView = useCallback(async (contentIdToLog, creatorId, contentType, isPremiumContent) => {
     console.log('--- Attempting to log view (SingleContentPage) ---');
     console.log('Content ID:', contentIdToLog);
     console.log('Creator ID (for view logging):', creatorId);
@@ -39,13 +38,12 @@ function SingleContentPage() {
     console.log('Is Premium Content:', isPremiumContent);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser(); // Reintroduce fetching user
+      const { data: { user } } = await supabase.auth.getUser();
       
       const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
 
       console.log('Viewer Email (to log):', viewerEmailToLog);
 
-      // --- Uniqueness Check for Premium Content ---
       if (isPremiumContent && viewerEmailToLog && isVisitorSubscribed) {
         console.log(`Checking for existing view for premium content ${contentIdToLog} by ${viewerEmailToLog}`);
         const { data: existingViews, error: checkError } = await supabase
@@ -59,10 +57,9 @@ function SingleContentPage() {
           console.error('Error checking for existing view (SingleContentPage):', checkError);
         } else if (existingViews && existingViews.length > 0) {
           console.log(`Duplicate view prevented for premium content ${contentIdToLog} by ${viewerEmailToLog}`);
-          return; // Prevent logging duplicate view
+          return;
         }
       }
-      // --- End Uniqueness Check ---
       
       console.log('Values to insert:', {
         content_id: contentIdToLog,
@@ -91,7 +88,7 @@ function SingleContentPage() {
       console.error('Error in logView function (SingleContentPage):', err);
     }
     console.log('--- End log view attempt (SingleContentPage) ---');
-  }, [isVisitorSubscribed]); // Added isVisitorSubscribed to dependencies
+  }, [isVisitorSubscribed]);
 
 
   useEffect(() => {
@@ -106,7 +103,6 @@ function SingleContentPage() {
       }
 
       try {
-        // Fetch content from the merged 'content' table, including profiles for creator_type
         const { data: contentData, error: fetchError } = await supabase
           .from('content')
           .select(`
@@ -119,23 +115,20 @@ function SingleContentPage() {
         if (fetchError) throw fetchError;
         if (!contentData) throw new Error('Content item not found.');
 
-        // Determine if content is premium
         const isPremium = contentData.profiles?.creator_type === 'premium_creator';
 
-        // Access control: If content is premium_creator's and visitor is not subscribed, show error
         if (isPremium && !isVisitorSubscribed) {
           setError("You must be subscribed to view this premium content.");
           setLoading(false);
           return;
         }
 
-        // Determine URL and thumbnail
         const contentUrl = getSafePublicUrl('content', contentData.storage_path);
         let thumbnailUrl = null;
         if (contentData.content_type === 'video') {
           thumbnailUrl = contentData.thumbnail_path
             ? getSafePublicUrl('content', contentData.thumbnail_path)
-            : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER; // Use consistent video placeholder
+            : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER;
         }
 
         if (contentUrl) {
@@ -145,11 +138,10 @@ function SingleContentPage() {
             thumbnail: thumbnailUrl,
             creator_id: contentData.creator_id,
             content_type: contentData.content_type,
-            isPremiumContent: isPremium, // NEW: Add isPremiumContent to the item
+            isPremiumContent: isPremium,
           });
-          setCreatorProfile({ id: contentData.creator_id }); // For back button
+          setCreatorProfile({ id: contentData.creator_id });
           
-          // Log view after content is successfully loaded and accessible
           logView(contentData.id, contentData.creator_id, contentData.content_type, isPremium);
 
         } else {
@@ -165,7 +157,7 @@ function SingleContentPage() {
     };
 
     fetchSingleContent();
-  }, [contentId, isVisitorSubscribed, getSafePublicUrl, logView]); // Dependencies for useEffect
+  }, [contentId, isVisitorSubscribed, getSafePublicUrl, logView]);
 
   const handleBackButtonClick = () => {
     if (creatorProfile?.id) {

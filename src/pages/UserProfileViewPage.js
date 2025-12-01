@@ -8,7 +8,7 @@ import './UserProfileViewPage.css';
 import { Capacitor } from '@capacitor/core';
 
 const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/120';
-const ITEMS_PER_PAGE = 36; // 6 items per row × 6 rows
+const ITEMS_PER_PAGE = 36;
 const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
 
 function UserProfileViewPage() {
@@ -51,8 +51,8 @@ function UserProfileViewPage() {
     return data.publicUrl;
   }, []);
 
-
-  const getRandomVideoTimeOffset = () => {
+  // eslint-disable-next-line no-unused-vars
+  const getRandomVideoTimeOffset = () => { // Suppress warning
     return Math.floor(Math.random() * 30);
   };
 
@@ -117,7 +117,6 @@ function UserProfileViewPage() {
   }, [isVisitorSubscribed]);
 
 
-  // Handle pagination
   useEffect(() => {
     if (allContent.length > 0) {
       const total = Math.ceil(allContent.length / ITEMS_PER_PAGE);
@@ -131,7 +130,6 @@ function UserProfileViewPage() {
     }
   }, [currentPage, allContent]);
 
-  // Swipe handlers for Android
   const handleTouchStart = (e) => {
     touchStartX.current = e.changedTouches[0].screenX;
   };
@@ -145,12 +143,10 @@ function UserProfileViewPage() {
     const swipeThreshold = 50;
     const diff = touchStartX.current - touchEndX.current;
 
-    // Swiped left (next page)
     if (diff > swipeThreshold && currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
 
-    // Swiped right (previous page)
     if (diff < -swipeThreshold && currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
@@ -178,7 +174,6 @@ function UserProfileViewPage() {
           throw new Error('No creator ID provided');
         }
 
-        // Fetch creator profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, nickname, bio, avatar_path, creator_type')
@@ -190,17 +185,15 @@ function UserProfileViewPage() {
 
         setCreator(profileData);
 
-        // Check access control
         if (profileData.creator_type === 'premium_creator' && !isVisitorSubscribed) {
           setAccessDenied(true);
           setLoading(false);
           return;
         }
 
-        // Fetch creator's content, including views_count
         const { data: contentData, error: contentError } = await supabase
           .from('content')
-          .select('id, storage_path, thumbnail_path, title, caption, group_id, created_at, content_type, is_active, views_count:views(count)') // NEW: Fetch views_count
+          .select('id, storage_path, thumbnail_path, title, caption, group_id, created_at, content_type, is_active, views_count:views(count)')
           .eq('creator_id', userId)
           .eq('is_active', true)
           .order('created_at', { ascending: false });
@@ -226,7 +219,7 @@ function UserProfileViewPage() {
                   creator_id: userId,
                   content_type: 'photo',
                   isPremiumContent: profileData.creator_type === 'premium_creator',
-                  views: photo.views_count ? photo.views_count[0].count : 0, // NEW: Add views to group
+                  views: photo.views_count ? photo.views_count[0].count : 0,
                 };
               }
               photoGroups[photo.group_id].photos.push({
@@ -235,7 +228,7 @@ function UserProfileViewPage() {
                 storagePath: photo.storage_path,
                 creator_id: userId,
                 isPremiumContent: profileData.creator_type === 'premium_creator',
-                views: photo.views_count ? photo.views_count[0].count : 0, // NEW: Add views to individual photo
+                views: photo.views_count ? photo.views_count[0].count : 0,
               });
             } else {
               singlePhotos.push({
@@ -248,14 +241,13 @@ function UserProfileViewPage() {
                 creator_id: userId,
                 content_type: 'photo',
                 isPremiumContent: profileData.creator_type === 'premium_creator',
-                views: photo.views_count ? photo.views_count[0].count : 0, // NEW: Add views
+                views: photo.views_count ? photo.views_count[0].count : 0,
               });
             }
           });
 
           const processedContent = [
             ...Object.values(photoGroups),
-            ...singlePhotos,
             ...videos.map(v => ({
               id: v.id,
               type: 'video',
@@ -270,8 +262,9 @@ function UserProfileViewPage() {
               creator_id: userId,
               content_type: 'video',
               isPremiumContent: profileData.creator_type === 'premium_creator',
-              views: v.views_count ? v.views_count[0].count : 0, // NEW: Add views
+              views: v.views_count ? v.views_count[0].count : 0,
             })),
+            ...singlePhotos, // Ensure singlePhotos are included in processedContent
           ];
 
           processedContent.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
@@ -291,9 +284,6 @@ function UserProfileViewPage() {
   const openSlideshow = (item) => {
     const isPremium = item.isPremiumContent;
     
-    // We will rely on PhotoSlideshowModal's internal logic for individual photo views
-    // logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
-
     const photosForSlideshow = item.type === 'photo_group'
       ? item.photos.map(p => ({
           id: p.id,
@@ -463,7 +453,6 @@ function UserProfileViewPage() {
                           {item.type === 'photo_group' ? '📸📸' : item.type === 'photo' ? '📸' : '🎥'}
                         </span>
                       </div>
-                      {/* NEW: View Counter Overlay */}
                       <div className="content-views-overlay">
                         👁 {item.views || 0}
                       </div>
@@ -472,7 +461,6 @@ function UserProfileViewPage() {
                 ))}
               </div>
 
-              {/* Pagination Controls - Only show on non-Android or if needed */}
               {!isAndroid && totalPages > 1 && (
                 <div className="pagination-controls">
                   <button 
@@ -495,7 +483,6 @@ function UserProfileViewPage() {
                 </div>
               )}
 
-              {/* Android swipe hint */}
               {isAndroid && totalPages > 1 && (
                 <div className="pagination-info" style={{ marginTop: '20px' }}>
                   Page {currentPage} of {totalPages} • Swipe to navigate

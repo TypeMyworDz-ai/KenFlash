@@ -1,30 +1,27 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Removed useCallback
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './AdminMessagesPage.css'; // We'll create this CSS file next
+import './AdminMessagesPage.css';
 
-// Define an admin email for testing purposes (should match ADMIN_EMAIL in AuthContext or AdminDashboardPage)
 const ADMIN_EMAIL = 'admin@kenyaflashing.com';
 
 function AdminMessagesPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth(); // Assuming useAuth provides logout
+  const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adminId, setAdminId] = useState(null);
-  const [creatorsWithMessages, setCreatorsWithMessages] = useState([]); // List of creators who have messaged
-  const [selectedCreatorId, setSelectedCreatorId] = useState(null); // The creator whose chat is currently open
-  const [currentChatMessages, setCurrentChatMessages] = useState([]); // Messages for the selected creator
+  const [creatorsWithMessages, setCreatorsWithMessages] = useState([]);
+  const [selectedCreatorId, setSelectedCreatorId] = useState(null);
+  const [currentChatMessages, setCurrentChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef(null); // For auto-scrolling to the latest message
+  const messagesEndRef = useRef(null);
 
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Admin authentication check
   useEffect(() => {
     const checkAdminStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -39,7 +36,6 @@ function AdminMessagesPage() {
     checkAdminStatus();
   }, [navigate, logout]);
 
-  // Fetch creators who have sent messages to admin
   useEffect(() => {
     if (!adminId) return;
 
@@ -47,19 +43,18 @@ function AdminMessagesPage() {
       setLoading(true);
       setError(null);
       try {
-        // Corrected: Explicitly select profiles via sender_id relationship using an alias
         const { data, error: fetchError } = await supabase
           .from('messages')
-          .select('sender_id, sender_profile:profiles!sender_id(id, nickname, official_name)') // Use an alias 'sender_profile'
+          .select('sender_id, sender_profile:profiles!sender_id(id, nickname, official_name)')
           .eq('receiver_id', adminId)
-          .neq('sender_id', adminId) // Ensure sender is not admin itself
+          .neq('sender_id', adminId)
           .order('sent_at', { ascending: false });
 
         if (fetchError) throw fetchError;
 
         const uniqueCreators = {};
         data?.forEach(msg => {
-          if (msg.sender_profile) { // Use the alias here
+          if (msg.sender_profile) {
             uniqueCreators[msg.sender_profile.id] = msg.sender_profile;
           }
         });
@@ -76,10 +71,9 @@ function AdminMessagesPage() {
     fetchCreators();
   }, [adminId]);
 
-  // Fetch messages for selected creator and set up real-time subscription
   useEffect(() => {
     if (!adminId || !selectedCreatorId) {
-      setCurrentChatMessages([]); // Clear messages if no creator is selected
+      setCurrentChatMessages([]);
       return;
     }
 
@@ -96,7 +90,6 @@ function AdminMessagesPage() {
         if (fetchError) throw fetchError;
         setCurrentChatMessages(data || []);
 
-        // Mark messages from this creator to admin as read
         const unreadMessagesFromCreator = data?.filter(msg => msg.sender_id === selectedCreatorId && msg.receiver_id === adminId && !msg.is_read);
         if (unreadMessagesFromCreator && unreadMessagesFromCreator.length > 0) {
           const messageIdsToMarkRead = unreadMessagesFromCreator.map(msg => msg.id);
@@ -117,7 +110,6 @@ function AdminMessagesPage() {
 
     fetchChatMessages();
 
-    // Set up real-time subscription for new messages
     const messageChannel = supabase
       .channel(`admin_chat_${selectedCreatorId}`)
       .on(
@@ -126,17 +118,15 @@ function AdminMessagesPage() {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `sender_id=eq.${selectedCreatorId}.or.receiver_id=eq.${selectedCreatorId}` // Filter for messages involving this creator
+          filter: `sender_id=eq.${selectedCreatorId}.or.receiver_id=eq.${selectedCreatorId}`
         },
         (payload) => {
           const newMessageData = payload.new;
-          // Ensure the new message is relevant to the currently selected chat
           const isRelevant = (newMessageData.sender_id === adminId && newMessageData.receiver_id === selectedCreatorId) ||
                              (newMessageData.sender_id === selectedCreatorId && newMessageData.receiver_id === adminId);
 
           if (isRelevant) {
             setCurrentChatMessages((prevMessages) => [...prevMessages, newMessageData]);
-            // Mark new message as read if admin is viewing it
             if (newMessageData.receiver_id === adminId && !newMessageData.is_read) {
               supabase.from('messages').update({ is_read: true }).eq('id', newMessageData.id).then(({ error }) => {
                 if (error) console.error('Error marking message as read:', error);
@@ -148,12 +138,12 @@ function AdminMessagesPage() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(messageChannel); // Clean up subscription on unmount
+      supabase.removeChannel(messageChannel);
     };
   }, [adminId, selectedCreatorId]);
 
   useEffect(() => {
-    scrollToBottom(); // Scroll to bottom on messages update
+    scrollToBottom();
   }, [currentChatMessages]);
 
   const handleSendMessage = async (e) => {
@@ -169,13 +159,13 @@ function AdminMessagesPage() {
           receiver_id: selectedCreatorId,
           message_text: newMessage.trim(),
           sent_at: new Date().toISOString(),
-          is_read: false, // Messages sent are initially unread by receiver
+          is_read: false,
         },
       ]);
 
       if (insertError) throw insertError;
 
-      setNewMessage(''); // Clear input
+      setNewMessage('');
     } catch (err) {
       setError(err.message || 'Failed to send message.');
       console.error('Error sending message:', err);
@@ -184,7 +174,7 @@ function AdminMessagesPage() {
     }
   };
 
-  if (loading && !selectedCreatorId) { // Only show full loading if not just switching chats
+  if (loading && !selectedCreatorId) {
     return <div className="admin-messages-container"><p>Loading admin chat interface...</p></div>;
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Removed useCallback
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,21 +6,19 @@ import './CreatorMessagesPage.css';
 
 function CreatorMessagesPage() {
   const navigate = useNavigate();
-  const { userRole } = useAuth(); // Assuming userRole is available from AuthContext
+  const { userRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
   const [adminProfile, setAdminProfile] = useState(null);
-  const messagesEndRef = useRef(null); // For auto-scrolling to the latest message
+  const messagesEndRef = useRef(null);
 
-  // Scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Fetch Admin ID and current user ID
   useEffect(() => {
     const setupChat = async () => {
       setLoading(true);
@@ -28,12 +26,11 @@ function CreatorMessagesPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || userRole !== 'creator') {
-          navigate('/login'); // Redirect if not logged in or not a creator
+          navigate('/login');
           return;
         }
         setCurrentUserId(user.id);
 
-        // Fetch Admin profile (assuming one admin for simplicity, with role 'admin')
         const { data: adminData, error: adminError } = await supabase
           .from('profiles')
           .select('id, nickname')
@@ -59,9 +56,11 @@ function CreatorMessagesPage() {
     setupChat();
   }, [navigate, userRole]);
 
-  // Fetch messages and set up real-time subscription
   useEffect(() => {
-    if (!currentUserId || !adminProfile) return;
+    if (!currentUserId || !adminProfile) {
+      setMessages([]);
+      return;
+    }
 
     const fetchMessages = async () => {
       setLoading(true);
@@ -84,7 +83,6 @@ function CreatorMessagesPage() {
 
     fetchMessages();
 
-    // Set up real-time subscription for new messages
     const messageChannel = supabase
       .channel('messages_channel')
       .on(
@@ -93,17 +91,15 @@ function CreatorMessagesPage() {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `sender_id=eq.${adminProfile.id}.or.receiver_id=eq.${adminProfile.id}` // Filter for messages involving this creator and admin
+          filter: `sender_id=eq.${adminProfile.id}.or.receiver_id=eq.${adminProfile.id}`
         },
         (payload) => {
-          // Check if the new message is relevant to this specific chat
           const newMessageData = payload.new;
           const isRelevant = (newMessageData.sender_id === currentUserId && newMessageData.receiver_id === adminProfile.id) ||
                              (newMessageData.sender_id === adminProfile.id && newMessageData.receiver_id === currentUserId);
 
           if (isRelevant) {
             setMessages((prevMessages) => [...prevMessages, newMessageData]);
-            // Mark message as read if it's for the current user and they are viewing it
             if (newMessageData.receiver_id === currentUserId && !newMessageData.is_read) {
               supabase.from('messages').update({ is_read: true }).eq('id', newMessageData.id).then(({ error }) => {
                 if (error) console.error('Error marking message as read:', error);
@@ -115,12 +111,12 @@ function CreatorMessagesPage() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(messageChannel); // Clean up subscription on unmount
+      supabase.removeChannel(messageChannel);
     };
   }, [currentUserId, adminProfile]);
 
   useEffect(() => {
-    scrollToBottom(); // Scroll to bottom on messages update
+    scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = async (e) => {
@@ -136,14 +132,13 @@ function CreatorMessagesPage() {
           receiver_id: adminProfile.id,
           message_text: newMessage.trim(),
           sent_at: new Date().toISOString(),
-          is_read: false, // Messages sent are initially unread by receiver
+          is_read: false,
         },
       ]);
 
       if (insertError) throw insertError;
 
-      setNewMessage(''); // Clear input
-      // The real-time subscription will add the message to the state
+      setNewMessage('');
     } catch (err) {
       setError(err.message || 'Failed to send message.');
       console.error('Error sending message:', err);
@@ -167,6 +162,8 @@ function CreatorMessagesPage() {
   return (
     <div className="creator-messages-container">
       <h2>Chat with Admin ({adminProfile.nickname})</h2>
+      <p>Manage conversations with content creators.</p>
+
       <div className="chat-box">
         <div className="messages-display">
           {messages.length === 0 ? (
@@ -184,7 +181,7 @@ function CreatorMessagesPage() {
               </div>
             ))
           )}
-          <div ref={messagesEndRef} /> {/* Scroll target */}
+          <div ref={messagesEndRef} />
         </div>
         <form onSubmit={handleSendMessage} className="message-input-form">
           <input

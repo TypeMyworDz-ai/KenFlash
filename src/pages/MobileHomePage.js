@@ -11,12 +11,15 @@ import './MobileHomePage.css';
 const AD_MEDIA_BUCKET = 'ad-media';
 const AVATAR_BUCKET = 'avatars';
 const CONTENT_FETCH_LIMIT = 5;
+// eslint-disable-next-line no-unused-vars
 const AD_INSERT_FREQUENCY = 3;
+// eslint-disable-next-line no-unused-vars
 const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3;
+const SESSION_PROMPT_KEY = 'mobileAppPromptShown';
 
 function MobileHomePage() {
   const navigate = useNavigate();
-  const { isVisitorSubscribed } = useAuth();
+  const { user, isVisitorSubscribed } = useAuth();
   const { theme } = useTheme();
 
   const [feedContent, setFeedContent] = useState([]);
@@ -32,6 +35,8 @@ function MobileHomePage() {
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
   const isFetching = useRef(false);
+  const hasPromptBeenShownThisSession = useRef(sessionStorage.getItem(SESSION_PROMPT_KEY) === 'true');
+
 
   const getPublicUrl = useCallback((path, bucketName) => {
     if (!path) return null;
@@ -39,23 +44,20 @@ function MobileHomePage() {
     return data.publicUrl;
   }, []);
 
-  // UPDATED: Function to log views - now includes viewer_email and uniqueness check for premium content
   const logView = useCallback(async (contentId, creatorId, contentType, isPremiumContent) => {
     console.log('--- Attempting to log view (Mobile) ---');
     console.log('Content ID:', contentId);
     console.log('Creator ID (for view logging):', creatorId);
     console.log('Content Type (for view logging):', contentType);
-    console.log('Is Premium Content:', isPremiumContent); // NEW: Log isPremiumContent
+    console.log('Is Premium Content:', isPremiumContent);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser(); // Reintroduce fetching user
+      const { data: { user: logUser } } = await supabase.auth.getUser();
       
-      // Determine viewer_email: prioritize authenticated user's email, then localStorage subscriber email
-      const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
+      const viewerEmailToLog = logUser?.email || localStorage.getItem('subscriberEmail') || null;
 
       console.log('Viewer Email (to log):', viewerEmailToLog);
 
-      // --- Uniqueness Check for Premium Content ---
       if (isPremiumContent && viewerEmailToLog && isVisitorSubscribed) {
         console.log(`Checking for existing view for premium content ${contentId} by ${viewerEmailToLog}`);
         const { data: existingViews, error: checkError } = await supabase
@@ -67,19 +69,17 @@ function MobileHomePage() {
 
         if (checkError) {
           console.error('Error checking for existing view (Mobile):', checkError);
-          // Proceed with logging anyway, but log the error
         } else if (existingViews && existingViews.length > 0) {
           console.log(`Duplicate view prevented for premium content ${contentId} by ${viewerEmailToLog}`);
-          return; // Prevent logging duplicate view
+          return;
         }
       }
-      // --- End Uniqueness Check ---
       
       console.log('Values to insert:', {
         content_id: contentId,
         creator_id: creatorId,
         content_type: contentType,
-        viewer_email: viewerEmailToLog, // NEW: Include viewer_email
+        viewer_email: viewerEmailToLog,
         viewed_at: new Date().toISOString(),
       });
 
@@ -88,7 +88,7 @@ function MobileHomePage() {
           content_id: contentId,
           creator_id: creatorId,
           content_type: contentType,
-          viewer_email: viewerEmailToLog, // NEW: Include viewer_email
+          viewer_email: viewerEmailToLog,
           viewed_at: new Date().toISOString(),
         },
       ]);
@@ -97,30 +97,26 @@ function MobileHomePage() {
         console.error('Supabase INSERT Error (Mobile):', insertError);
       } else {
         console.log('View successfully logged for contentId (Mobile):', contentId);
-        // Optionally re-fetch content to update counts immediately, but for infinite scroll,
-        // it might be better to let the next scroll fetch update it.
-        // fetchContent(); 
       }
     } catch (err) {
       console.error('Error in logView function (Mobile):', err);
     }
     console.log('--- End log view attempt (Mobile) ---');
-  }, [isVisitorSubscribed]); // Added isVisitorSubscribed to dependencies
+  }, [isVisitorSubscribed]);
 
 
   const fetchContent = useCallback(async () => {
-    if (isFetching.current || !hasMoreContent) return;
+    if (!user || isFetching.current || !hasMoreContent) return;
     
     isFetching.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator'] : ['normal_creator'];
+      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'normal_creator'] : ['normal_creator'];
       const from = currentPage * CONTENT_FETCH_LIMIT;
       const to = from + CONTENT_FETCH_LIMIT - 1;
 
-      // UPDATED: Fetch content, profiles (including creator_type), and views_count
       const { data: contentData, error: contentError } = await supabase
         .from('content')
         .select(`
@@ -150,11 +146,10 @@ function MobileHomePage() {
             nickname: item.profiles.nickname || 'Creator',
             avatar_url: getPublicUrl(item.profiles.avatar_path, AVATAR_BUCKET) || null
           },
-          views: item.views_count ? item.views_count[0].count : 0, // Extract views count
-          isPremiumContent: item.profiles.creator_type === 'premium_creator', // NEW: Flag for premium content
+          views: item.views_count ? item.views_count[0].count : 0,
+          isPremiumContent: item.profiles.creator_type === 'premium_creator',
         }));
 
-        // Fetch active ad campaigns
         const now = new Date().toISOString();
         const { data: adsData, error: adsError } = await supabase
           .from('ad_campaigns')
@@ -188,12 +183,20 @@ function MobileHomePage() {
       }
     } catch (err) {
       setError(err.message || 'Failed to load content.');
-      console.error('Error fetching mobile content:', err);
+      console.error('Error fetching mobile content:','err', err);
     } finally {
       setLoading(false);
       isFetching.current = false;
     }
-  }, [currentPage, hasMoreContent, isVisitorSubscribed, getPublicUrl]); // Removed logView from dependencies, as it is not directly used here
+  }, [currentPage, hasMoreContent, isVisitorSubscribed, getPublicUrl, user]); // CORRECTED: Re-added user to dependencies
+
+
+  // Effect to ensure user is loaded before fetching content
+  useEffect(() => {
+    if (user === undefined) return;
+    fetchContent();
+  }, [user, fetchContent]); // CORRECTED: Added fetchContent to dependencies
+
 
   // Reset feed when subscription status changes
   useEffect(() => {
@@ -201,12 +204,8 @@ function MobileHomePage() {
     setCurrentPage(0);
     setHasMoreContent(true);
     isFetching.current = false;
+    hasPromptBeenShownThisSession.current = sessionStorage.getItem(SESSION_PROMPT_KEY) === 'true';
   }, [isVisitorSubscribed]);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchContent();
-  }, [currentPage, hasMoreContent, isVisitorSubscribed, fetchContent]);
 
   // Intersection Observer for video playback and infinite scroll
   useEffect(() => {
@@ -239,17 +238,12 @@ function MobileHomePage() {
     };
   }, [feedContent, loading, hasMoreContent]);
 
-  // Trigger fetch on scroll
-  useEffect(() => {
-    if (scrollCount > 0 && !loading && hasMoreContent) {
-      fetchContent();
-    }
-  }, [scrollCount, loading, hasMoreContent, fetchContent]);
-
   // Subscription prompt logic
   useEffect(() => {
-    if (!isVisitorSubscribed && scrollCount >= SCROLLS_BEFORE_SUBSCRIPTION_PROMPT) {
+    if (!isVisitorSubscribed && scrollCount > 0 && !hasPromptBeenShownThisSession.current) {
       setShowSubscriptionPrompt(true);
+      hasPromptBeenShownThisSession.current = true;
+      sessionStorage.setItem(SESSION_PROMPT_KEY, 'true');
     }
   }, [isVisitorSubscribed, scrollCount]);
 
@@ -274,7 +268,9 @@ function MobileHomePage() {
 
       {error && <p className="error-message">{error}</p>}
 
-      {feedContent.length === 0 && !loading && !error ? (
+      {loading && feedContent.length === 0 ? (
+        <p className="loading-message">Loading content...</p>
+      ) : feedContent.length === 0 && !error ? (
         <p className="no-content-message">No content available. Check back later!</p>
       ) : (
         <div className="content-feed">
@@ -291,7 +287,7 @@ function MobileHomePage() {
                     isVisitorSubscribed={isVisitorSubscribed}
                     setShowSubscriptionPrompt={setShowSubscriptionPrompt}
                     onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}`)}
-                    logView={logView} // Pass logView function
+                    logView={logView}
                   />
                 )}
               </div>
@@ -300,7 +296,7 @@ function MobileHomePage() {
         </div>
       )}
 
-      {loading && <p className="loading-message">Loading more content...</p>}
+      {loading && feedContent.length > 0 && <p className="loading-message">Loading more content...</p>}
       {!hasMoreContent && !loading && feedContent.length > 0 && <p className="end-of-feed-message">You've reached the end.</p>}
 
       {showSubscriptionPrompt && !isVisitorSubscribed && (

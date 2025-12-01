@@ -37,15 +37,15 @@ import MyContentPage from './pages/MyContentPage';
 import AdminViewCreatorProfilePage from './pages/AdminViewCreatorProfilePage';
 import AdminAllCreatorsPage from './pages/AdminAllCreatorsPage';
 import AdminCreatorContentPage from './pages/AdminCreatorContentPage';
-import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage';
+import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage'; // CORRECTED PATH
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
-import AdCampaignManagementPage from './pages/AdCampaignManagementPage'; // Renamed import
-import PayForAdPage from './pages/PayForAdPage'; // New import
+import AdCampaignManagementPage from './pages/AdCampaignManagementPage';
+import PayForAdPage from './pages/PayForAdPage';
+import MobileUploadContentPage from './pages/MobileUploadContentPage';
 import { Capacitor } from '@capacitor/core';
 
 
-// Component to handle traffic logging
 function TrafficLogger() {
   const location = useLocation();
   const { user, isVisitorSubscribed, visitorEmail } = useAuth();
@@ -85,15 +85,13 @@ function App() {
     setIsAndroid(Capacitor.isNativePlatform('android'));
   }, []);
 
-  // Determine which Navbar to render
   const CurrentNavbar = isAndroid ? MobileNavbar : Navbar;
-  // Determine which HomePage to render
   const CurrentHomePage = isAndroid ? MobileHomePage : HomePage;
 
   return (
     <Router>
       <AuthProvider>
-        <ThemeProvider> {/* Wrap the entire application with ThemeProvider */}
+        <ThemeProvider>
           <div className="App">
             <CurrentNavbar />
             <div className="content">
@@ -116,13 +114,11 @@ function App() {
                 <Route path="/messages" element={<CreatorMessagesPage />} />
                 <Route path="/admin-messages" element={<AdminMessagesPage />} />
                 <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-                {/* Updated route for Ad Campaign Management */}
                 <Route path="/admin-manage-ads" element={<AdCampaignManagementPage />} />
                 <Route path="/profile/:userId" element={<UserProfileViewPage />} />
                 <Route path="/content/:contentId" element={<SingleContentPage />} />
                 <Route path="/subscribe" element={<SubscriptionPage />} />
                 <Route path="/paystack-callback" element={<PaystackCallback />} />
-                {/* New route for Ad Campaign Payment */}
                 <Route path="/pay-for-ad/:campaignId" element={<PayForAdPage />} />
                 <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
@@ -136,6 +132,7 @@ function App() {
                 <Route path="/admin-all-creators" element={<AdminAllCreatorsPage />} />
                 <Route path="/admin-creator-content/:creatorId" element={<AdminCreatorContentPage />} />
                 <Route path="/admin-payment-overviews" element={<AdminPaymentOverviewsPage />} />
+                <Route path="/mobile-upload-content" element={<MobileUploadContentPage />} />
               </Routes>
             </div>
           </div>

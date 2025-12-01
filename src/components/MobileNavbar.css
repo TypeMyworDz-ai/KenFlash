@@ -2,8 +2,8 @@
 .mobile-navbar {
   width: 100%;
   padding: 10px 20px;
-  background-color: var(--navbar-background); /* Use theme variable */
-  color: var(--navbar-text); /* Use theme variable */
+  background-color: var(--navbar-background);
+  color: var(--navbar-text);
   display: flex;
   justify-content: space-between; /* Distribute items */
   align-items: center;
@@ -14,65 +14,76 @@
   z-index: 999;
   height: 60px; /* Fixed height for mobile navbar */
   box-sizing: border-box;
-  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* NEW: Draftey Logo and Slogan on the left */
-.mobile-navbar-brand {
+/* NEW: Home Icon on the left */
+.mobile-navbar-home-icon {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: inherit;
-  gap: 10px; /* Space between logo and slogan */
+  color: var(--navbar-text); /* Use theme variable for color */
+  height: 100%; /* Align vertically */
+  padding-right: 10px; /* Space from center items */
+  font-size: 1.8em; /* Adjust size for the SVG */
 }
 
-.mobile-draftey-logo {
-  height: 40px; /* Adjust as needed */
-  width: auto;
+/* Styles for SVG icons (used by home icon) */
+.icon-svg {
+  width: 1.2em; /* Control SVG size relative to parent font-size */
+  height: 1.2em;
+  fill: currentColor; /* Inherit color from parent */
+  transition: fill 0.3s ease;
 }
 
-.mobile-draftey-slogan {
-  font-size: 1.2em;
-  font-weight: 500;
-  margin: 0;
-  color: var(--navbar-text); /* Use theme variable */
-  white-space: nowrap; /* Prevent text wrapping */
+.mobile-navbar-home-icon:hover .icon-svg {
+  fill: var(--primary-color); /* Change color on hover */
 }
 
-/* REMOVED: Old Home Icon styles */
-/* .mobile-home-icon {
-  font-size: 1.8em;
-  color: var(--primary-color);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding-right: 10px;
-} */
 
-/* REMOVED: Old Centered App Name styles */
-/* .mobile-navbar-brand-center {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: var(--primary-color);
-  text-decoration: none;
-  position: absolute;
+/* NEW: Centered Camera Button for Creators */
+.mobile-navbar-camera-button {
+  position: absolute; /* Absolute positioning to center it */
   left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-} */
+  transform: translateX(-50%); /* Center horizontally */
+  background-color: var(--primary-color); /* Themed background */
+  border: none;
+  border-radius: 50%; /* Make it round */
+  width: 45px; /* Size of the button */
+  height: 45px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  z-index: 100; /* Ensure it's above other navbar elements */
+}
+
+.mobile-navbar-camera-button:hover {
+  background-color: var(--primary-hover, #0056b3); /* Darker on hover */
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* Styles for the camera icon image */
+.camera-icon-img {
+  width: 60%; /* Adjust size of the image within the button */
+  height: 60%;
+  object-fit: contain;
+  filter: invert(100%); /* Make it white if your icon is black, or adjust as needed */
+}
+
 
 /* Hamburger Menu Icon */
 .hamburger-menu {
   background: none;
   border: none;
   font-size: 2em;
-  color: var(--navbar-text); /* Use theme variable */
+  color: var(--navbar-text);
   cursor: pointer;
   padding: 0;
   margin: 0;
-  line-height: 1; /* Align icon vertically */
-  /* No longer need margin-left: auto; as brand is on left */
+  line-height: 1;
 }
 
 /* Mobile Menu Overlay */
@@ -85,15 +96,15 @@
   background-color: rgba(0, 0, 0, 0.7);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end; /* Slide in from right */
+  justify-content: flex-end;
   animation: fadeInOverlay 0.3s forwards;
 }
 
 /* Mobile Menu Content (Slide-out panel) */
 .mobile-menu-content {
-  background-color: var(--card-background); /* Use theme variable */
-  color: var(--text-color); /* Use theme variable */
-  width: 70%; /* Adjust width as needed */
+  background-color: var(--card-background);
+  color: var(--text-color);
+  width: 70%;
   max-width: 300px;
   height: 100%;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
@@ -102,7 +113,7 @@
   flex-direction: column;
   animation: slideInRight 0.3s forwards;
   box-sizing: border-box;
-  overflow-y: auto; /* Enable scrolling for long menus */
+  overflow-y: auto;
 }
 
 @keyframes fadeInOverlay {
@@ -123,7 +134,7 @@
   background: none;
   border: none;
   font-size: 2em;
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
   cursor: pointer;
 }
 
@@ -131,34 +142,34 @@
 .mobile-menu-item {
   display: block;
   padding: 12px 10px;
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
   text-decoration: none;
   font-size: 1.1em;
-  border-bottom: 1px solid var(--card-border); /* Use theme variable */
+  border-bottom: 1px solid var(--card-border);
   transition: background-color 0.2s ease;
   text-align: left;
-  background: none; /* For buttons */
-  border: none; /* For buttons */
-  width: 100%; /* For buttons */
+  background: none;
+  border: none;
+  width: 100%;
   cursor: pointer;
 }
 
 .mobile-menu-item:hover {
-  background-color: var(--secondary-color); /* Use theme variable */
-  color: white; /* Keep text white on hover for better contrast */
+  background-color: var(--secondary-color);
+  color: white;
 }
 
 .mobile-menu-item.brand-item {
   font-size: 1.6em;
   font-weight: bold;
-  color: var(--primary-color); /* Use theme variable */
-  border-bottom: 2px solid var(--primary-color); /* Use theme variable */
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
   margin-bottom: 15px;
   padding-left: 0;
 }
 
 .mobile-menu-item.logout-button {
-  background-color: #dc3545; /* Specific color for logout, can be a theme variable too */
+  background-color: #dc3545;
   color: white;
   border-radius: 5px;
   margin-top: 20px;
@@ -171,7 +182,7 @@
 
 /* Theme Toggle Button Styles for Mobile Navbar */
 .mobile-menu-item.theme-toggle-button {
-  background-color: var(--primary-color); /* Use primary color for toggle button */
+  background-color: var(--primary-color);
   color: white;
   border-radius: 5px;
   margin-top: 15px;
@@ -186,7 +197,7 @@
 }
 
 .mobile-menu-item.theme-toggle-button:hover {
-  background-color: var(--secondary-color); /* Darker on hover */
+  background-color: var(--secondary-color);
 }
 
 
@@ -205,16 +216,16 @@
 .mobile-dropdown-menu {
   display: flex;
   flex-direction: column;
-  background-color: var(--card-background); /* Use theme variable */
+  background-color: var(--card-background);
   margin-top: 5px;
   border-radius: 5px;
   overflow: hidden;
-  border: 1px solid var(--card-border); /* Use theme variable */
+  border: 1px solid var(--card-border);
 }
 
 .mobile-dropdown-item {
   padding: 10px 15px;
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
   text-decoration: none;
   font-size: 0.95em;
   text-align: left;
@@ -222,6 +233,6 @@
 }
 
 .mobile-dropdown-item:hover {
-  background-color: var(--secondary-color); /* Use theme variable */
+  background-color: var(--secondary-color);
   color: white;
 }
