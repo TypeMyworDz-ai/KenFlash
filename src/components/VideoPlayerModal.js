@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import './VideoPlayerModal.css';
 
-function VideoPlayerModal({ video, onClose }) {
+function VideoPlayerModal({ video, onClose, logView, creatorId, contentType, isPremiumContent }) { // NEW: Added logView, creatorId, contentType, isPremiumContent
   const videoRef = useRef(null);
 
   useEffect(() => {

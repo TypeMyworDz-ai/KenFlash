@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // Removed useLocation as it's not used
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import './SingleContentPage.css'; // We will create this CSS file next
 
 const DEFAULT_THUMBNAIL_PLACEHOLDER = 'https://via.placeholder.com/600x400?text=Content';
+const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video'; // NEW: Consistent video placeholder
 
 function SingleContentPage() {
   const { contentId } = useParams();
   const navigate = useNavigate();
-  const { user, isVisitorSubscribed, visitorEmail } = useAuth(); // Get user object and visitorEmail
+  const { isVisitorSubscribed } = useAuth(); // Only isVisitorSubscribed is needed for logView logic
 
   const [contentItem, setContentItem] = useState(null);
   const [creatorProfile, setCreatorProfile] = useState(null);
@@ -29,64 +30,68 @@ function SingleContentPage() {
     return null;
   }, []);
 
-  // Function to log a view
-  const logContentView = useCallback(async (creatorId, contentId, contentType) => {
-    // Only log views if the visitor is subscribed (either logged in or via visitorEmail)
-    if (!isVisitorSubscribed && (!user || user.userType === 'viewer')) {
-      console.log('View not logged: User not subscribed or not a creator/admin.');
-      return;
-    }
-
-    let viewerIdentifier = {};
-    if (user?.id) { // Logged-in user
-      viewerIdentifier.viewer_profile_id = user.id;
-    } else if (isVisitorSubscribed && visitorEmail) { // Subscribed visitor
-      viewerIdentifier.subscriber_email = visitorEmail;
-    } else {
-      console.log('View not logged: No valid viewer identifier (logged-in user or subscribed visitor email).');
-      return;
-    }
+  // UPDATED: logView function - Standardized version for unique premium content views
+  const logView = useCallback(async (contentIdToLog, creatorId, contentType, isPremiumContent) => { // Renamed contentId to contentIdToLog to avoid conflict
+    console.log('--- Attempting to log view (SingleContentPage) ---');
+    console.log('Content ID:', contentIdToLog);
+    console.log('Creator ID (for view logging):', creatorId);
+    console.log('Content Type (for view logging):', contentType);
+    console.log('Is Premium Content:', isPremiumContent);
 
     try {
-      // Check if a unique view already exists for this creator by this viewer
-      let existingViewQuery = supabase
-        .from('views')
-        .select('id')
-        .eq('creator_id', creatorId);
+      const { data: { user } } = await supabase.auth.getUser(); // Reintroduce fetching user
+      
+      const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
 
-      if (viewerIdentifier.viewer_profile_id) {
-        existingViewQuery = existingViewQuery.eq('viewer_profile_id', viewerIdentifier.viewer_profile_id);
-      } else if (viewerIdentifier.subscriber_email) {
-        existingViewQuery = existingViewQuery.eq('subscriber_email', viewerIdentifier.subscriber_email);
+      console.log('Viewer Email (to log):', viewerEmailToLog);
+
+      // --- Uniqueness Check for Premium Content ---
+      if (isPremiumContent && viewerEmailToLog && isVisitorSubscribed) {
+        console.log(`Checking for existing view for premium content ${contentIdToLog} by ${viewerEmailToLog}`);
+        const { data: existingViews, error: checkError } = await supabase
+          .from('views')
+          .select('id')
+          .eq('content_id', contentIdToLog)
+          .eq('viewer_email', viewerEmailToLog)
+          .limit(1);
+
+        if (checkError) {
+          console.error('Error checking for existing view (SingleContentPage):', checkError);
+        } else if (existingViews && existingViews.length > 0) {
+          console.log(`Duplicate view prevented for premium content ${contentIdToLog} by ${viewerEmailToLog}`);
+          return; // Prevent logging duplicate view
+        }
       }
-
-      const { data: existingView, error: existingViewError } = await existingViewQuery.single();
-
-      if (existingViewError && existingViewError.code !== 'PGRST116') { // PGRST116 means no rows found
-        console.error('Error checking for existing view:', existingViewError.message);
-        // Continue to log if check fails, to avoid blocking legitimate views
-      } else if (existingView) {
-        console.log('View not logged: Unique view for this creator by this viewer already exists.');
-        return; // Do not log a duplicate unique view
-      }
-
-      // Log the new view
-      const { error: logError } = await supabase.from('views').insert({
+      // --- End Uniqueness Check ---
+      
+      console.log('Values to insert:', {
+        content_id: contentIdToLog,
         creator_id: creatorId,
-        content_id: contentId,
         content_type: contentType,
-        ...viewerIdentifier, // Add viewer_profile_id or subscriber_email
+        viewer_email: viewerEmailToLog,
+        viewed_at: new Date().toISOString(),
       });
 
-      if (logError) {
-        console.error('Error logging content view:', logError.message);
+      const { error: insertError } = await supabase.from('views').insert([
+        {
+          content_id: contentIdToLog,
+          creator_id: creatorId,
+          content_type: contentType,
+          viewer_email: viewerEmailToLog,
+          viewed_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error('Supabase INSERT Error (SingleContentPage):', insertError);
       } else {
-        console.log('Content view logged successfully!');
+        console.log('View successfully logged for contentId (SingleContentPage):', contentIdToLog);
       }
     } catch (err) {
-      console.error('Failed to log content view:', err.message);
+      console.error('Error in logView function (SingleContentPage):', err);
     }
-  }, [user, isVisitorSubscribed, visitorEmail]);
+    console.log('--- End log view attempt (SingleContentPage) ---');
+  }, [isVisitorSubscribed]); // Added isVisitorSubscribed to dependencies
 
 
   useEffect(() => {
@@ -101,7 +106,7 @@ function SingleContentPage() {
       }
 
       try {
-        // Fetch content from the merged 'content' table
+        // Fetch content from the merged 'content' table, including profiles for creator_type
         const { data: contentData, error: fetchError } = await supabase
           .from('content')
           .select(`
@@ -114,8 +119,11 @@ function SingleContentPage() {
         if (fetchError) throw fetchError;
         if (!contentData) throw new Error('Content item not found.');
 
+        // Determine if content is premium
+        const isPremium = contentData.profiles?.creator_type === 'premium_creator';
+
         // Access control: If content is premium_creator's and visitor is not subscribed, show error
-        if (contentData.profiles?.creator_type === 'premium_creator' && !isVisitorSubscribed) {
+        if (isPremium && !isVisitorSubscribed) {
           setError("You must be subscribed to view this premium content.");
           setLoading(false);
           return;
@@ -127,7 +135,7 @@ function SingleContentPage() {
         if (contentData.content_type === 'video') {
           thumbnailUrl = contentData.thumbnail_path
             ? getSafePublicUrl('content', contentData.thumbnail_path)
-            : `${contentUrl}#t=${Math.floor(Math.random() * 30)}`; // Random frame for video poster
+            : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER; // Use consistent video placeholder
         }
 
         if (contentUrl) {
@@ -135,13 +143,14 @@ function SingleContentPage() {
             ...contentData,
             url: contentUrl,
             thumbnail: thumbnailUrl,
-            creator_id: contentData.creator_id, // Ensure creator_id is available
-            content_type: contentData.content_type, // Ensure content_type is available
+            creator_id: contentData.creator_id,
+            content_type: contentData.content_type,
+            isPremiumContent: isPremium, // NEW: Add isPremiumContent to the item
           });
           setCreatorProfile({ id: contentData.creator_id }); // For back button
           
           // Log view after content is successfully loaded and accessible
-          logContentView(contentData.creator_id, contentData.id, contentData.content_type);
+          logView(contentData.id, contentData.creator_id, contentData.content_type, isPremium);
 
         } else {
           setError('Failed to retrieve content URL.');
@@ -156,7 +165,7 @@ function SingleContentPage() {
     };
 
     fetchSingleContent();
-  }, [contentId, isVisitorSubscribed, getSafePublicUrl, logContentView]); // Dependencies for useEffect
+  }, [contentId, isVisitorSubscribed, getSafePublicUrl, logView]); // Dependencies for useEffect
 
   const handleBackButtonClick = () => {
     if (creatorProfile?.id) {
@@ -188,7 +197,7 @@ function SingleContentPage() {
       <button onClick={handleBackButtonClick} className="back-button">← Back to Creator</button>
 
       <div className="content-display">
-        {contentItem.content_type === 'photo' ? ( // Use content_type
+        {contentItem.content_type === 'photo' ? (
           <img src={contentItem.url} alt={contentItem.caption || 'Content Photo'} className="single-content-media" />
         ) : (
           <video controls poster={contentItem.thumbnail} className="single-content-media">

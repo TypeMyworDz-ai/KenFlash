@@ -33,9 +33,11 @@ function HomePage() {
   const [showSlideshowModal, setShowSlideshowModal] = useState(false);
   const [currentSlideshowPhotos, setCurrentSlideshowPhotos] = useState([]);
   const [currentSlideshowIndex, setCurrentSlideshowIndex] = useState(0);
+  const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
+
 
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [currentVideo, setCurrentVideo] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null); // UPDATED: currentVideo will now store more context
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalContentCount, setTotalContentCount] = useState(0);
@@ -86,9 +88,6 @@ function HomePage() {
       url: getPublicUrl(p.storage_path, 'content')
     }))];
   }, [getPublicUrl]);
-
-  // Removed fetchProfilesForContent as profile data is now fetched directly in the main content query
-  // const fetchProfilesForContent = useCallback(async (creatorIds) => { ... });
 
   const logView = useCallback(async (contentId, creatorId, contentType, isPremiumContent) => {
     console.log('--- Attempting to log view ---');
@@ -160,7 +159,6 @@ function HomePage() {
     try {
       const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator'] : ['normal_creator'];
 
-      // UPDATED: Fetch nickname and avatar_path from profiles
       const { data: contentData, error: contentError } = await supabase
         .from('content')
         .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, creator_type), views_count:views(count)')
@@ -169,13 +167,9 @@ function HomePage() {
 
       if (contentError) throw contentError;
 
-      // No longer need to manually build profilesMap or filter by creator_type here
-      // as it's done directly in the select and filter in the query.
-
       const contentWithProfilesAndViews = (contentData || [])
         .map(item => ({
           ...item,
-          // profiles object is already attached by the Supabase join
           views: item.views_count ? item.views_count[0].count : 0,
         }))
         .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.creator_type));
@@ -206,7 +200,7 @@ function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]); // Removed fetchProfilesForContent from deps
+  }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]);
 
   useEffect(() => {
     fetchContent();
@@ -276,26 +270,36 @@ function HomePage() {
 
   const openSlideshow = (item) => {
     const isPremium = item.profiles?.creator_type === 'premium_creator';
-    logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
     
-    if (item.type === 'photo_group') {
-      setCurrentSlideshowPhotos(item.photos.map(p => ({
-        id: p.id,
-        url: getPublicUrl(p.storage_path, 'content'),
-        caption: p.caption,
-        creatorNickname: item.profiles?.nickname,
-        type: 'photo',
-      })));
-    } else {
-      setCurrentSlideshowPhotos([{
-        id: item.id,
-        url: item.url,
-        caption: item.caption,
-        creatorNickname: item.profiles?.nickname,
-        type: 'photo',
-      }]);
-    }
+    logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
+
+    const photosForSlideshow = item.type === 'photo_group'
+      ? item.photos.map(p => ({
+          id: p.id,
+          url: getPublicUrl(p.storage_path, 'content'),
+          caption: p.caption,
+          creator_id: item.creator_id,
+          isPremiumContent: isPremium,
+          type: 'photo',
+        }))
+      : [{
+          id: item.id,
+          url: item.url,
+          caption: item.caption,
+          creator_id: item.creator_id,
+          isPremiumContent: isPremium,
+          type: 'photo',
+        }];
+
+    setCurrentSlideshowPhotos(photosForSlideshow);
     setCurrentSlideshowIndex(0);
+    
+    setSlideshowContext({
+      creatorId: item.creator_id,
+      isPremiumContent: isPremium,
+      contentType: 'photo',
+    });
+
     setShowSlideshowModal(true);
   };
 
@@ -303,8 +307,10 @@ function HomePage() {
     setShowSlideshowModal(false);
     setCurrentSlideshowPhotos([]);
     setCurrentSlideshowIndex(0);
+    setSlideshowContext({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
   };
 
+  // UPDATED: openVideoPlayer to store full context in currentVideo
   const openVideoPlayer = (videoItem) => {
     const isPremium = videoItem.profiles?.creator_type === 'premium_creator';
     logView(videoItem.id, videoItem.creator_id, videoItem.content_type, isPremium);
@@ -315,6 +321,9 @@ function HomePage() {
       thumbnailUrl: videoItem.thumbnailUrl,
       title: videoItem.title,
       creatorNickname: videoItem.profiles?.nickname,
+      creator_id: videoItem.creator_id, // NEW: Pass creator_id
+      content_type: videoItem.content_type, // NEW: Pass content_type
+      isPremiumContent: isPremium, // NEW: Pass isPremiumContent
     });
     setShowVideoModal(true);
   };
@@ -468,15 +477,23 @@ function HomePage() {
       {showSlideshowModal && (
         <PhotoSlideshowModal
           photos={currentSlideshowPhotos}
-          initialIndex={currentSlideshowIndex}
+          caption={slideshowContext.contentType === 'photo' ? currentSlideshowPhotos[currentSlideshowIndex]?.caption : ''}
           onClose={closeSlideshow}
+          logView={logView}
+          creatorId={slideshowContext.creatorId}
+          contentType={slideshowContext.contentType}
+          isPremiumContent={slideshowContext.isPremiumContent}
         />
       )}
 
       {showVideoModal && (
         <VideoPlayerModal
-          video={currentVideo}
+          video={currentVideo} // currentVideo now contains creator_id, content_type, isPremiumContent
           onClose={closeVideoPlayer}
+          logView={logView}
+          creatorId={currentVideo?.creator_id || null}
+          contentType={currentVideo?.content_type || 'video'}
+          isPremiumContent={currentVideo?.isPremiumContent || false}
         />
       )}
     </div>

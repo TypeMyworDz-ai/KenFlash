@@ -125,6 +125,24 @@
   /* Styling handled by parent */
 }
 
+/* NEW: View Counter Overlay */
+.content-views-overlay {
+  position: absolute;
+  bottom: 10px; /* Adjust vertical position from bottom */
+  right: 10px; /* Adjust horizontal position from right */
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark background */
+  color: white;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+  display: flex; /* For icon and text alignment */
+  align-items: center;
+  gap: 4px; /* Space between icon and number */
+  z-index: 10; /* Ensure it's above the media */
+}
+
+
 /* Pagination Controls */
 .pagination-controls {
   display: flex;

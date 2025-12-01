@@ -2,56 +2,55 @@
 .mobile-homepage-container {
   display: flex;
   flex-direction: column;
-  /* Align items to stretch vertically to enable proper scroll snapping */
   align-items: stretch;
   justify-content: flex-start;
-  height: 100vh; /* Make container full viewport height for snapping */
-  padding-top: 0; /* No padding-top here, navbar is fixed */
+  height: 100vh;
+  padding-top: 0;
   background-color: var(--background-color);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-y: scroll; /* Enable vertical scrolling for the feed */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  scroll-snap-type: y mandatory; /* Enable scroll snapping for TikTok-like experience */
-  position: relative; /* Needed for absolute positioning of search bar */
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y mandatory;
+  position: relative;
 }
 
 /* Transparent Search Bar Container */
 .mobile-search-bar-container {
-  position: fixed; /* Fixed position so it scrolls with the view but stays at top */
-  top: 70px; /* Below navbar, adjust as needed */
+  position: fixed;
+  top: 70px;
   left: 50%;
-  transform: translateX(-50%); /* Center horizontally */
-  width: 90%; /* Occupy most of the width */
-  max-width: 400px; /* Max width for consistency */
-  z-index: 990; /* Below navbar, above content */
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 990;
   text-align: center;
-  pointer-events: none; /* Allow clicks to pass through by default */
+  pointer-events: none;
 }
 
 .mobile-creator-search-input {
   width: 100%;
   padding: 10px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for transparency */
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 25px;
   font-size: 1em;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   box-sizing: border-box;
-  background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent dark background */
+  background-color: rgba(0, 0, 0, 0.4);
   color: white;
-  pointer-events: auto; /* Re-enable pointer events for the input field */
+  pointer-events: auto;
 }
 
 .mobile-creator-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .mobile-creator-search-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  background-color: rgba(0, 0, 0, 0.6); /* Slightly darker on focus */
-  box-shadow: 0 0 0 2px var(--primary-color); /* Use a themed focus ring */
+  background-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 /* Content Feed Container */
@@ -60,78 +59,120 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Removed padding-bottom here, rely on individual item height */
 }
 
 /* Individual Content Card (Photo/Video/Ad) Wrapper for scroll snapping */
 .scroll-snap-item {
   width: 100%;
   max-width: 450px;
-  height: 100vh; /* Each item takes full viewport height */
-  scroll-snap-align: start; /* Snap to the start of the item */
+  height: 100vh;
+  scroll-snap-align: start;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-shrink: 0; /* Prevent items from shrinking */
+  flex-shrink: 0;
 }
 
+/* Base styles for mobile content and ad cards */
 .mobile-content-card,
 .mobile-ad-card {
   width: 100%;
-  height: 100%; /* Fill the scroll-snap-item wrapper */
-  border-radius: 0; /* No rounded corners for full screen effect */
+  height: 100%;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
-  background-color: var(--card-background);
-  box-shadow: none; /* No shadow for full screen effect */
+  background-color: var(--card-background-color); /* Use theme variable */
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* Align content to top within the card */
   align-items: center;
   color: var(--text-color);
 }
 
 .mobile-content-media {
   width: 100%;
-  height: 100%;
-  object-fit: contain; /* Ensure full content is visible, letterboxing if needed */
+  height: 100%; /* Fill the card height */
+  object-fit: cover; /* Cover the area, cropping if necessary */
   display: block;
 }
 
 .mobile-ad-media {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ads typically fill the space */
+  object-fit: cover;
   display: block;
 }
 
-.mobile-content-overlay,
-.mobile-ad-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
-  color: white;
-  padding: 20px 15px 10px;
+/* NEW: Styles for the bottom info bar (creator and views) */
+.mobile-content-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: var(--card-background-color);
+  border-top: 1px solid var(--border-color);
+  gap: 10px;
+  min-height: 60px;
+  width: 100%; /* Ensure it spans the full width of the card */
+  flex-shrink: 0; /* Prevent it from shrinking */
+}
+
+.mobile-creator-left-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.mobile-creator-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.mobile-creator-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-creator-name-info {
   text-align: left;
-  box-sizing: border-box;
-  z-index: 10;
+  min-width: 0;
 }
 
-.mobile-content-overlay h3,
-.mobile-ad-overlay h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.2em;
-  color: white;
-}
-
-.mobile-content-overlay p,
-.mobile-ad-overlay p {
+.mobile-creator-name-info p {
   margin: 0;
   font-size: 0.9em;
-  color: #ccc;
+  color: var(--text-color);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.mobile-view-count {
+  font-size: 0.85em;
+  color: var(--secondary-text-color);
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mobile-view-count::before {
+  content: '👁';
+  font-size: 0.8em;
+}
+
 
 .loading-message,
 .end-of-feed-message,
@@ -143,8 +184,8 @@
   text-align: center;
   width: 100%;
   max-width: 450px;
-  scroll-snap-align: start; /* Make messages snap too */
-  height: 100vh; /* Fill screen height */
+  scroll-snap-align: start;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -153,11 +194,8 @@
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 480px) {
-  .mobile-homepage-container {
-    /* No padding-top needed here, if navbar is fixed */
-  }
   .mobile-search-bar-container {
-    top: 60px; /* Adjust search bar position below mobile navbar */
+    top: 60px;
   }
   .scroll-snap-item,
   .mobile-content-card,
@@ -166,6 +204,6 @@
   .end-of-feed-message,
   .no-content-message,
   .error-message {
-    height: 100vh; /* Ensure full viewport height */
+    height: 100vh;
   }
 }

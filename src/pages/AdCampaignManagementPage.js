@@ -6,6 +6,12 @@ import './AdCampaignManagementPage.css';
 
 const AD_MEDIA_BUCKET = 'ad-media';
 
+// Define fixed payment amounts for intervals
+const PAYMENT_AMOUNTS = {
+  weekly: 500,  // KES
+  monthly: 1500, // KES
+};
+
 function AdCampaignManagementPage() {
   const navigate = useNavigate();
   const { user, userType, logout } = useAuth();
@@ -20,7 +26,6 @@ function AdCampaignManagementPage() {
     ad_type: 'image',
     media_file: null,
     target_url: '',
-    payment_amount: '',
     payment_interval: 'weekly',
     start_date: '',
     end_date: '',
@@ -29,7 +34,7 @@ function AdCampaignManagementPage() {
   const [editingCampaignId, setEditingCampaignId] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
 
-  const isFetchingCampaigns = useRef(false); // Ref to prevent duplicate fetches
+  const isFetchingCampaigns = useRef(false);
 
   const getPublicUrl = useCallback((path) => {
     if (!path) return null;
@@ -48,10 +53,10 @@ function AdCampaignManagementPage() {
 
     if (userType !== 'admin' && userType !== 'business') {
       alert("Access Denied: Only business accounts and admins can manage ads.");
-      navigate('/'); // Redirect to home if not authorized
+      navigate('/');
       return;
     }
-    setLoading(false); // Auth check passed, stop initial loading state
+    setLoading(false);
   }, [navigate, logout, user, userType]);
 
 
@@ -59,7 +64,7 @@ function AdCampaignManagementPage() {
   const fetchCampaigns = useCallback(async () => {
     if (!user || isFetchingCampaigns.current) return;
 
-    isFetchingCampaigns.current = true; // Set ref to true to prevent re-entry
+    isFetchingCampaigns.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -82,16 +87,16 @@ function AdCampaignManagementPage() {
       console.error('Error fetching campaigns:', err);
     } finally {
       setLoading(false);
-      isFetchingCampaigns.current = false; // Reset ref
+      isFetchingCampaigns.current = false;
     }
-  }, [user, userType]); // Dependencies for fetchCampaigns useCallback
+  }, [user, userType]);
 
   // Effect to trigger fetching campaigns when user or userType changes
   useEffect(() => {
     if (user && (userType === 'admin' || userType === 'business')) {
       fetchCampaigns();
     }
-  }, [user, userType, fetchCampaigns]); // fetchCampaigns is a dependency here
+  }, [user, userType, fetchCampaigns]);
 
 
   const handleInputChange = (e) => {
@@ -120,7 +125,6 @@ function AdCampaignManagementPage() {
       ad_type: campaign.media_type,
       media_file: null,
       target_url: campaign.target_url || '',
-      payment_amount: campaign.payment_amount,
       payment_interval: campaign.payment_interval,
       start_date: campaign.start_date ? campaign.start_date.split('T')[0] : '',
       end_date: campaign.end_date ? campaign.end_date.split('T')[0] : '',
@@ -132,7 +136,7 @@ function AdCampaignManagementPage() {
       setMediaPreview(null);
     }
     setSuccess(null);
-    setError(null); // Clear any existing errors when editing
+    setError(null);
   };
 
   const handleCancelEdit = () => {
@@ -143,7 +147,6 @@ function AdCampaignManagementPage() {
       ad_type: 'image',
       media_file: null,
       target_url: '',
-      payment_amount: '',
       payment_interval: 'weekly',
       start_date: '',
       end_date: '',
@@ -176,11 +179,6 @@ function AdCampaignManagementPage() {
       setLoading(false);
       return;
     }
-    if (!newCampaign.payment_amount || isNaN(parseFloat(newCampaign.payment_amount))) {
-      setError('Please provide a valid payment amount.');
-      setLoading(false);
-      return;
-    }
 
     try {
       let mediaPath = '';
@@ -201,6 +199,14 @@ function AdCampaignManagementPage() {
         mediaPath = existingCampaign?.media_path || '';
       }
 
+      // DERIVED: payment_amount based on interval
+      const derivedPaymentAmount = PAYMENT_AMOUNTS[newCampaign.payment_interval];
+      if (derivedPaymentAmount === undefined) {
+        setError('Invalid payment interval selected.');
+        setLoading(false);
+        return;
+      }
+
       const campaignData = {
         business_id: user.id,
         ad_title: newCampaign.ad_title,
@@ -208,7 +214,7 @@ function AdCampaignManagementPage() {
         media_path: mediaPath,
         media_type: newCampaign.ad_type,
         target_url: newCampaign.target_url,
-        payment_amount: parseFloat(newCampaign.payment_amount),
+        payment_amount: derivedPaymentAmount,
         payment_interval: newCampaign.payment_interval,
         start_date: newCampaign.start_date || null,
         end_date: newCampaign.end_date || null,
@@ -244,7 +250,7 @@ function AdCampaignManagementPage() {
       if (userType === 'business' && campaignId && campaignData.status === 'pending_payment') {
         navigate(`/pay-for-ad/${campaignId}`);
       } else {
-        await fetchCampaigns(); // Re-fetch campaigns after successful operation
+        await fetchCampaigns();
         handleCancelEdit();
       }
 
@@ -277,7 +283,7 @@ function AdCampaignManagementPage() {
 
       if (deleteError) throw deleteError;
 
-      await fetchCampaigns(); // Re-fetch campaigns after deletion
+      await fetchCampaigns();
       setSuccess('Ad campaign deleted successfully!');
     } catch (err) {
       setError(err.message || 'Failed to delete ad campaign.');
@@ -326,7 +332,7 @@ function AdCampaignManagementPage() {
 
       if (updateError) throw updateError;
 
-      await fetchCampaigns(); // Re-fetch campaigns after admin action
+      await fetchCampaigns();
       setSuccess(`Campaign ${campaignId} ${action}d successfully!`);
     } catch (err) {
       setError(err.message || `Failed to ${action} campaign.`);
@@ -337,7 +343,7 @@ function AdCampaignManagementPage() {
   };
 
 
-  if (loading || !user) { // Keep loading if user is not yet loaded or initial auth check is ongoing
+  if (loading || !user) {
     return <div className="ad-campaign-management-container"><p>Loading...</p></div>;
   }
 
@@ -345,9 +351,8 @@ function AdCampaignManagementPage() {
     return <div className="ad-campaign-management-container"><p className="error-message">{error}</p></div>;
   }
 
-  // If initial auth check passed but user is null (e.g. not logged in), redirect
   if (!user) {
-    navigate('/'); // Should be caught by the useEffect, but good as fallback
+    navigate('/');
     return null;
   }
 
@@ -441,21 +446,6 @@ function AdCampaignManagementPage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="payment_amount">Payment Amount (KES):</label>
-            <input
-              type="number"
-              id="payment_amount"
-              name="payment_amount"
-              value={newCampaign.payment_amount}
-              onChange={handleInputChange}
-              required
-              min="0"
-              step="any"
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
             <label htmlFor="payment_interval">Payment Interval:</label>
             <select
               id="payment_interval"
@@ -464,8 +454,8 @@ function AdCampaignManagementPage() {
               onChange={handleInputChange}
               disabled={loading}
             >
-              <option value="weekly">Weekly (500 KES)</option>
-              <option value="monthly">Monthly (1500 KES)</option>
+              <option value="weekly">Weekly (KES {PAYMENT_AMOUNTS.weekly.toLocaleString()})</option>
+              <option value="monthly">Monthly (KES {PAYMENT_AMOUNTS.monthly.toLocaleString()})</option>
             </select>
           </div>
 
@@ -550,7 +540,6 @@ function AdCampaignManagementPage() {
                   <p><strong>Description:</strong> {campaign.ad_description || 'N/A'}</p>
                   <p><strong>Type:</strong> {campaign.media_type}</p>
                   <p><strong>Target:</strong> <a href={campaign.target_url} target="_blank" rel="noopener noreferrer">{campaign.target_url}</a></p>
-                  <p><strong>Amount:</strong> KES {campaign.payment_amount.toLocaleString()} / {campaign.payment_interval}</p>
                   <p><strong>Status:</strong> {campaign.status.replace(/_/g, ' ')}</p>
                   <p><strong>Dates:</strong> {campaign.start_date ? new Date(campaign.start_date).toLocaleDateString() : 'N/A'} - {campaign.end_date ? new Date(campaign.end_date).toLocaleDateString() : 'N/A'}</p>
                 </div>

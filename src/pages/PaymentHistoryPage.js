@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-// Removed: import { useAuth } from '../context/AuthContext'; // No longer needed
 import { useNavigate } from 'react-router-dom';
 import './PaymentHistoryPage.css';
 
 function PaymentHistoryPage() {
-  // Removed: const { } = useAuth(); // This was causing the empty object pattern warning
   const navigate = useNavigate();
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +12,6 @@ function PaymentHistoryPage() {
 
   useEffect(() => {
     const fetchPaymentHistory = async () => {
-      // Get authenticated user from Supabase
       const { data: { user: authUser } } = await supabase.auth.getUser();
       
       if (!authUser) {
@@ -28,7 +25,6 @@ function PaymentHistoryPage() {
       setError(null);
 
       try {
-        // Fetch payment history from payments table
         const { data: payments, error: paymentsError } = await supabase
           .from('payments')
           .select('*')
@@ -39,7 +35,6 @@ function PaymentHistoryPage() {
 
         setPaymentHistory(payments || []);
 
-        // Calculate current month views (subscribed viewers only)
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth() + 1;
         const currentYear = currentDate.getFullYear();
@@ -67,7 +62,7 @@ function PaymentHistoryPage() {
   }, [navigate]);
 
   const totalEarned = paymentHistory.reduce((sum, payment) => sum + parseFloat(payment.earnings_kes || 0), 0);
-  const upcomingPayment = Math.floor(currentMonthViews / 1000) * 100; // Updated from 10 to 100
+  const upcomingPayment = Math.floor(currentMonthViews / 1000) * 100; // Corrected line, ensuring no stray characters
 
   if (loading) {
     return <div className="payment-history-container"><p>Loading payment history...</p></div>;
@@ -142,7 +137,7 @@ function PaymentHistoryPage() {
         <div className="info-cards">
           <div className="info-card">
             <h4>Earning Rate</h4>
-            <p>You earn 100 KES for every 1,000 combined views of your photos and videos from subscribed viewers.</p> {/* Updated from 10 KES to 100 KES */}
+            <p>You earn 100 KES for every 1,000 combined views of your photos and videos from subscribed viewers.</p>
           </div>
           <div className="info-card">
             <h4>Payment Frequency</h4>
