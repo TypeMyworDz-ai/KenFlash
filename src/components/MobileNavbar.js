@@ -12,8 +12,7 @@ function MobileNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
 
-  // --- DEBUGGING LOG (Re-added) ---
-  // This will help us see the auth state when the navbar renders.
+  // --- DEBUGGING LOG ---
   console.log('MobileNavbar Auth State:', { isLoggedIn, userRole });
 
 
@@ -42,8 +41,8 @@ function MobileNavbar() {
       if (userRole === 'admin') {
         return '/admin-dashboard';
       } else if (userRole === 'creator') {
-        return '/user-dashboard'; // Correct path for creator dashboard
-      } else if (userRole === 'business') { // NEW: Handle business role for brand redirect
+        return '/user-dashboard';
+      } else if (userRole === 'business') {
         return '/ad-campaign-management';
       }
     }
@@ -72,12 +71,10 @@ function MobileNavbar() {
         </svg>
       </Link>
       
-      {/* Centered Camera Icon for Creators (Image) */}
-      {(isLoggedIn && userRole === 'creator') && (
-        <button className="mobile-navbar-camera-button" onClick={handleCameraClick}>
-          <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
-        </button>
-      )}
+      {/* Centered Camera Icon (ALWAYS DISPLAYED for debugging) */}
+      <button className="mobile-navbar-camera-button" onClick={handleCameraClick}> {/* REMOVED CONDITIONAL RENDERING */}
+        <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
+      </button>
 
       {/* Hamburger menu on the right */}
       <button className="hamburger-menu" onClick={toggleMenu}>
@@ -108,7 +105,7 @@ function MobileNavbar() {
                 )}
                 {userRole === 'creator' && (
                   <>
-                    <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Dashboard</Link> {/* UPDATED: Renamed "My Dashboard" to "Dashboard" */}
+                    <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Dashboard</Link>
                     <Link to="/my-content" className="mobile-menu-item" onClick={closeAllMenus}>My Content</Link>
                     <button className="mobile-menu-item" onClick={handleCameraClick}>Upload Content</button>
                     <Link to="/my-views" className="mobile-menu-item" onClick={closeAllMenus}>My Views</Link>
