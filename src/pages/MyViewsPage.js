@@ -38,96 +38,78 @@ function MyViewsPage() {
       try {
         const today = new Date();
         const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-        
         const weekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+        const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        // 1. Total views all-time
-        const { count: totalCount } = await supabase
-          .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id);
-        setTotalViews(totalCount || 0);
 
-        // 2. Views today
-        const { count: todayCount } = await supabase
+        // UPDATED: Fetch all views for this creator directly from the 'views' table
+        // RLS policy on 'views' table already filters by auth.uid() = creator_id
+        const { data: creatorViews, error: viewsError } = await supabase
           .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id)
-          .gte('viewed_at', todayStart);
-        setViewsToday(todayCount || 0);
+          .select(`
+            content_id,
+            viewed_at,
+            creator_id,
+            content_type
+          `);
 
-        // 3. Views this week
-        const { count: weekCount } = await supabase
-          .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id)
-          .gte('viewed_at', weekStart);
-        setViewsThisWeek(weekCount || 0);
+        if (viewsError) throw viewsError;
 
-        // 4. Views this month
-        const { count: monthCount } = await supabase
-          .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id)
-          .gte('viewed_at', monthStart);
-        setViewsThisMonth(monthCount || 0);
+        // No need for client-side filtering by creator_id anymore, RLS handles it.
+        // The data already comes filtered for the current authUser.id
+        const filteredViews = creatorViews || [];
 
-        // 5. Views by content type
-        const { count: photoCount } = await supabase
-          .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id)
-          .eq('content_type', 'photo');
-        setPhotoViews(photoCount || 0);
-
-        const { count: videoCount } = await supabase
-          .from('views')
-          .select('id', { count: 'exact' })
-          .eq('creator_id', authUser.id)
-          .eq('content_type', 'video');
-        setVideoViews(videoCount || 0);
-
-        // 6. Daily views (last 30 days)
-        const { data: dailyData } = await supabase
-          .from('views')
-          .select('viewed_at')
-          .eq('creator_id', authUser.id)
-          .gte('viewed_at', new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString());
+        // Process the filtered views data
+        let totalCount = 0;
+        let todayCount = 0;
+        let weekCount = 0;
+        let monthCount = 0;
+        let photoCount = 0;
+        let videoCount = 0;
 
         const dailyBreakdown = {};
-        dailyData?.forEach(view => {
-          const date = new Date(view.viewed_at).toLocaleDateString();
-          dailyBreakdown[date] = (dailyBreakdown[date] || 0) + 1;
-        });
-        setDailyViews(Object.entries(dailyBreakdown).map(([date, count]) => ({ date, count })).sort((a, b) => new Date(a.date) - new Date(b.date)));
-
-        // 7. Monthly views (all-time)
-        const { data: monthlyData } = await supabase
-          .from('views')
-          .select('viewed_at')
-          .eq('creator_id', authUser.id);
-
         const monthlyBreakdown = {};
-        monthlyData?.forEach(view => {
-          const date = new Date(view.viewed_at);
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] || 0) + 1;
-        });
-        setMonthlyViews(Object.entries(monthlyBreakdown).map(([month, count]) => ({ month, count })).sort());
-
-        // 8. Top performing content
-        const { data: allViews } = await supabase
-          .from('views')
-          .select('content_id, content_type')
-          .eq('creator_id', authUser.id);
-
         const contentViewCount = {};
-        allViews?.forEach(view => {
-          const key = `${view.content_type}-${view.content_id}`;
-          contentViewCount[key] = (contentViewCount[key] || 0) + 1;
+
+        filteredViews.forEach(view => {
+          totalCount++;
+
+          const viewDate = new Date(view.viewed_at);
+
+          // Time-based counts
+          if (viewDate.toISOString() >= todayStart) todayCount++;
+          if (viewDate.toISOString() >= weekStart) weekCount++;
+          if (viewDate.toISOString() >= monthStart) monthCount++;
+
+          // Content type breakdown (now directly from view.content_type)
+          if (view.content_type === 'photo') photoCount++;
+          if (view.content_type === 'video') videoCount++;
+
+          // Daily views (last 30 days)
+          if (viewDate.toISOString() >= thirtyDaysAgo) {
+            const dateKey = viewDate.toLocaleDateString();
+            dailyBreakdown[dateKey] = (dailyBreakdown[dateKey] || 0) + 1;
+          }
+
+          // Monthly views (all-time)
+          const monthKey = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
+          monthlyBreakdown[monthKey] = (monthlyBreakdown[monthKey] || 0) + 1;
+
+          // Top performing content (now directly from view.content_type)
+          const contentKey = `${view.content_type}-${view.content_id}`;
+          contentViewCount[contentKey] = (contentViewCount[contentKey] || 0) + 1;
         });
+
+        setTotalViews(totalCount);
+        setViewsToday(todayCount);
+        setViewsThisWeek(weekCount);
+        setViewsThisMonth(monthCount);
+        setPhotoViews(photoCount);
+        setVideoViews(videoCount);
+
+        setDailyViews(Object.entries(dailyBreakdown).map(([date, count]) => ({ date, count })).sort((a, b) => new Date(a.date) - new Date(b.date)));
+        setMonthlyViews(Object.entries(monthlyBreakdown).map(([month, count]) => ({ month, count })).sort());
 
         const topContentList = Object.entries(contentViewCount)
           .map(([key, count]) => {
@@ -136,8 +118,8 @@ function MyViewsPage() {
           })
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
-
         setTopContent(topContentList);
+
 
       } catch (err) {
         setError(err.message || 'Failed to fetch views data');

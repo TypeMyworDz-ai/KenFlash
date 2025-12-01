@@ -65,19 +65,20 @@ function UploadPhotosPage() {
       const photoMetadata = uploadedPhotoPaths.map(path => {
         const metadataItem = {
           creator_id: creatorId,
-          storage_path: String(path), // Explicitly convert to String to prevent any ambiguity
+          storage_path: String(path),
           group_id: groupId,
           caption: caption || null,
+          content_type: 'photo',
           is_active: true,
         };
-        console.log('[UploadPhotosPage] Inside map - metadataItem before return:', metadataItem); // CRITICAL DEBUGGING
+        console.log('[UploadPhotosPage] Inside map - metadataItem before return:', metadataItem);
         return metadataItem;
       });
 
       console.log('[UploadPhotosPage] Photo metadata prepared for insertion (final check):', photoMetadata);
 
       const { error: insertError } = await supabase
-        .from('photos')
+        .from('content')
         .insert(photoMetadata);
 
       if (insertError) {
@@ -89,7 +90,7 @@ function UploadPhotosPage() {
       alert('Your photos have been uploaded and saved!');
       setSelectedPhotos([]);
       setCaption('');
-      navigate('/my-content'); // Redirect to My Content Page
+      navigate('/my-content');
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during photo upload.');
       console.error('[UploadPhotosPage] Photo upload process error (caught):', err);

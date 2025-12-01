@@ -9,7 +9,7 @@ import SubscriptionPromptModal from '../components/SubscriptionPromptModal';
 import './MobileHomePage.css';
 
 const AD_MEDIA_BUCKET = 'ad-media';
-const AVATAR_BUCKET = 'avatars'; // Assuming your avatars are in an 'avatars' bucket
+const AVATAR_BUCKET = 'avatars';
 const CONTENT_FETCH_LIMIT = 5;
 const AD_INSERT_FREQUENCY = 3;
 const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3;
@@ -20,10 +20,10 @@ function MobileHomePage() {
   const { theme } = useTheme();
 
   const [feedContent, setFeedContent] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasMoreContent, setHasMoreContent] = useState(true);
-  const [lastFetchedItemId, setLastFetchedItemId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
   const [scrollCount, setScrollCount] = useState(0);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +31,7 @@ function MobileHomePage() {
 
   const containerRef = useRef(null);
   const itemRefs = useRef([]);
+  const isFetching = useRef(false);
 
   const getPublicUrl = useCallback((path, bucketName) => {
     if (!path) return null;
@@ -38,135 +39,181 @@ function MobileHomePage() {
     return data.publicUrl;
   }, []);
 
-  const fetchContent = useCallback(async (isInitialFetch = false) => {
-    if ((loading && !isInitialFetch) || (!hasMoreContent && !isInitialFetch)) {
-      return;
-    }
+  // UPDATED: Function to log views - now includes viewer_email and uniqueness check for premium content
+  const logView = useCallback(async (contentId, creatorId, contentType, isPremiumContent) => {
+    console.log('--- Attempting to log view (Mobile) ---');
+    console.log('Content ID:', contentId);
+    console.log('Creator ID (for view logging):', creatorId);
+    console.log('Content Type (for view logging):', contentType);
+    console.log('Is Premium Content:', isPremiumContent); // NEW: Log isPremiumContent
 
+    try {
+      const { data: { user } } = await supabase.auth.getUser(); // Reintroduce fetching user
+      
+      // Determine viewer_email: prioritize authenticated user's email, then localStorage subscriber email
+      const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
+
+      console.log('Viewer Email (to log):', viewerEmailToLog);
+
+      // --- Uniqueness Check for Premium Content ---
+      if (isPremiumContent && viewerEmailToLog && isVisitorSubscribed) {
+        console.log(`Checking for existing view for premium content ${contentId} by ${viewerEmailToLog}`);
+        const { data: existingViews, error: checkError } = await supabase
+          .from('views')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('viewer_email', viewerEmailToLog)
+          .limit(1);
+
+        if (checkError) {
+          console.error('Error checking for existing view (Mobile):', checkError);
+          // Proceed with logging anyway, but log the error
+        } else if (existingViews && existingViews.length > 0) {
+          console.log(`Duplicate view prevented for premium content ${contentId} by ${viewerEmailToLog}`);
+          return; // Prevent logging duplicate view
+        }
+      }
+      // --- End Uniqueness Check ---
+      
+      console.log('Values to insert:', {
+        content_id: contentId,
+        creator_id: creatorId,
+        content_type: contentType,
+        viewer_email: viewerEmailToLog, // NEW: Include viewer_email
+        viewed_at: new Date().toISOString(),
+      });
+
+      const { error: insertError } = await supabase.from('views').insert([
+        {
+          content_id: contentId,
+          creator_id: creatorId,
+          content_type: contentType,
+          viewer_email: viewerEmailToLog, // NEW: Include viewer_email
+          viewed_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error('Supabase INSERT Error (Mobile):', insertError);
+      } else {
+        console.log('View successfully logged for contentId (Mobile):', contentId);
+        // Optionally re-fetch content to update counts immediately, but for infinite scroll,
+        // it might be better to let the next scroll fetch update it.
+        // fetchContent(); 
+      }
+    } catch (err) {
+      console.error('Error in logView function (Mobile):', err);
+    }
+    console.log('--- End log view attempt (Mobile) ---');
+  }, [isVisitorSubscribed]); // Added isVisitorSubscribed to dependencies
+
+
+  const fetchContent = useCallback(async () => {
+    if (isFetching.current || !hasMoreContent) return;
+    
+    isFetching.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      let photosQuery = supabase
-        .from('photos')
-        .select('id, storage_path, caption, creator_id, created_at')
+      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator'] : ['normal_creator'];
+      const from = currentPage * CONTENT_FETCH_LIMIT;
+      const to = from + CONTENT_FETCH_LIMIT - 1;
+
+      // UPDATED: Fetch content, profiles (including creator_type), and views_count
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .select(`
+          *, 
+          profiles!inner(id, nickname, avatar_path, creator_type),
+          views_count:views(count)
+        `)
+        .in('profiles.creator_type', creatorTypesToFetch)
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(CONTENT_FETCH_LIMIT);
+        .range(from, to);
 
-      if (lastFetchedItemId && !isInitialFetch) {
-        photosQuery = photosQuery.lt('id', lastFetchedItemId);
-      }
+      if (contentError) throw contentError;
 
-      const { data: photosData, error: photosError } = await photosQuery;
-      if (photosError) throw photosError;
-
-      let videosQuery = supabase
-        .from('videos')
-        .select('id, storage_path, thumbnail_path, title, creator_id, created_at')
-        .order('created_at', { ascending: false })
-        .limit(CONTENT_FETCH_LIMIT);
-
-      if (lastFetchedItemId && !isInitialFetch) {
-        videosQuery = videosQuery.lt('id', lastFetchedItemId);
-      }
-
-      const { data: videosData, error: videosError } = await videosQuery;
-      if (videosError) throw videosError;
-
-      const allContent = [
-        ...(photosData || []).map(p => ({
-          ...p,
-          type: 'photo',
-          url: getPublicUrl(p.storage_path, 'content')
-        })),
-        ...(videosData || []).map(v => ({
-          ...v,
-          type: 'video',
-          url: getPublicUrl(v.storage_path, 'content'),
-          thumbnailUrl: getPublicUrl(v.thumbnail_path || v.storage_path, 'content')
-        })),
-      ];
-
-      allContent.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      if (allContent.length === 0) {
+      if (contentData.length < CONTENT_FETCH_LIMIT) {
         setHasMoreContent(false);
-      } else {
-        const creatorIds = [...new Set(allContent.map(item => item.creator_id))];
-        let profilesData = [];
-        let profilesError = null;
-        if (creatorIds.length > 0) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, nickname, avatar_url');
-          profilesData = data;
-          profilesError = error;
-        }
-        
-        if (profilesError) console.error('Error fetching profiles for nicknames/avatars:', profilesError);
-
-        const profilesMap = profilesData ? profilesData.reduce((acc, profile) => {
-          acc[profile.id] = { nickname: profile.nickname, avatar_url: profile.avatar_url };
-          return acc;
-        }, {}) : {};
-
-        const contentWithCreatorInfo = allContent.map(item => ({
+      }
+      
+      if (contentData.length > 0) {
+        const processedContent = contentData.map(item => ({
           ...item,
+          type: item.content_type,
+          url: getPublicUrl(item.storage_path, 'content'),
+          thumbnailUrl: getPublicUrl(item.thumbnail_path || item.storage_path, 'content'),
           creatorInfo: {
-            id: item.creator_id,
-            nickname: profilesMap[item.creator_id]?.nickname || 'Creator',
-            avatar_url: getPublicUrl(profilesMap[item.creator_id]?.avatar_url, AVATAR_BUCKET) || null
-          }
+            id: item.profiles.id,
+            nickname: item.profiles.nickname || 'Creator',
+            avatar_url: getPublicUrl(item.profiles.avatar_path, AVATAR_BUCKET) || null
+          },
+          views: item.views_count ? item.views_count[0].count : 0, // Extract views count
+          isPremiumContent: item.profiles.creator_type === 'premium_creator', // NEW: Flag for premium content
         }));
 
-        setLastFetchedItemId(allContent[allContent.length - 1].id);
-
+        // Fetch active ad campaigns
+        const now = new Date().toISOString();
         const { data: adsData, error: adsError } = await supabase
-          .from('advertisements')
+          .from('ad_campaigns')
           .select('*')
-          .eq('is_active', true)
+          .eq('status', 'active')
+          .lte('start_date', now)
+          .gte('end_date', now)
           .order('created_at', { ascending: false })
           .limit(10);
 
         if (adsError) console.error('Error fetching ads:', adsError);
-
+        
         let newFeedItems = [];
         let adIndex = 0;
-        for (let i = 0; i < contentWithCreatorInfo.length; i++) {
-          newFeedItems.push(contentWithCreatorInfo[i]);
-          if (adsData && adsData.length > 0 && (i + 1) % AD_INSERT_FREQUENCY === 0) {
+        for (let i = 0; i < processedContent.length; i++) {
+          newFeedItems.push(processedContent[i]);
+          if (adsData?.length > 0 && (i + 1) % AD_INSERT_FREQUENCY === 0) {
             const randomAd = adsData[adIndex % adsData.length];
-            newFeedItems.push({
-              ...randomAd,
-              type: 'ad',
-              media_url: getPublicUrl(randomAd.media_path, AD_MEDIA_BUCKET)
+            newFeedItems.push({ 
+              ...randomAd, 
+              type: 'ad', 
+              media_url: getPublicUrl(randomAd.media_path, AD_MEDIA_BUCKET),
+              ad_type: randomAd.media_type,
             });
             adIndex++;
           }
         }
-
-        setFeedContent(prev => isInitialFetch ? newFeedItems : [...prev, ...newFeedItems]);
+        
+        setFeedContent(prev => [...prev, ...newFeedItems]);
+        setCurrentPage(prev => prev + 1);
       }
-
     } catch (err) {
       setError(err.message || 'Failed to load content.');
-      console.error('Error fetching mobile content (catch block):', err);
+      console.error('Error fetching mobile content:', err);
     } finally {
       setLoading(false);
+      isFetching.current = false;
     }
-  }, [loading, hasMoreContent, lastFetchedItemId, getPublicUrl]);
+  }, [currentPage, hasMoreContent, isVisitorSubscribed, getPublicUrl]); // Removed logView from dependencies, as it is not directly used here
 
-  // Initial content fetch
+  // Reset feed when subscription status changes
   useEffect(() => {
-    fetchContent(true);
-  }, [fetchContent]);
+    setFeedContent([]);
+    setCurrentPage(0);
+    setHasMoreContent(true);
+    isFetching.current = false;
+  }, [isVisitorSubscribed]);
 
-  // Intersection Observer for video playback control and infinite scroll
+  // Initial fetch
+  useEffect(() => {
+    fetchContent();
+  }, [currentPage, hasMoreContent, isVisitorSubscribed, fetchContent]);
+
+  // Intersection Observer for video playback and infinite scroll
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const currentItemRefs = itemRefs.current; 
+    const currentItemRefs = itemRefs.current;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -177,53 +224,44 @@ function MobileHomePage() {
 
             if (index === feedContent.length - 1 && !loading && hasMoreContent) {
               setScrollCount(prev => prev + 1);
-              fetchContent();
             }
           }
         });
       },
-      {
-        root: containerRef.current,
-        rootMargin: '0px',
-        threshold: 0.75,
-      }
+      { root: container, rootMargin: '0px', threshold: 0.75 }
     );
 
-    currentItemRefs.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
+    currentItemRefs.forEach(ref => { if (ref) observer.observe(ref); });
 
     return () => {
-      currentItemRefs.forEach((ref) => {
-        if (ref) observer.unobserve(ref);
-      });
+      currentItemRefs.forEach(ref => { if (ref) observer.unobserve(ref); });
       observer.disconnect();
     };
-  }, [feedContent, loading, hasMoreContent, fetchContent]);
+  }, [feedContent, loading, hasMoreContent]);
 
-  // Subscription prompt logic for free users
+  // Trigger fetch on scroll
+  useEffect(() => {
+    if (scrollCount > 0 && !loading && hasMoreContent) {
+      fetchContent();
+    }
+  }, [scrollCount, loading, hasMoreContent, fetchContent]);
+
+  // Subscription prompt logic
   useEffect(() => {
     if (!isVisitorSubscribed && scrollCount >= SCROLLS_BEFORE_SUBSCRIPTION_PROMPT) {
       setShowSubscriptionPrompt(true);
     }
   }, [isVisitorSubscribed, scrollCount]);
 
-  const closeSubscriptionPrompt = () => {
-    setShowSubscriptionPrompt(false);
-  };
-
+  const closeSubscriptionPrompt = () => setShowSubscriptionPrompt(false);
   const handleSubscribeClick = () => {
     navigate('/subscribe');
     closeSubscriptionPrompt();
   };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
   return (
     <div className={`mobile-homepage-container ${theme}`} ref={containerRef}>
-      {/* Transparent Search Bar */}
       <div className="mobile-search-bar-container">
         <input
           type="text"
@@ -252,8 +290,8 @@ function MobileHomePage() {
                     isActive={isActive}
                     isVisitorSubscribed={isVisitorSubscribed}
                     setShowSubscriptionPrompt={setShowSubscriptionPrompt}
-                    // Changed to general creator profile page
-                    onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}`)} 
+                    onNavigateToCreatorProfile={(creatorId) => navigate(`/profile/${creatorId}`)}
+                    logView={logView} // Pass logView function
                   />
                 )}
               </div>
@@ -263,7 +301,7 @@ function MobileHomePage() {
       )}
 
       {loading && <p className="loading-message">Loading more content...</p>}
-      {!hasMoreContent && !loading && <p className="end-of-feed-message">You've reached the end of the feed.</p>}
+      {!hasMoreContent && !loading && feedContent.length > 0 && <p className="end-of-feed-message">You've reached the end.</p>}
 
       {showSubscriptionPrompt && !isVisitorSubscribed && (
         <SubscriptionPromptModal

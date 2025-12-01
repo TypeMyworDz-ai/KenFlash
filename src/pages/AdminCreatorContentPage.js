@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import PhotoSlideshowModal from '../components/PhotoSlideshowModal'; // Re-use photo slideshow modal
-import './AdminCreatorContentPage.css'; // We'll create this CSS file next
+import PhotoSlideshowModal from '../components/PhotoSlideshowModal';
+import './AdminCreatorContentPage.css';
 
-// Define the admin email for testing purposes
 const ADMIN_EMAIL = 'admin@kenyaflashing.com';
 
 function AdminCreatorContentPage() {
@@ -60,30 +59,25 @@ function AdminCreatorContentPage() {
             return data.publicUrl;
           };
 
-          // 1. Fetch creator's photos
-          const { data: photosData, error: photosError } = await supabase
-            .from('photos')
-            .select('id, created_at, storage_path, caption, group_id')
+          // Fetch creator's content from merged table
+          const { data: contentData, error: contentError } = await supabase
+            .from('content')
+            .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type, is_active')
             .eq('creator_id', creatorId)
             .order('created_at', { ascending: false });
 
-          if (photosError) throw photosError;
-
-          // 2. Fetch creator's videos
-          const { data: videosData, error: videosError } = await supabase
-            .from('videos')
-            .select('id, created_at, storage_path, thumbnail_path, title, caption')
-            .eq('creator_id', creatorId)
-            .order('created_at', { ascending: false });
-
-          if (videosError) throw videosError;
+          if (contentError) throw contentError;
 
           const allContent = [];
 
-          // Process photos: Group by group_id
-          if (photosData) {
+          if (contentData) {
+            // Separate photos and videos
+            const photos = contentData.filter(item => item.content_type === 'photo');
+            const videos = contentData.filter(item => item.content_type === 'video');
+
+            // Process photos: Group by group_id
             const photoGroups = {};
-            photosData.forEach(photo => {
+            photos.forEach(photo => {
               if (!photoGroups[photo.group_id]) {
                 photoGroups[photo.group_id] = {
                   id: photo.group_id,
@@ -91,7 +85,7 @@ function AdminCreatorContentPage() {
                   uploadDate: photo.created_at,
                   caption: photo.caption,
                   photos: [],
-                  storagePaths: [], // To store all storage paths for deletion
+                  storagePaths: [],
                 };
               }
               photoGroups[photo.group_id].photos.push({
@@ -102,11 +96,9 @@ function AdminCreatorContentPage() {
               photoGroups[photo.group_id].storagePaths.push(photo.storage_path);
             });
             Object.values(photoGroups).forEach(group => allContent.push(group));
-          }
 
-          // Process videos
-          if (videosData) {
-            videosData.forEach(video => {
+            // Process videos
+            videos.forEach(video => {
               allContent.push({
                 id: video.id,
                 type: 'video',
@@ -132,9 +124,9 @@ function AdminCreatorContentPage() {
       };
       fetchCreatorContent();
     }
-  }, [currentAdminEmail, creatorId, navigate]); // Added navigate to dependency array
+  }, [currentAdminEmail, creatorId, navigate]);
 
-  const handleTakeDownContent = async (itemId, itemType, storagePaths) => { // storagePaths is now an array for groups
+  const handleTakeDownContent = async (itemId, itemType, storagePaths) => {
     if (!window.confirm(`Are you sure you want to permanently take down this ${itemType} (${itemId})? This will delete it from the database and storage.`)) {
       return;
     }
@@ -144,21 +136,18 @@ function AdminCreatorContentPage() {
       // 1. Delete files from Supabase Storage
       const { error: storageError } = await supabase.storage
         .from('content')
-        .remove(Array.isArray(storagePaths) ? storagePaths : [storagePaths]); // Handle single or multiple paths
+        .remove(Array.isArray(storagePaths) ? storagePaths : [storagePaths]);
       if (storageError) throw storageError;
 
-      // 2. Delete record(s) from the database table (photos or videos)
-      let dbError;
+      // 2. Delete record(s) from the content table
       if (itemType === 'photo_group') {
         // Delete all photos belonging to this group_id
-        const { error } = await supabase.from('photos').delete().eq('group_id', itemId);
-        dbError = error;
+        const { error } = await supabase.from('content').delete().eq('group_id', itemId);
+        if (error) throw error;
       } else if (itemType === 'video') {
-        const { error } = await supabase.from('videos').delete().eq('id', itemId);
-        dbError = error;
+        const { error } = await supabase.from('content').delete().eq('id', itemId);
+        if (error) throw error;
       }
-
-      if (dbError) throw dbError;
 
       // Update UI: remove the content from the list
       setCreatorContent(prevContent => prevContent.filter(item => item.id !== itemId));
@@ -183,7 +172,6 @@ function AdminCreatorContentPage() {
     setCurrentSlideshowPhotos([]);
     setCurrentSlideshowCaption('');
   };
-
 
   if (!currentAdminEmail) {
     return <div className="admin-creator-content-container">Loading admin status...</div>;

@@ -3,24 +3,28 @@
 .homepage-container {
   text-align: center;
   padding: 30px;
+  padding-top: 80px; /* Add padding to account for fixed Navbar */
   max-width: 1400px; /* Increased max-width for larger items */
   margin: 0 auto;
   position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 80px; /* Add padding to account for fixed Navbar */
+  box-sizing: border-box; /* Ensure padding is included in width calculation */
 }
 
 /* Draftey Logo and Slogan Section */
 .draftey-header-section {
-  position: absolute; /* Position absolutely within the homepage-container */
-  top: 45px; /* Adjusted to be visible and below the home icon */
-  left: 20px; /* Adjusted to align with the home icon */
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* Align items to the start (left) */
-  z-index: 10; /* Ensure it's above other content if necessary */
+  margin-bottom: 40px; /* Space between header and first content section */
+  padding-left: 20px; /* Align with the left edge of the content area */
+  padding-right: 20px; /* Ensure content doesn't touch right edge */
+  width: 100%; /* Take full width of its container */
+  max-width: 1200px; /* Constrain width of the inner content */
+  align-self: center; /* Center the block itself within homepage-container's max-width */
+  text-align: left; /* Ensure text inside is left-aligned */
 }
 
 .draftey-logo {
@@ -168,16 +172,21 @@
 
 /* Search Bar Styling */
 .search-bar-container {
-  position: absolute;
-  top: 20px; /* Adjusted position */
-  left: 30px; /* Adjusted position */
-  width: 250px; /* Increased width */
-  z-index: 990;
-  margin: 0;
+  position: sticky; /* Keeps search bar visible when scrolling */
+  top: 80px; /* Position below the fixed navbar */
+  left: 0;
+  width: 100%;
+  z-index: 90; /* Ensure it's above content but below navbar */
+  margin: 0 auto;
+  padding: 0 30px;
+  box-sizing: border-box;
+  background-color: var(--background-color); /* Ensure background matches theme */
+  padding-bottom: 20px; /* Space below the search bar */
 }
 
 .creator-search-input {
   width: 100%;
+  max-width: 300px;
   padding: 10px 18px; /* Increased padding */
   border: 1px solid var(--border-color);
   border-radius: 25px; /* More rounded */
@@ -187,6 +196,7 @@
   box-sizing: border-box;
   background-color: var(--input-background-color);
   color: var(--input-text-color);
+  text-align: left;
 }
 
 .creator-search-input::placeholder {
@@ -205,6 +215,7 @@
   margin-top: 40px; /* Increased margin */
   margin-bottom: 50px; /* Increased margin */
   text-align: center;
+  align-self: center; /* Center the grid within the flex container */
 }
 
 .ad-banners-grid {
@@ -239,8 +250,8 @@
   display: block;
 }
 
-/* Free Content Grid (New) */
-.free-content-grid {
+/* Content Grid - IMPROVED */
+.content-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Adjusted for larger, more flexible items */
   gap: 25px; /* Increased gap */
@@ -259,7 +270,7 @@
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Ensure content is stacked vertically */
 }
 
 .content-card:hover {
@@ -267,12 +278,14 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
+/* Media takes up more space */
 .content-media {
   position: relative;
   width: 100%;
-  padding-bottom: 100%; /* Creates a square aspect ratio */
+  padding-bottom: 120%; /* Creates a 4:5 aspect ratio (taller than wide) for photos/videos */
   cursor: pointer;
   overflow: hidden;
+  flex-grow: 1; /* Allow media to take available height */
 }
 
 .content-thumbnail {
@@ -285,40 +298,76 @@
   display: block;
 }
 
-.content-overlay {
-  position: absolute;
-  top: 10px; /* Adjusted position */
-  right: 10px; /* Adjusted position */
-  background-color: rgba(0, 0, 0, 0.75); /* Slightly darker overlay */
-  color: white;
-  padding: 5px 8px; /* Increased padding */
-  border-radius: 4px; /* Slightly larger border-radius */
-  font-size: 0.8em; /* Slightly larger font size */
-  font-weight: bold;
-}
+/* Remove content-overlay as view count is moving */
+/* .content-overlay { ... } */
 
+/* Creator info bar - compact, horizontal layout with views on the right */
 .content-creator-info {
   display: flex;
-  justify-content: center;
-  padding: 12px; /* Increased padding */
+  align-items: center;
+  justify-content: space-between; /* Distribute items with space in between */
+  padding: 10px 12px; /* Reduced padding for a more compact look */
   background-color: var(--card-background-color);
   border-top: 1px solid var(--border-color); /* Added subtle border top */
+  gap: 10px; /* Space between avatar and name */
+  min-height: 60px; /* Ensure consistent height */
+}
+
+.creator-left-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1; /* Allow this section to take available space */
+  min-width: 0; /* Allow content to shrink */
 }
 
 .creator-avatar {
-  width: 50px; /* Larger avatar */
-  height: 50px; /* Larger avatar */
+  width: 45px; /* Slightly smaller avatar */
+  height: 45px; /* Slightly smaller avatar */
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--primary-color); /* Thicker border */
+  border: 2px solid var(--primary-color); /* Thicker border */
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Added subtle shadow to avatar */
+  flex-shrink: 0; /* Prevent avatar from shrinking */
 }
 
 .creator-avatar:hover {
   transform: scale(1.1); /* More prominent hover effect */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Creator name/info */
+.creator-name-info {
+  text-align: left;
+  min-width: 0; /* Allow text to truncate */
+}
+
+.creator-name-info p {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-color);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Truncate long names with ellipsis */
+}
+
+/* View count on right (now moved inside content-creator-info) */
+.view-count {
+  font-size: 0.85em;
+  color: var(--secondary-text-color);
+  white-space: nowrap;
+  flex-shrink: 0; /* Prevent view count from shrinking */
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.view-count::before {
+  content: '👁'; /* Eye icon for views */
+  font-size: 0.8em;
 }
 
 /* Pagination Controls */
@@ -438,7 +487,7 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .free-content-grid {
+  .content-grid {
     grid-template-columns: repeat(4, 1fr); /* 4 columns on larger desktops */
     max-width: 960px;
   }
@@ -449,9 +498,9 @@
     padding-top: 60px;
   }
   .search-bar-container {
-    width: 200px;
-    top: 10px;
-    left: 15px;
+    top: 60px; /* Adjust sticky top for smaller navbar */
+    width: 250px; /* Slightly smaller search bar */
+    padding: 0 15px;
   }
   .creator-search-input {
     padding: 8px 15px;
@@ -465,30 +514,36 @@
   .ad-banner-card video {
     height: 180px;
   }
-  .free-content-grid {
+  .content-grid {
     grid-template-columns: repeat(3, 1fr); /* 3 columns on medium screens */
     gap: 20px;
     max-width: 700px;
   }
   .content-media {
-    padding-bottom: 100%;
+    padding-bottom: 120%; /* Keep aspect ratio */
   }
   .content-thumbnail {
     height: 100%;
   }
   .creator-avatar {
-    width: 45px;
-    height: 45px;
+    width: 40px; /* Smaller avatar */
+    height: 40px; /* Smaller avatar */
   }
   .draftey-header-section {
-    top: 35px; /* Adjusted */
-    left: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
+    max-width: 1000px;
   }
   .draftey-logo {
     max-width: 100px;
   }
   .draftey-slogan {
     font-size: 1.1em;
+  }
+  /* Remove content-overlay responsive styles */
+  /* .content-overlay { ... } */
+  .view-count {
+    font-size: 0.8em;
   }
 }
 
@@ -499,16 +554,18 @@
   }
 
   .search-bar-container {
-    position: static;
+    position: static; /* No longer sticky on small screens */
     width: 100%;
     margin-bottom: 30px;
     top: auto;
     left: auto;
+    padding: 0; /* Remove padding as container handles it */
   }
 
   .creator-search-input {
     padding: 10px 18px;
     font-size: 1em;
+    max-width: 100%; /* Full width on mobile */
   }
 
   .modal-content.age-modal {
@@ -571,7 +628,7 @@
     font-size: 1.1em;
   }
 
-  .free-content-grid {
+  .content-grid {
     grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens */
     gap: 15px;
     max-width: 500px;
@@ -587,8 +644,9 @@
     height: 150px;
   }
   .draftey-header-section {
-    top: 30px; /* Adjusted */
-    left: 15px;
+    padding-left: 10px;
+    padding-right: 10px;
+    max-width: 800px;
   }
   .draftey-logo {
     max-width: 80px;
@@ -656,15 +714,15 @@
     font-size: 1em;
   }
 
-  .free-content-grid {
+  .content-grid {
     grid-template-columns: 1fr; /* Single column on very small screens */
     gap: 10px;
     max-width: 350px;
   }
 
   .creator-avatar {
-    width: 40px;
-    height: 40px;
+    width: 35px; /* Even smaller avatar */
+    height: 35px; /* Even smaller avatar */
   }
 
   .ad-banner-card img,
@@ -672,8 +730,9 @@
     height: 100px;
   }
   .draftey-header-section {
-    top: 25px; /* Adjusted */
-    left: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    max-width: 600px;
   }
   .draftey-logo {
     max-width: 70px;

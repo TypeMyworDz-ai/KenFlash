@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext'; // Import useTheme
+import { useTheme } from '../context/ThemeContext';
 import './MobileNavbar.css';
 
 function MobileNavbar() {
   const { isLoggedIn, userRole, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme(); // Use theme and toggleTheme from context
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-    setIsPolicyDropdownOpen(false); // Close policy dropdown if menu is toggled
+    setIsPolicyDropdownOpen(false);
   };
 
   const togglePolicyDropdown = () => {
@@ -44,12 +44,12 @@ function MobileNavbar() {
 
   return (
     <nav className="mobile-navbar">
-      {/* Home icon on the left */}
-      <Link to="/" className="mobile-home-icon" onClick={closeAllMenus}>
-        🏠
+      {/* Draftey Logo and Slogan on the left */}
+      <Link to="/" className="mobile-navbar-brand" onClick={closeAllMenus}>
+        <img src="/draftey-logo.png" alt="Draftey Logo" className="mobile-draftey-logo" />
+        <h2 className="mobile-draftey-slogan">Post your Drafts…</h2>
       </Link>
-      {/* App name "Draftee" in the center */}
-      <div className="mobile-navbar-brand-center">Draftee</div>
+      
       {/* Hamburger menu on the right */}
       <button className="hamburger-menu" onClick={toggleMenu}>
         &#9776; {/* Hamburger icon */}
@@ -60,7 +60,7 @@ function MobileNavbar() {
           <div className="mobile-menu-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-menu-button" onClick={toggleMenu}>&times;</button>
             <Link to={getBrandRedirectPath()} className="mobile-menu-item brand-item" onClick={closeAllMenus}>
-              Draftee
+              Draftey
             </Link>
             {isLoggedIn ? (
               <>

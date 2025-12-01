@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "POST", "PUT", "DELETE"],
+    "AllowedOrigins": ["http://localhost:3000", "https://ken-flash.vercel.app"],
+    "ExposeHeaders": ["Content-Length", "x-supabase-storage-id"],
+    "MaxAgeSeconds": 3000
+  }
+]

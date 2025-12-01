@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient'; // Uncommented and now actively used
+import { supabase } from '../supabaseClient';
 import './AdminContentModerationPage.css';
 
 function AdminContentModerationPage() {
-  const [content, setContent] = useState([]); // Will store combined photos and videos
+  const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -12,69 +12,45 @@ function AdminContentModerationPage() {
       setLoading(true);
       setError(null);
       try {
-        const bucketName = 'content'; // The bucket where user content is stored
+        const bucketName = 'content';
 
-        // Helper function to get public URL from storage path
         const getPublicUrl = (path) => {
           if (!path) return null;
           const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
           return data.publicUrl;
         };
 
-        // 1. Fetch all photos
-        const { data: photosData, error: photosError } = await supabase
-          .from('photos')
-          .select('id, created_at, creator_id, storage_path, caption, profiles(nickname, official_name)')
-          .order('created_at', { ascending: false }); // Order by latest first
+        // Fetch all content from merged table
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .select('id, created_at, creator_id, storage_path, thumbnail_path, title, caption, content_type, is_active, profiles(nickname, official_name)')
+          .order('created_at', { ascending: false });
 
-        if (photosError) throw photosError;
-
-        // 2. Fetch all videos
-        const { data: videosData, error: videosError } = await supabase
-          .from('videos')
-          .select('id, created_at, creator_id, storage_path, thumbnail_path, title, caption, profiles(nickname, official_name)')
-          .order('created_at', { ascending: false }); // Order by latest first
-
-        if (videosError) throw videosError;
+        if (contentError) throw contentError;
 
         // Combine and format content
         const allContent = [];
 
-        // Process photos
-        if (photosData) {
-          photosData.forEach(photo => {
+        if (contentData) {
+          contentData.forEach(item => {
             allContent.push({
-              id: photo.id,
-              type: 'photo',
-              creatorId: photo.creator_id,
-              creatorNickname: photo.profiles ? photo.profiles.nickname : 'Unknown Creator',
-              url: getPublicUrl(photo.storage_path), // Construct public URL
-              uploadDate: photo.created_at,
-              caption: photo.caption,
-              storagePath: photo.storage_path, // Keep storage path for deletion
+              id: item.id,
+              type: item.content_type,
+              creatorId: item.creator_id,
+              creatorNickname: item.profiles ? item.profiles.nickname : 'Unknown Creator',
+              url: getPublicUrl(item.storage_path),
+              thumbnail: item.thumbnail_path ? getPublicUrl(item.thumbnail_path) : getPublicUrl(item.storage_path),
+              videoUrl: getPublicUrl(item.storage_path),
+              title: item.title,
+              caption: item.caption,
+              uploadDate: item.created_at,
+              storagePath: item.storage_path,
+              isActive: item.is_active,
             });
           });
         }
 
-        // Process videos
-        if (videosData) {
-          videosData.forEach(video => {
-            allContent.push({
-              id: video.id,
-              type: 'video',
-              creatorId: video.creator_id,
-              creatorNickname: video.profiles ? video.profiles.nickname : 'Unknown Creator',
-              thumbnail: getPublicUrl(video.thumbnail_path || video.storage_path), // Use thumbnail or video path
-              videoUrl: getPublicUrl(video.storage_path), // Construct public URL
-              title: video.title,
-              uploadDate: video.created_at,
-              caption: video.caption,
-              storagePath: video.storage_path, // Keep storage path for deletion
-            });
-          });
-        }
-
-        // Sort combined content by upload date (latest first)
+        // Sort by upload date (latest first)
         allContent.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
 
         setContent(allContent);
@@ -88,7 +64,7 @@ function AdminContentModerationPage() {
     };
 
     fetchAllContent();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const handleTakeDownContent = async (contentId, contentType, storagePath) => {
     if (!window.confirm(`Are you sure you want to take down this ${contentType} (${contentId})? This will permanently delete it.`)) {
@@ -100,22 +76,18 @@ function AdminContentModerationPage() {
       // 1. Delete file from Supabase Storage
       const { error: storageError } = await supabase.storage
         .from('content')
-        .remove([storagePath]); // Pass the full storage path
+        .remove([storagePath]);
 
       if (storageError) {
         throw storageError;
       }
       console.log(`File removed from storage: ${storagePath}`);
 
-      // 2. Delete record from the database table (photos or videos)
-      let dbError;
-      if (contentType === 'photo') {
-        const { error } = await supabase.from('photos').delete().eq('id', contentId);
-        dbError = error;
-      } else if (contentType === 'video') {
-        const { error } = await supabase.from('videos').delete().eq('id', contentId);
-        dbError = error;
-      }
+      // 2. Delete record from the content table
+      const { error: dbError } = await supabase
+        .from('content')
+        .delete()
+        .eq('id', contentId);
 
       if (dbError) {
         throw dbError;
@@ -156,7 +128,6 @@ function AdminContentModerationPage() {
                   <video controls src={item.videoUrl} poster={item.thumbnail} className="content-thumbnail">
                     Your browser does not support the video tag.
                   </video>
-                  {/* <span className="play-icon-overlay">▶</span> */} {/* Removed play icon overlay for native video controls */}
                 </div>
               )}
               <div className="content-details">

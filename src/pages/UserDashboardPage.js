@@ -12,7 +12,6 @@ function UserDashboardPage() {
   useEffect(() => {
     const fetchCreatorType = async () => {
       try {
-        // Get the current authenticated user directly from Supabase
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
         if (authUser?.id) {
@@ -53,6 +52,15 @@ function UserDashboardPage() {
         <p className="dashboard-description">Manage your content and profile settings.</p>
 
         <div className="dashboard-sections-grid normal-creator-grid">
+          {/* My Content Card */}
+          <Link to="/my-content" className="dashboard-card-link">
+            <div className="dashboard-card content-card">
+              <h3>📂 My Content</h3>
+              <p>View, manage, and edit all your uploaded photos and videos.</p>
+              <button className="dashboard-button">View Content</button>
+            </div>
+          </Link>
+
           {/* Upload Content Card */}
           <Link to="/choose-upload-type" className="dashboard-card-link">
             <div className="dashboard-card upload-card">
@@ -91,8 +99,8 @@ function UserDashboardPage() {
       <div className="dashboard-sections-grid">
         {/* My Content Card */}
         <Link to={isUserApproved ? "/my-content" : "#"} className={`dashboard-card-link ${!isUserApproved ? 'disabled-link' : ''}`}>
-          <div className="dashboard-card">
-            <h3>My Content</h3>
+          <div className="dashboard-card content-card">
+            <h3>📂 My Content</h3>
             <p>View, manage, and edit all your uploaded photos and videos.</p>
             {isUserApproved ? (
               <button className="dashboard-button">View Content</button>
@@ -104,8 +112,8 @@ function UserDashboardPage() {
 
         {/* Upload Content Card */}
         <Link to={isUserApproved ? "/choose-upload-type" : "#"} className={`dashboard-card-link ${!isUserApproved ? 'disabled-link' : ''}`}>
-          <div className="dashboard-card">
-            <h3>Upload New Content</h3>
+          <div className="dashboard-card upload-card">
+            <h3>📤 Upload New Content</h3>
             <p>Share your latest photos and videos with your audience.</p>
             {isUserApproved ? (
               <button className="dashboard-button">Start Uploading</button>
@@ -117,7 +125,7 @@ function UserDashboardPage() {
 
         {/* My Views Card */}
         <div className="dashboard-card">
-          <h3>My Views</h3>
+          <h3>📊 My Views</h3>
           <p>Monitor your total views and track your content's performance.</p>
           {isUserApproved ? (
             <Link to="/my-views" className="dashboard-button">View Statistics</Link>
@@ -128,7 +136,7 @@ function UserDashboardPage() {
 
         {/* Payment History Card */}
         <div className="dashboard-card">
-          <h3>Payment History</h3>
+          <h3>💰 Payment History</h3>
           <p>See your earnings and upcoming payments.</p>
           {isUserApproved ? (
             <Link to="/payment-history" className="dashboard-button">Check Payments</Link>
@@ -139,7 +147,7 @@ function UserDashboardPage() {
 
         {/* Messages Card */}
         <div className="dashboard-card">
-          <h3>Messages</h3>
+          <h3>💬 Messages</h3>
           <p>Chat with the admin team for support or inquiries.</p>
           {isUserApproved ? (
             <Link to="/messages" className="dashboard-button">Chat with Admin</Link>
@@ -150,7 +158,7 @@ function UserDashboardPage() {
 
         {/* Settings Card */}
         <div className="dashboard-card">
-          <h3>Settings</h3>
+          <h3>⚙️ Settings</h3>
           <p>Update your profile information and details.</p>
           {isUserApproved ? (
             <Link to="/profile-settings" className="dashboard-button">Edit Settings</Link>

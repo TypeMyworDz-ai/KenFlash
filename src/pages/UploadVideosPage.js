@@ -42,7 +42,7 @@ function UploadVideosPage() {
       const fileExtension = selectedVideo.name.split('.').pop();
       const filePath = `public/${creatorId}/videos/${uuidv4()}.${fileExtension}`;
 
-      console.log('[UploadVideosPage] Attempting to upload video to path:', filePath); // Debugging
+      console.log('[UploadVideosPage] Attempting to upload video to path:', filePath);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('content')
         .upload(filePath, selectedVideo, {
@@ -51,29 +51,30 @@ function UploadVideosPage() {
         });
 
       if (uploadError) {
-        console.error('[UploadVideosPage] Error uploading video to storage:', uploadError); // Debugging
+        console.error('[UploadVideosPage] Error uploading video to storage:', uploadError);
         throw uploadError;
       }
       const storagePath = uploadData.path;
-      console.log('[UploadVideosPage] Video uploaded to storage. uploadData:', uploadData); // Debugging
-      console.log('[UploadVideosPage] Uploaded video path (storagePath):', storagePath); // Debugging
+      console.log('[UploadVideosPage] Video uploaded to storage. uploadData:', uploadData);
+      console.log('[UploadVideosPage] Uploaded video path (storagePath):', storagePath);
 
       const videoMetadata = {
         creator_id: creatorId,
         storage_path: storagePath,
         title: videoTitle,
-        caption: caption,
+        caption: caption || null,
+        content_type: 'video',
         is_active: true,
       };
 
-      console.log('[UploadVideosPage] Video metadata prepared for insertion:', videoMetadata); // Debugging
+      console.log('[UploadVideosPage] Video metadata prepared for insertion:', videoMetadata);
 
       const { error: insertError } = await supabase
-        .from('videos')
+        .from('content')
         .insert([videoMetadata]);
 
       if (insertError) {
-        console.error('[UploadVideosPage] Error inserting video metadata:', insertError); // Debugging
+        console.error('[UploadVideosPage] Error inserting video metadata:', insertError);
         throw insertError;
       }
 
@@ -82,11 +83,11 @@ function UploadVideosPage() {
       setSelectedVideo(null);
       setVideoTitle('');
       setCaption('');
-      navigate('/my-content'); // Redirect to My Content Page
+      navigate('/my-content');
 
     } catch (err) {
       setError(err.message || 'An unexpected error occurred during video upload.');
-      console.error('[UploadVideosPage] Video upload process error:', err); // Debugging
+      console.error('[UploadVideosPage] Video upload process error:', err);
     } finally {
       setLoading(false);
     }

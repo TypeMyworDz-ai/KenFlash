@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext'; // Import ThemeProvider
+import { ThemeProvider } from './context/ThemeContext';
 import { supabase } from './supabaseClient';
 import './App.css';
 import Navbar from './components/Navbar';
@@ -15,7 +15,7 @@ import UserSignupSuccessPage from './pages/UserSignupSuccessPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
-import SingleContentPage from './pages/SingleContentPage'; // New Import
+import SingleContentPage from './pages/SingleContentPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import PaystackCallback from './pages/PaystackCallback';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
@@ -25,15 +25,13 @@ import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-// Removed: import CreatorPhotosPage from './pages/CreatorPhotosPage';
-// Removed: import CreatorVideosPage from './pages/CreatorVideosPage';
 import PaymentHistoryPage from './pages/PaymentHistoryPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import MyProfilePage from './pages/MyProfilePage';
 import CreatorMessagesPage from './pages/CreatorMessagesPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminContentModerationPage from './pages/AdminContentModerationPage';
-import AdminPendingCreatorsPage from './pages/AdminPendingCreatorsPage'; // Corrected Import Path
+import AdminPendingCreatorsPage from './pages/AdminPendingCreatorsPage';
 import AdminManageViewersPage from './pages/AdminManageViewersPage';
 import MyContentPage from './pages/MyContentPage';
 import AdminViewCreatorProfilePage from './pages/AdminViewCreatorProfilePage';
@@ -42,7 +40,8 @@ import AdminCreatorContentPage from './pages/AdminCreatorContentPage';
 import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
-import AdminManageAdsPage from './pages/AdminManageAdsPage';
+import AdCampaignManagementPage from './pages/AdCampaignManagementPage'; // Renamed import
+import PayForAdPage from './pages/PayForAdPage'; // New import
 import { Capacitor } from '@capacitor/core';
 
 
@@ -117,15 +116,14 @@ function App() {
                 <Route path="/messages" element={<CreatorMessagesPage />} />
                 <Route path="/admin-messages" element={<AdminMessagesPage />} />
                 <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-                <Route path="/admin-manage-ads" element={<AdminManageAdsPage />} />
+                {/* Updated route for Ad Campaign Management */}
+                <Route path="/admin-manage-ads" element={<AdCampaignManagementPage />} />
                 <Route path="/profile/:userId" element={<UserProfileViewPage />} />
-                {/* New route for individual content display */}
-                <Route path="/content/:contentId" element={<SingleContentPage />} /> 
-                {/* Removed old routes for CreatorPhotosPage and CreatorVideosPage */}
-                {/* <Route path="/profile/:userId/photos" element={<CreatorPhotosPage />} /> */}
-                {/* <Route path="/profile/:userId/videos" element={<CreatorVideosPage />} /> */}
+                <Route path="/content/:contentId" element={<SingleContentPage />} />
                 <Route path="/subscribe" element={<SubscriptionPage />} />
                 <Route path="/paystack-callback" element={<PaystackCallback />} />
+                {/* New route for Ad Campaign Payment */}
+                <Route path="/pay-for-ad/:campaignId" element={<PayForAdPage />} />
                 <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -141,7 +139,7 @@ function App() {
               </Routes>
             </div>
           </div>
-        </ThemeProvider> {/* End of ThemeProvider */}
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

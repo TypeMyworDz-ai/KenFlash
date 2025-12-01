@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PhotoSlideshowModal from '../components/PhotoSlideshowModal';
 import VideoPlayerModal from '../components/VideoPlayerModal';
@@ -7,16 +7,14 @@ import { supabase } from '../supabaseClient';
 import './HomePage.css';
 
 const AD_MEDIA_BUCKET = 'ad-media';
-const CONTENT_PER_PAGE = 30; // 5 columns × 6 rows
-const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/40'; // Consistent placeholder
-const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video'; // Generic video placeholder
+const CONTENT_PER_PAGE = 30;
+const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/40';
+const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
 
 function HomePage() {
   const { isVisitorSubscribed } = useAuth();
-  const navigate = useNavigate();
 
-  const [content, setContent] = useState([]); // State for free content
-  const [premiumContent, setPremiumContent] = useState([]); // State for premium content
+  const [content, setContent] = useState([]);
   const [advertisements, setAdvertisements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,12 +30,10 @@ function HomePage() {
     return false;
   });
 
-  // State for PhotoSlideshowModal
   const [showSlideshowModal, setShowSlideshowModal] = useState(false);
   const [currentSlideshowPhotos, setCurrentSlideshowPhotos] = useState([]);
   const [currentSlideshowIndex, setCurrentSlideshowIndex] = useState(0);
 
-  // State for VideoPlayerModal
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
 
@@ -45,7 +41,6 @@ function HomePage() {
   const [totalContentCount, setTotalContentCount] = useState(0);
   const totalPages = Math.ceil(totalContentCount / CONTENT_PER_PAGE);
 
-  // Ref for video elements to control playback on hover
   const videoRefs = useRef({});
 
   const getPublicUrl = useCallback((path, bucketName) => {
@@ -54,7 +49,6 @@ function HomePage() {
     return data.publicUrl;
   }, []);
 
-  // Helper function to group photos by group_id
   const groupPhotos = useCallback((photos) => {
     const groupedPhotosMap = new Map();
     const singlePhotos = [];
@@ -72,16 +66,17 @@ function HomePage() {
 
     const combinedContent = [];
     groupedPhotosMap.forEach((group, group_id) => {
-      // Sort group photos by created_at or some order if needed, taking the first as thumbnail
       const sortedGroup = group.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       combinedContent.push({
-        id: group_id, // Use group_id as the main ID for the group
+        id: group_id,
         type: 'photo_group',
         photos: sortedGroup,
-        url: getPublicUrl(sortedGroup[0].storage_path, 'content'), // Thumbnail is the first photo
-        caption: sortedGroup[0].caption, // Use first photo's caption for display
+        url: getPublicUrl(sortedGroup[0].storage_path, 'content'),
+        caption: sortedGroup[0].caption,
         creator_id: sortedGroup[0].creator_id,
-        profiles: sortedGroup[0].profiles, // Ensure profiles are already attached if coming from processed data
+        profiles: sortedGroup[0].profiles,
+        views: sortedGroup[0].views || 0, // Ensure views are passed from individual photos
+        content_type: 'photo', // Assuming a photo group is treated as 'photo' type for views
       });
     });
 
@@ -92,225 +87,159 @@ function HomePage() {
     }))];
   }, [getPublicUrl]);
 
-  // Helper function to fetch profiles for a list of creator IDs
-  const fetchProfilesForContent = useCallback(async (creatorIds) => {
-    if (creatorIds.length === 0) return {};
+  // Removed fetchProfilesForContent as profile data is now fetched directly in the main content query
+  // const fetchProfilesForContent = useCallback(async (creatorIds) => { ... });
+
+  const logView = useCallback(async (contentId, creatorId, contentType, isPremiumContent) => {
+    console.log('--- Attempting to log view ---');
+    console.log('Content ID:', contentId);
+    console.log('Creator ID (for view logging):', creatorId);
+    console.log('Content Type (for view logging):', contentType);
+    console.log('Is Premium Content:', isPremiumContent);
 
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, nickname, avatar_path, creator_type')
-        .in('id', creatorIds); // Fetch all unique profiles in one go
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
 
-      if (profilesError) throw profilesError;
+      console.log('Viewer Email (to log):', viewerEmailToLog);
 
-      const profilesMap = {};
-      profilesData.forEach(profile => {
-        profilesMap[profile.id] = profile;
+      if (isPremiumContent && viewerEmailToLog && isVisitorSubscribed) {
+        console.log(`Checking for existing view for premium content ${contentId} by ${viewerEmailToLog}`);
+        const { data: existingViews, error: checkError } = await supabase
+          .from('views')
+          .select('id')
+          .eq('content_id', contentId)
+          .eq('viewer_email', viewerEmailToLog)
+          .limit(1);
+
+        if (checkError) {
+          console.error('Error checking for existing view:', checkError);
+        } else if (existingViews && existingViews.length > 0) {
+          console.log(`Duplicate view prevented for premium content ${contentId} by ${viewerEmailToLog}`);
+          return;
+        }
+      }
+
+      console.log('Values to insert:', {
+        content_id: contentId,
+        creator_id: creatorId,
+        content_type: contentType,
+        viewer_email: viewerEmailToLog,
+        viewed_at: new Date().toISOString(),
       });
-      console.log('Fetched Profiles Map (separate query):', profilesMap); // Debugging
-      return profilesMap;
-    } catch (err) {
-      console.error('Error fetching profiles for content (separate query):', err);
-      return {};
-    }
-  }, []);
 
-  // Fetch free creator content (photos and videos)
-  const fetchFreeContent = useCallback(async () => {
+      const { error: insertError } = await supabase.from('views').insert([
+        {
+          content_id: contentId,
+          creator_id: creatorId,
+          content_type: contentType,
+          viewer_email: viewerEmailToLog,
+          viewed_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error('Supabase INSERT Error:', insertError);
+      } else {
+        console.log('View successfully logged for contentId:', contentId);
+      }
+    } catch (err) {
+      console.error('Error in logView function:', err);
+    }
+    console.log('--- End log view attempt ---');
+  }, [isVisitorSubscribed]);
+
+  const fetchContent = useCallback(async () => {
     if (showAgeModal) {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
-      // Fetch photos WITHOUT joining profiles
-      const { data: photosData, error: photosError } = await supabase
-        .from('photos')
-        .select('id, storage_path, caption, creator_id, group_id, created_at', { count: 'exact' })
+      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator'] : ['normal_creator'];
+
+      // UPDATED: Fetch nickname and avatar_path from profiles
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, creator_type), views_count:views(count)')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (photosError) throw photosError;
+      if (contentError) throw contentError;
 
-      // Fetch videos WITHOUT joining profiles
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select('id, storage_path, thumbnail_path, title, creator_id', { count: 'exact' })
-        .order('created_at', { ascending: false });
+      // No longer need to manually build profilesMap or filter by creator_type here
+      // as it's done directly in the select and filter in the query.
 
-      if (videosError) throw videosError;
-
-      // Collect all unique creator IDs from both photos and videos
-      const allCreatorIds = [
-        ...new Set([
-          ...(photosData || []).map(p => p.creator_id),
-          ...(videosData || []).map(v => v.creator_id),
-        ].filter(Boolean))
-      ];
-
-      // Fetch profiles separately
-      const profilesMap = await fetchProfilesForContent(allCreatorIds);
-
-      // Attach profiles and apply client-side filtering for 'normal_creator'
-      const processedPhotosWithProfiles = (photosData || [])
-        .map(photo => ({
-          ...photo,
-          profiles: profilesMap[photo.creator_id] || null // Attach profile or null if not found
+      const contentWithProfilesAndViews = (contentData || [])
+        .map(item => ({
+          ...item,
+          // profiles object is already attached by the Supabase join
+          views: item.views_count ? item.views_count[0].count : 0,
         }))
-        .filter(photo => photo.profiles && photo.profiles.creator_type === 'normal_creator');
+        .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.creator_type));
 
-      const processedVideosWithProfiles = (videosData || [])
-        .map(video => ({
-          ...video,
-          profiles: profilesMap[video.creator_id] || null // Attach profile or null if not found
-        }))
-        .filter(video => video.profiles && video.profiles.creator_type === 'normal_creator');
+      const photos = contentWithProfilesAndViews.filter(item => item.content_type === 'photo');
+      const videos = contentWithProfilesAndViews.filter(item => item.content_type === 'video');
 
-      console.log('Processed Free Photos (with profiles, client-filtered):', processedPhotosWithProfiles);
-      console.log('Processed Free Videos (with profiles, client-filtered):', processedVideosWithProfiles);
+      const groupedAndFilteredPhotos = groupPhotos(photos);
 
-      // Group photos (now with profiles attached)
-      const groupedAndFilteredPhotos = groupPhotos(processedPhotosWithProfiles || []);
-
-      // Combine all content
       const allContent = [
         ...groupedAndFilteredPhotos,
-        ...(processedVideosWithProfiles || []).map(v => ({
+        ...videos.map(v => ({
           ...v,
           type: 'video',
           url: getPublicUrl(v.storage_path, 'content'),
-          thumbnailUrl: v.thumbnail_path ? getPublicUrl(v.thumbnail_path, 'content') : (v.storage_path ? getPublicUrl(v.storage_path, 'content') : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER)
+          thumbnailUrl: v.thumbnail_path ? getPublicUrl(v.thumbnail_path, 'content') : (v.storage_path ? getPublicUrl(v.storage_path, 'content') : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER),
         })),
       ];
 
       const shuffled = allContent.sort(() => Math.random() - 0.5);
       setTotalContentCount(shuffled.length);
-      
       const startIndex = (currentPage - 1) * CONTENT_PER_PAGE;
       const endIndex = startIndex + CONTENT_PER_PAGE;
       setContent(shuffled.slice(startIndex, endIndex));
-
     } catch (err) {
       setError(err.message || 'Failed to fetch content.');
-      console.error('Error fetching free content:', err);
+      console.error('Error fetching content:', err);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, showAgeModal, getPublicUrl, groupPhotos, fetchProfilesForContent]);
-
-  // Fetch premium creator content (photos and videos)
-  const fetchPremiumContent = useCallback(async () => {
-    // If not subscribed, we don't fetch premium content
-    if (!isVisitorSubscribed || showAgeModal) {
-      setPremiumContent([]);
-      return;
-    }
-
-    try {
-      // Fetch photos WITHOUT joining profiles
-      const { data: photosData, error: photosError } = await supabase
-        .from('photos')
-        .select('id, storage_path, caption, creator_id, group_id, created_at')
-        .order('created_at', { ascending: false });
-
-      if (photosError) throw photosError;
-
-      // Fetch videos WITHOUT joining profiles
-      const { data: videosData, error: videosError } = await supabase
-        .from('videos')
-        .select('id, storage_path, thumbnail_path, title, creator_id')
-        .order('created_at', { ascending: false });
-
-      if (videosError) throw videosError;
-
-      // Collect all unique creator IDs from both photos and videos
-      const allCreatorIds = [
-        ...new Set([
-          ...(photosData || []).map(p => p.creator_id),
-          ...(videosData || []).map(v => v.creator_id),
-        ].filter(Boolean))
-      ];
-
-      // Fetch profiles separately
-      const profilesMap = await fetchProfilesForContent(allCreatorIds);
-
-      // Attach profiles and apply client-side filtering for 'premium_creator'
-      const processedPhotosWithProfiles = (photosData || [])
-        .map(photo => ({
-          ...photo,
-          profiles: profilesMap[photo.creator_id] || null
-        }))
-        .filter(photo => photo.profiles && photo.profiles.creator_type === 'premium_creator');
-
-      const processedVideosWithProfiles = (videosData || [])
-        .map(video => ({
-          ...video,
-          profiles: profilesMap[video.creator_id] || null
-        }))
-        .filter(video => video.profiles && video.profiles.creator_type === 'premium_creator');
-
-      console.log('Processed Premium Photos (with profiles, client-filtered):', processedPhotosWithProfiles);
-      console.log('Processed Premium Videos (with profiles, client-filtered):', processedVideosWithProfiles);
-
-      // Group photos (now with profiles attached)
-      const groupedAndFilteredPhotos = groupPhotos(processedPhotosWithProfiles || []);
-
-      // Combine all premium content
-      const allPremiumContent = [
-        ...groupedAndFilteredPhotos,
-        ...(processedVideosWithProfiles || []).map(v => ({
-          ...v,
-          type: 'video',
-          url: getPublicUrl(v.storage_path, 'content'),
-          thumbnailUrl: v.thumbnail_path ? getPublicUrl(v.thumbnail_path, 'content') : (v.storage_path ? getPublicUrl(v.storage_path, 'content') : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER)
-        })),
-      ];
-
-      const shuffledPremium = allPremiumContent.sort(() => Math.random() - 0.5);
-      setPremiumContent(shuffledPremium);
-
-    } catch (err) {
-      console.error('Error fetching premium content:', err);
-    }
-  }, [isVisitorSubscribed, showAgeModal, getPublicUrl, groupPhotos, fetchProfilesForContent]);
+  }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]); // Removed fetchProfilesForContent from deps
 
   useEffect(() => {
-    fetchFreeContent();
-    fetchPremiumContent(); // Fetch premium content when subscription status changes
-  }, [fetchFreeContent, fetchPremiumContent]);
+    fetchContent();
+  }, [fetchContent]);
 
-  // Fetch Advertisements
   useEffect(() => {
     if (showAgeModal) {
       setAdvertisements([]);
       return;
     }
-
     const fetchAds = async () => {
       try {
         const now = new Date().toISOString();
         const { data, error: fetchError } = await supabase
-          .from('advertisements')
+          .from('ad_campaigns')
           .select('*')
-          .eq('is_active', true)
+          .eq('status', 'active')
           .lte('start_date', now)
           .gte('end_date', now)
-          .order('display_order', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;
 
         const shuffledAds = data ? data.sort(() => Math.random() - 0.5).slice(0, 2) : [];
         setAdvertisements(shuffledAds.map(ad => ({
           ...ad,
-          media_url: getPublicUrl(ad.media_path, AD_MEDIA_BUCKET)
+          media_url: getPublicUrl(ad.media_path, AD_MEDIA_BUCKET),
+          ad_type: ad.media_type,
         })));
       } catch (err) {
         console.error('Error fetching advertisements:', err);
       }
     };
-
     fetchAds();
   }, [showAgeModal, getPublicUrl]);
 
@@ -322,7 +251,7 @@ function HomePage() {
         setShowCookieConsent(Math.random() < 0.5);
       }
     } else {
-      navigate('https://www.google.com');
+      window.location.href = 'https://www.google.com';
     }
   };
 
@@ -345,27 +274,26 @@ function HomePage() {
     }
   };
 
-  // Functions to manage slideshow modal
   const openSlideshow = (item) => {
-    // If it's a photo group, pass all photos in the group
+    const isPremium = item.profiles?.creator_type === 'premium_creator';
+    logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
+    
     if (item.type === 'photo_group') {
       setCurrentSlideshowPhotos(item.photos.map(p => ({
         id: p.id,
         url: getPublicUrl(p.storage_path, 'content'),
         caption: p.caption,
-        creatorNickname: p.profiles?.nickname,
+        creatorNickname: item.profiles?.nickname,
         type: 'photo',
       })));
-    } else { // It's a single photo
-      setCurrentSlideshowPhotos([
-        {
-          id: item.id,
-          url: item.url,
-          caption: item.caption,
-          creatorNickname: item.profiles?.nickname,
-          type: 'photo',
-        }
-      ]);
+    } else {
+      setCurrentSlideshowPhotos([{
+        id: item.id,
+        url: item.url,
+        caption: item.caption,
+        creatorNickname: item.profiles?.nickname,
+        type: 'photo',
+      }]);
     }
     setCurrentSlideshowIndex(0);
     setShowSlideshowModal(true);
@@ -377,8 +305,10 @@ function HomePage() {
     setCurrentSlideshowIndex(0);
   };
 
-  // Functions to manage video player modal
   const openVideoPlayer = (videoItem) => {
+    const isPremium = videoItem.profiles?.creator_type === 'premium_creator';
+    logView(videoItem.id, videoItem.creator_id, videoItem.content_type, isPremium);
+    
     setCurrentVideo({
       id: videoItem.id,
       url: videoItem.url,
@@ -394,16 +324,14 @@ function HomePage() {
     setCurrentVideo(null);
   };
 
-  // Handle creator avatar click
   const handleCreatorAvatarClick = (creatorId) => {
-    navigate(`/profile/${creatorId}`);
+    window.open(`/profile/${creatorId}`, '_blank');
   };
 
-  // Handle video hover for autoplay
   const handleVideoMouseEnter = (itemId) => {
     const video = videoRefs.current[itemId];
     if (video) {
-      video.muted = true; // Ensure video is muted for autoplay
+      video.muted = true;
       video.play().catch(error => console.error("Video autoplay failed:", error));
     }
   };
@@ -412,10 +340,9 @@ function HomePage() {
     const video = videoRefs.current[itemId];
     if (video) {
       video.pause();
-      video.currentTime = 0; // Reset video to start on mouse leave
+      video.currentTime = 0;
     }
   };
-
 
   if (showAgeModal) {
     return (
@@ -425,12 +352,8 @@ function HomePage() {
             <h2>Age Verification</h2>
             <p>You must be 18 or older to access this content.</p>
             <div className="modal-buttons">
-              <button className="modal-button decline" onClick={() => handleAgeVerification(false)}>
-                I'm Under 18
-              </button>
-              <button className="modal-button accept" onClick={() => handleAgeVerification(true)}>
-                I'm Over 18
-              </button>
+              <button className="modal-button decline" onClick={() => handleAgeVerification(false)}>I'm Under 18</button>
+              <button className="modal-button accept" onClick={() => handleAgeVerification(true)}>I'm Over 18</button>
             </div>
           </div>
         </div>
@@ -443,19 +366,15 @@ function HomePage() {
       {showCookieConsent && (
         <div className="cookie-consent-banner">
           <p>We use cookies to enhance your experience. By continuing, you accept our use of cookies.</p>
-          <button className="cookie-accept-button" onClick={handleCookieConsent}>
-            Accept Cookies
-          </button>
+          <button className="cookie-accept-button" onClick={handleCookieConsent}>Accept Cookies</button>
         </div>
       )}
 
-      {/* Draftey Logo and Slogan */}
       <div className="draftey-header-section">
-        <img src="/draftey-logo.png" alt="Draftey Logo" className="draftey-logo" /> {/* Assumes logo is in the public folder */}
+        <img src="/draftey-logo.png" alt="Draftey Logo" className="draftey-logo" />
         <h2 className="draftey-slogan">Post your Drafts…</h2>
       </div>
 
-      {/* Advertisement Banners */}
       {advertisements.length > 0 && (
         <div className="ad-banners-section">
           <div className="ad-banners-grid">
@@ -472,81 +391,16 @@ function HomePage() {
         </div>
       )}
 
-      {/* Free Content Grid */}
       {error && <p className="error-message">{error}</p>}
 
       {loading ? (
         <p>Loading content...</p>
       ) : content.length === 0 ? (
-        <p>No free content available at the moment.</p>
+        <p>No content available at the moment.</p>
       ) : (
         <>
-          <h2 className="content-grid-heading">Free Content</h2>
-          <div className="free-content-grid">
+          <div className="content-grid">
             {content.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="content-card">
-                <div
-                  className="content-media"
-                  onClick={item.type === 'video' ? () => openVideoPlayer(item) : () => openSlideshow(item)}
-                  onMouseEnter={item.type === 'video' ? () => handleVideoMouseEnter(item.id) : undefined}
-                  onMouseLeave={item.type === 'video' ? () => handleVideoMouseLeave(item.id) : undefined}
-                >
-                  {item.type === 'photo' || item.type === 'photo_group' ? (
-                    <img src={item.url} alt={item.caption || 'Content'} className="content-thumbnail" />
-                  ) : (
-                    <video
-                      ref={el => (videoRefs.current[item.id] = el)}
-                      poster={item.thumbnailUrl} // Use the potentially new thumbnailUrl
-                      className="content-thumbnail"
-                      muted // Muted for autoplay on hover
-                      loop
-                      controls // Added controls for better user interaction if autoplay fails
-                      controlsList="nodownload"
-                    >
-                      <source src={item.url} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  )}
-                  <div className="content-overlay">
-                    <span className="content-type">
-                      {item.type === 'photo_group' ? '📸📸' : item.type === 'photo' ? '📸' : '🎥'}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Creator Avatar Below Content */}
-                <div className="content-creator-info">
-                  <img
-                    src={item.profiles?.avatar_path ? getPublicUrl(item.profiles.avatar_path, 'avatars') : DEFAULT_AVATAR_PLACEHOLDER}
-                    alt={item.profiles?.nickname || 'Creator'}
-                    className="creator-avatar"
-                    onClick={() => handleCreatorAvatarClick(item.profiles?.id)}
-                    title={item.profiles?.nickname || 'Creator'}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination Controls */}
-          <div className="pagination-controls">
-            <button onClick={handlePrevPage} disabled={currentPage === 1 || loading} className="pagination-button">
-              Previous
-            </button>
-            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
-            <button onClick={handleNextPage} disabled={currentPage === totalPages || loading} className="pagination-button">
-              Next
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* Premium Content Grid (Conditionally rendered) */}
-      {isVisitorSubscribed && premiumContent.length > 0 && (
-        <>
-          <h2 className="content-grid-heading">Premium Content</h2>
-          <div className="premium-content-grid free-content-grid"> {/* Reusing free-content-grid styles for now */}
-            {premiumContent.map((item) => (
               <div key={`${item.type}-${item.id}`} className="content-card">
                 <div
                   className="content-media"
@@ -570,40 +424,47 @@ function HomePage() {
                       Your browser does not support the video tag.
                     </video>
                   )}
-                  <div className="content-overlay">
-                    <span className="content-type">
-                      {item.type === 'photo_group' ? '📸📸' : item.type === 'photo' ? '📸' : '🎥'}
-                    </span>
-                  </div>
                 </div>
-                
+
                 <div className="content-creator-info">
-                  <img
-                    src={item.profiles?.avatar_path ? getPublicUrl(item.profiles.avatar_path, 'avatars') : DEFAULT_AVATAR_PLACEHOLDER}
-                    alt={item.profiles?.nickname || 'Creator'}
-                    className="creator-avatar"
-                    onClick={() => handleCreatorAvatarClick(item.profiles?.id)}
-                    title={item.profiles?.nickname || 'Creator'}
-                  />
+                  <div className="creator-left-section">
+                    <img
+                      src={item.profiles?.avatar_path ? getPublicUrl(item.profiles.avatar_path, 'avatars') : DEFAULT_AVATAR_PLACEHOLDER}
+                      alt={item.profiles?.nickname || 'Creator'}
+                      className="creator-avatar"
+                      onClick={() => handleCreatorAvatarClick(item.profiles?.id)}
+                      title={item.profiles?.nickname || 'Creator'}
+                    />
+                    <div className="creator-name-info">
+                      <p>{item.profiles?.nickname || 'Unknown Creator'}</p>
+                    </div>
+                  </div>
+                  <div className="view-count">
+                    {item.views || 0}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
+          <div className="pagination-controls">
+            <button onClick={handlePrevPage} disabled={currentPage === 1 || loading} className="pagination-button">Previous</button>
+            <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+            <button onClick={handleNextPage} disabled={currentPage === totalPages || loading} className="pagination-button">Next</button>
+          </div>
         </>
       )}
 
-      {/* Subscribe Prompt */}
       {!isVisitorSubscribed && (
         <div className="subscribe-prompt bottom-prompt">
           <h3>Unlock Premium Content</h3>
           <p>Subscribe to view exclusive content from premium creators!</p>
           <Link to="/subscribe" className="subscribe-button-homepage">
-            Subscribe Now - 20 KES / 24 Hours
+            Subscribe Now - 20 KES / 2 Hours
           </Link>
         </div>
       )}
 
-      {/* Photo Slideshow Modal */}
       {showSlideshowModal && (
         <PhotoSlideshowModal
           photos={currentSlideshowPhotos}
@@ -612,7 +473,6 @@ function HomePage() {
         />
       )}
 
-      {/* Video Player Modal */}
       {showVideoModal && (
         <VideoPlayerModal
           video={currentVideo}

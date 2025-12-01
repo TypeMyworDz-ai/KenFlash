@@ -1,94 +1,108 @@
-/* Mobile Content Card Container (re-defined for clarity and consistency) */
+/* src/components/MobileContentCard.css */
+
 .mobile-content-card {
-  width: 100%;
-  max-width: 450px; /* Consistent with MobileHomePage.css */
-  height: 100%; /* Fill the scroll-snap-item wrapper */
-  border-radius: 0; /* No rounded corners for full screen effect */
+  background-color: var(--card-background-color);
+  border-radius: 12px; /* Consistent with other cards */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Consistent shadow */
   overflow: hidden;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   position: relative;
-  background-color: var(--card-background); /* Uses theme variable */
-  box-shadow: none; /* No shadow for full screen effect */
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: var(--text-color); /* Uses theme variable */
+  width: 100%; /* Take full width of its parent */
+  max-width: 500px; /* Max width for mobile cards, as discussed */
+  margin: 0 auto; /* Center the card */
+  scroll-snap-align: start; /* For smooth scrolling behavior */
+  height: 100%; /* Ensure it fills the scroll item wrapper */
+}
+
+.mobile-content-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-content-media {
+  position: relative;
+  width: 100%;
+  padding-bottom: 120%; /* 4:5 aspect ratio for media (taller than wide) */
+  cursor: pointer;
+  overflow: hidden;
+  flex-grow: 1; /* Allows media to take up available space */
+}
+
+.mobile-content-thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Ensure full content is visible, letterboxing if needed */
+  object-fit: cover; /* Covers the area, cropping if necessary */
   display: block;
 }
 
-.mobile-content-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
-  color: white;
-  padding: 20px 15px 10px;
-  text-align: left;
-  box-sizing: border-box;
-  z-index: 10; /* Ensure overlay is above media */
-}
-
-.mobile-content-overlay h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.2em;
-  color: white;
-}
-
-.mobile-content-overlay p {
-  margin: 0;
-  font-size: 0.9em;
-  color: #ccc;
-}
-
-/* Profile Avatar Styles */
-.mobile-creator-avatar-container {
-  position: absolute;
-  bottom: 15px; /* Adjust vertical position */
-  right: 15px; /* Position on the RIGHT */
-  width: 50px; /* Avatar size */
-  height: 50px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid white; /* White border around avatar */
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+/* New structure for content info and views */
+.mobile-content-info {
   display: flex;
-  justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for placeholder */
-  z-index: 11; /* Ensure avatar is above overlay */
+  justify-content: space-between; /* Pushes avatar/name to left, views to right */
+  padding: 10px 12px; /* Compact padding */
+  background-color: var(--card-background-color);
+  border-top: 1px solid var(--border-color); /* Subtle separator */
+  gap: 10px; /* Space between elements */
+  min-height: 60px; /* Consistent height */
+}
+
+.mobile-creator-left-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-grow: 1; /* Allows this section to take available space */
+  min-width: 0; /* Allows name to truncate */
 }
 
 .mobile-creator-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.mobile-creator-avatar-placeholder {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: white;
-  text-transform: uppercase;
-}
-
-.mobile-creator-avatar-lock {
-  position: absolute;
-  bottom: -5px; /* Position slightly below avatar */
-  left: -5px; /* Position slightly to the LEFT of the avatar (relative to its container) */
-  background-color: var(--primary-color); /* Themed background */
-  color: white;
+  width: 45px; /* Avatar size */
+  height: 45px;
   border-radius: 50%;
-  padding: 3px;
+  object-fit: cover;
+  border: 2px solid var(--primary-color); /* Themed border */
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0; /* Prevents avatar from shrinking */
+}
+
+.mobile-creator-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-creator-name-info {
+  text-align: left;
+  min-width: 0; /* Allows text to truncate */
+}
+
+.mobile-creator-name-info p {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--text-color);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Truncate long names */
+}
+
+.mobile-view-count {
+  font-size: 0.85em;
+  color: var(--secondary-text-color);
+  white-space: nowrap;
+  flex-shrink: 0; /* Prevents count from shrinking */
+  display: flex; /* For icon and text alignment */
+  align-items: center;
+  gap: 3px; /* Space between icon and number */
+}
+
+.mobile-view-count::before {
+  content: '👁'; /* Eye icon */
   font-size: 0.8em;
-  line-height: 1;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  z-index: 12; /* Ensure lock is above avatar */
 }

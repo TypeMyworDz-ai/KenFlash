@@ -1,89 +1,105 @@
 import React, { useRef, useEffect } from 'react';
-import './MobileContentCard.css';
+import './MobileContentCard.css'; // Assuming you have a CSS file for this component
+
+const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/40';
+const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
 
 function MobileContentCard({ 
   item, 
   isActive, 
   isVisitorSubscribed, 
   setShowSubscriptionPrompt, 
-  onNavigateToCreatorProfile // This prop will now navigate to the creator's main profile page
+  onNavigateToCreatorProfile,
+  logView // Receive logView function as a prop
 }) {
-  // --- React Hooks must be called unconditionally at the top level ---
   const videoRef = useRef(null);
 
   useEffect(() => {
     if (videoRef.current && item && item.type === 'video') {
       if (isActive) {
-        // Attempt to play, catch potential autoplay policy errors
-        videoRef.current.play().catch(e => console.error("Error playing video:", e));
+        videoRef.current.muted = true; // Always mute for autoplay
+        videoRef.current.play().catch(e => console.error("Error playing mobile video:", e));
       } else {
         videoRef.current.pause();
         videoRef.current.currentTime = 0; // Reset video to start when not active
       }
     }
-  }, [isActive, item]); // Depend on isActive and item for correctness
-  // --- End of Hooks section ---
+  }, [isActive, item]);
 
-  if (!item) return null; // Early return after Hooks
+  // Handle click on the content media itself
+  const handleMediaClick = () => {
+    // Determine if the content is premium
+    const isPremium = item.profiles?.creator_type === 'premium_creator'; // NEW: Get isPremium from item.profiles
 
-  const handleProfileClick = () => {
+    // Log the view when the media is clicked, passing isPremium
+    if (item.id && item.creatorInfo?.id && item.type) {
+      logView(item.id, item.creatorInfo.id, item.type === 'photo_group' ? 'photo' : item.type, isPremium); // NEW: Pass isPremium
+      console.log(`Mobile Content ${item.id} media clicked. View logged.`);
+    }
+    // If it's premium content and the visitor is not subscribed, show prompt
+    if (!isVisitorSubscribed && isPremium) { // Use isPremium here
+      setShowSubscriptionPrompt(true);
+    }
+    // Optionally, if there's a detailed view for mobile, navigate to it here.
+    // e.g., navigate(`/content/${item.id}`);
+  };
+
+  // Handle click on the creator's avatar (same as before)
+  const handleCreatorAvatarClick = () => {
     if (item.creatorInfo && item.creatorInfo.id) {
       if (isVisitorSubscribed) {
-        // Navigate to the creator's main profile page, where they can choose photos or videos
         onNavigateToCreatorProfile(item.creatorInfo.id); 
       } else {
-        setShowSubscriptionPrompt(true); // Show subscription prompt for unsubscribed users
+        setShowSubscriptionPrompt(true);
       }
     }
   };
 
+  if (!item) return null;
+
   return (
     <div className="mobile-content-card">
-      {item.type === 'photo' ? (
-        <img src={item.url} alt={item.caption || 'Content'} className="mobile-content-media" />
-      ) : (
-        <video
-          ref={videoRef}
-          src={item.url}
-          poster={item.thumbnailUrl}
-          className="mobile-content-media"
-          muted
-          loop
-          playsInline // Important for mobile browsers to autoplay inline
-          controlsList="nodownload nofullscreen noremoteplayback" // Restrict controls
-        >
-          Your browser does not support the video tag.
-        </video>
-      )}
-
-      <div className="mobile-content-overlay">
-        {item.type === 'photo' ? (
-          <h3 className="mobile-content-title">{item.caption || 'Photo Content'}</h3>
+      {/* Media Section */}
+      <div className="mobile-content-media" onClick={handleMediaClick}>
+        {item.type === 'photo' || item.type === 'photo_group' ? (
+          <img src={item.url} alt={item.caption || 'Content'} className="mobile-content-thumbnail" />
         ) : (
-          <h3 className="mobile-content-title">{item.title || 'Video Content'}</h3>
+          <video
+            ref={videoRef}
+            src={item.url}
+            poster={item.thumbnailUrl || DEFAULT_VIDEO_THUMBNAIL_PLACEHADER}
+            className="mobile-content-thumbnail"
+            muted
+            loop
+            playsInline
+            controlsList="nodownload nofullscreen noremoteplayback"
+          >
+            Your browser does not support the video tag.
+          </video>
         )}
-        <p className="mobile-content-creator">By: {item.creatorInfo?.nickname || 'Unknown Creator'}</p>
       </div>
 
-      {/* Profile Avatar (Positioned on the right bottom) */}
-      {item.creatorInfo && item.creatorInfo.id && (
-        <div className="mobile-creator-avatar-container" onClick={handleProfileClick}>
-          {item.creatorInfo.avatar_url ? (
-            <img 
-              src={item.creatorInfo.avatar_url} 
-              alt={item.creatorInfo.nickname} 
-              className="mobile-creator-avatar" 
-            />
-          ) : (
-            <div className="mobile-creator-avatar-placeholder">
-              {item.creatorInfo.nickname ? item.creatorInfo.nickname.charAt(0) : 'C'}
-            </div>
-          )}
-          {!isVisitorSubscribed && (
-            <div className="mobile-creator-avatar-lock">🔒</div>
-          )}
+      {/* Creator Info and Views Section */}
+      <div className="mobile-content-info">
+        <div className="mobile-creator-left-section">
+          {/* Creator Avatar */}
+          <img
+            src={item.creatorInfo?.avatar_url || DEFAULT_AVATAR_PLACEHOLDER}
+            alt={item.creatorInfo?.nickname || 'Creator'}
+            className="mobile-creator-avatar"
+            onClick={handleCreatorAvatarClick}
+            title={item.creatorInfo?.nickname || 'Creator'}
+          />
+          {/* Creator Name */}
+          <div className="mobile-creator-name-info">
+            <p>{item.creatorInfo?.nickname || 'Unknown Creator'}</p>
+          </div>
         </div>
-      )}
+        {/* View Count */}
+        <div className="mobile-view-count">
+          {item.views || 0}
+        </div>
+      </div>
     </div>
   );
 }

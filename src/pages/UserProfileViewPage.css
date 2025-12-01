@@ -1,15 +1,15 @@
 .user-profile-view-container {
   text-align: center;
   padding: 30px;
-  max-width: 1200px; /* Increased max-width for content grid */
+  max-width: 1200px;
   margin: 0 auto;
-  position: relative; /* For positioning the back button */
+  position: relative;
 }
 
 .back-button {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 30px;
+  left: 30px;
   background-color: var(--primary-color);
   color: white;
   padding: 8px 15px;
@@ -18,24 +18,24 @@
   font-size: 1em;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  z-index: 10; /* Ensure it's above other elements */
+  z-index: 50;
 }
 
 .back-button:hover {
-  background-color: var(--secondary-color);
+  background-color: var(--primary-hover, #0056b3);
 }
 
 .profile-header {
-  background-color: var(--card-background); /* Use theme variable */
+  background-color: var(--card-background);
   border-radius: 10px;
-  padding: 30px;
-  margin-bottom: 40px;
+  padding: 40px 30px;
+  margin-bottom: 50px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
 }
 
 .profile-image {
@@ -44,28 +44,29 @@
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 20px;
-  border: 4px solid var(--primary-color); /* Use theme variable */
+  border: 4px solid var(--primary-color);
 }
 
 .profile-nickname {
-  color: var(--heading-color); /* Use theme variable */
+  color: var(--heading-color);
   font-size: 2.5em;
   margin: 0 0 15px 0;
+  font-weight: 600;
 }
 
 .profile-bio {
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
   font-size: 1.1em;
   line-height: 1.6;
   max-width: 700px;
   margin: 0 auto;
 }
 
-/* New Grid for Creator Content */
-.creator-content-grid { /* Renamed from .creator-content-feed */
+/* Content Grid - 6 items per row */
+.creator-content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Consistent with homepage grid */
-  gap: 25px; /* Consistent with homepage grid */
+  grid-template-columns: repeat(6, 1fr);
+  gap: 25px;
   margin-top: 40px;
   margin-bottom: 60px;
   max-width: 1200px;
@@ -73,8 +74,8 @@
   margin-right: auto;
 }
 
-.content-card { /* Styles for individual content items within the grid */
-  background-color: var(--card-background-color);
+.content-card {
+  background-color: var(--card-background);
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -82,6 +83,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .content-card:hover {
@@ -92,8 +94,7 @@
 .content-media {
   position: relative;
   width: 100%;
-  padding-bottom: 100%; /* Creates a square aspect ratio */
-  cursor: pointer;
+  padding-bottom: 100%;
   overflow: hidden;
 }
 
@@ -117,33 +118,69 @@
   border-radius: 4px;
   font-size: 0.8em;
   font-weight: bold;
+  z-index: 5;
 }
 
 .content-type {
-  /* No specific styling needed beyond parent .content-overlay */
+  /* Styling handled by parent */
 }
 
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.pagination-button {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: var(--primary-hover, #0056b3);
+}
+
+.pagination-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 1em;
+  color: var(--text-color);
+  font-weight: 500;
+}
 
 /* Subscription call to action for locked content */
 .subscription-call-to-action.locked-content-message {
   margin-top: 50px;
   padding: 30px;
-  background-color: var(--accent-background); /* Use theme variable */
+  background-color: var(--accent-background, #f8f9fa);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  color: var(--text-color); /* Use theme variable */
+  color: var(--text-color);
 }
 
 .subscription-call-to-action .subscription-info {
   font-size: 1.2em;
-  color: var(--primary-color); /* Use theme variable */
+  color: var(--primary-color);
   margin-bottom: 25px;
   font-weight: bold;
 }
 
 .subscribe-link-button {
   display: inline-block;
-  background-color: var(--success-color); /* Use theme variable */
+  background-color: var(--success-color, #28a745);
   color: white;
   padding: 12px 25px;
   border: none;
@@ -157,13 +194,13 @@
 }
 
 .subscribe-link-button:hover {
-  background-color: var(--success-hover-color); /* Use theme variable */
+  background-color: var(--success-hover, #218838);
 }
 
 .error-message {
-  color: var(--error-color); /* Use theme variable */
-  background-color: var(--error-background); /* Use theme variable */
-  border: 1px solid var(--error-border); /* Use theme variable */
+  color: var(--error-color, #dc3545);
+  background-color: var(--error-background, #f8d7da);
+  border: 1px solid var(--error-border, #f5c6cb);
   padding: 10px;
   border-radius: 4px;
   margin-top: 15px;
@@ -172,14 +209,24 @@
 }
 
 /* Responsive */
-@media (max-width: 992px) {
-  .user-profile-view-container {
-    max-width: 960px;
-  }
+@media (max-width: 1400px) {
   .creator-content-grid {
-    grid-template-columns: repeat(3, 1fr); /* 3 columns on medium screens */
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
-    max-width: 700px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .creator-content-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 992px) {
+  .creator-content-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
   }
 }
 
@@ -206,14 +253,13 @@
   }
 
   .creator-content-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2 columns on small screens */
-    gap: 15px;
-    max-width: 500px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .back-button {
-    top: 5px;
-    left: 5px;
+    top: 15px;
+    left: 15px;
     padding: 6px 12px;
     font-size: 0.9em;
   }
@@ -221,8 +267,11 @@
 
 @media (max-width: 480px) {
   .creator-content-grid {
-    grid-template-columns: 1fr; /* Single column on very small screens */
+    grid-template-columns: 1fr;
     gap: 10px;
-    max-width: 350px;
+  }
+
+  .profile-nickname {
+    font-size: 1.5em;
   }
 }

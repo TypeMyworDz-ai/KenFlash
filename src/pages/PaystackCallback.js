@@ -4,8 +4,8 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import './PaystackCallback.css';
 
-const PLAN_NAME = '1 Day Plan';
-const PLAN_DURATION_MS = 24 * 60 * 60 * 1000;
+const PLAN_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours for '2 Hour Plan'
+const DEFAULT_PLAN_NAME = '2 Hour Plan'; // Default plan name fallback
 
 function PaystackCallback() {
   const [searchParams] = useSearchParams();
@@ -21,6 +21,9 @@ function PaystackCallback() {
 
     const reference = searchParams.get('trxref') || searchParams.get('reference');
     const status = searchParams.get('status');
+    // NEW: Retrieve email and plan name directly from URL query parameters
+    const subscriptionEmail = searchParams.get('subscription_email');
+    const planNameFromUrl = searchParams.get('plan_name');
 
     if (!reference) {
       setPaymentStatus('failed');
@@ -30,12 +33,14 @@ function PaystackCallback() {
       return;
     }
 
+    // Check if Paystack reported success or if a reference exists (indicating potential success)
     if (status === 'success' || reference) {
       setPaymentStatus('verifying');
       setMessage('Payment reference received. Updating your subscription...');
 
-      // **PRIORITIZE retrieving email from local storage**
-      const userEmail = localStorage.getItem('pendingSubscriptionEmail') || searchParams.get('email');
+      // PRIORITIZE retrieving email from URL, fallback to any email param Paystack might send
+      const userEmail = subscriptionEmail || searchParams.get('email');
+      const currentPlanName = planNameFromUrl || DEFAULT_PLAN_NAME; // Use plan name from URL, fallback to default plan name string
 
       if (!userEmail) {
         setPaymentStatus('failed');
@@ -47,12 +52,12 @@ function PaystackCallback() {
 
       try {
         const now = new Date();
-        const expiryTime = new Date(now.getTime() + PLAN_DURATION_MS);
+        const expiryTime = new Date(now.getTime() + PLAN_DURATION_MS); // Use fixed duration for '2 Hour Plan'
 
         const { data, error } = await supabase.from('subscriptions').insert([
           {
             email: userEmail,
-            plan: PLAN_NAME,
+            plan: currentPlanName, // Use dynamic plan name
             expiry_time: expiryTime.toISOString(),
             created_at: now.toISOString(),
             transaction_ref: reference,
@@ -68,9 +73,9 @@ function PaystackCallback() {
         if (data && data.length > 0) {
           setPaymentStatus('success');
           setMessage('Subscription activated successfully! Redirecting to homepage...');
-          subscribeVisitor(userEmail, PLAN_NAME);
+          subscribeVisitor(userEmail, currentPlanName); // Pass dynamic plan name
           setRedirecting(true);
-          localStorage.removeItem('pendingSubscriptionEmail'); // Clean up after successful subscription
+          // No longer need to remove 'pendingSubscriptionEmail' from localStorage
           setTimeout(() => navigate('/'), 3000);
         } else {
           throw new Error('No data returned from subscription insert.');
@@ -112,14 +117,16 @@ function PaystackCallback() {
   return (
     <div className="paystack-callback-container">
       <div className="status-card">
-        <div className={`status-icon ${getStatusClass()}`}>
-          {getStatusIcon()}
+        <div className="status-icon-wrapper"> {/* Added wrapper for styling */}
+          <div className={`status-icon ${getStatusClass()}`}>
+            {getStatusIcon()}
+          </div>
         </div>
         <h2 className={getStatusClass()}>{message}</h2>
         {paymentStatus === 'failed' && (
           <p>
             Please check your payment status on Paystack or{' '}
-            <a href="mailto:support@kenflash.com">contact support</a>.
+            <a href="mailto:support@draftey.com">contact support</a>. {/* Changed email and brand */}
           </p>
         )}
         {redirecting && paymentStatus !== 'success' && (

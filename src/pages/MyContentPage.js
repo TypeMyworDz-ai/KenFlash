@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import PhotoSlideshowModal from '../components/PhotoSlideshowModal'; // We'll create this component
+import PhotoSlideshowModal from '../components/PhotoSlideshowModal';
 import './MyContentPage.css';
 
 function MyContentPage() {
@@ -36,30 +36,23 @@ function MyContentPage() {
           return data.publicUrl;
         };
 
-        // 1. Fetch creator's photos
-        const { data: photosData, error: photosError } = await supabase
-          .from('photos')
-          .select('id, created_at, storage_path, caption, group_id')
+        // Fetch creator's content from merged table
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type')
           .eq('creator_id', creatorId)
           .order('created_at', { ascending: false });
 
-        if (photosError) throw photosError;
-
-        // 2. Fetch creator's videos
-        const { data: videosData, error: videosError } = await supabase
-          .from('videos')
-          .select('id, created_at, storage_path, thumbnail_path, title, caption')
-          .eq('creator_id', creatorId)
-          .order('created_at', { ascending: false });
-
-        if (videosError) throw videosError;
+        if (contentError) throw contentError;
 
         const allMyContent = [];
 
-        // Process photos: Group by group_id
-        if (photosData) {
+        if (contentData) {
+          // Process photos: Group by group_id
           const photoGroups = {};
-          photosData.forEach(photo => {
+          const photos = contentData.filter(item => item.content_type === 'photo');
+
+          photos.forEach(photo => {
             if (!photoGroups[photo.group_id]) {
               photoGroups[photo.group_id] = {
                 id: photo.group_id,
@@ -72,17 +65,15 @@ function MyContentPage() {
             photoGroups[photo.group_id].photos.push({
               id: photo.id,
               url: getPublicUrl(photo.storage_path),
-              storagePath: photo.storage_path, // Keep storage path for future deletion
+              storagePath: photo.storage_path,
             });
           });
 
-          // Convert photoGroups object back to an array and add to allMyContent
           Object.values(photoGroups).forEach(group => allMyContent.push(group));
-        }
 
-        // Process videos
-        if (videosData) {
-          videosData.forEach(video => {
+          // Process videos
+          const videos = contentData.filter(item => item.content_type === 'video');
+          videos.forEach(video => {
             allMyContent.push({
               id: video.id,
               type: 'video',
@@ -91,7 +82,7 @@ function MyContentPage() {
               title: video.title,
               uploadDate: video.created_at,
               caption: video.caption,
-              storagePath: video.storage_path, // Keep storage path for future deletion
+              storagePath: video.storage_path,
             });
           });
         }

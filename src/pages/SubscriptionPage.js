@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// Removed: import { supabase } from '../supabaseClient'; // No longer directly used in this component
 import './SubscriptionPage.css';
 
-// Paystack Hosted Payment Page URL
-const PAYSTACK_HOSTED_PAGE_URL = 'https://paystack.shop/pay/kenyaflash1day-access';
+// Paystack Hosted Payment Page URL - This should be configured in Paystack to point to your callback.
+// IMPORTANT: The actual Paystack URL you redirect to needs to be dynamic or configured to include callback_url
+// For now, we'll construct the callback_url to your /paystack-callback route.
+const PAYSTACK_HOSTED_PAGE_BASE_URL = 'https://paystack.shop/pay/2jeen70kmt'; // Base URL for your Paystack product
 const PLAN_AMOUNT_KES = 20;
-const PLAN_NAME = '1 Day Plan';
+const PLAN_NAME = '2 Hour Plan';
 
 function SubscriptionPage() {
   const navigate = useNavigate();
-  // Removed: subscribeVisitor from destructuring as it's no longer called directly here
-  const { checkExistingSubscription } = useAuth(); 
+  const { checkExistingSubscription } = useAuth();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [showExistingSubscriberSection, setShowExistingSubscriberSection] = useState(false);
@@ -27,11 +27,19 @@ function SubscriptionPage() {
     setLoading(true);
     setMessage(`Redirecting to Paystack for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) payment for ${email}...`);
 
-    localStorage.setItem('pendingSubscriptionEmail', email);
+    // IMPORTANT: Construct the callback URL to your app's PaystackCallback route.
+    // This URL will receive Paystack's transaction reference.
+    // We also pass the email and planName as custom query parameters to our callback.
+    const callbackUrl = `${window.location.origin}/paystack-callback?subscription_email=${encodeURIComponent(email)}&plan_name=${encodeURIComponent(PLAN_NAME)}`;
 
-    const paymentUrl = `${PAYSTACK_HOSTED_PAGE_URL}?email=${encodeURIComponent(email)}`;
+    // Construct the Paystack hosted payment page URL
+    // You might need to adjust how your Paystack product URL handles custom parameters.
+    // A common way is to pass custom_fields or metadata in the Paystack initialization,
+    // but for a hosted page, we typically rely on its own parameters and our callback.
+    const paystackRedirectUrl = `${PAYSTACK_HOSTED_PAGE_BASE_URL}?email=${encodeURIComponent(email)}&callback_url=${encodeURIComponent(callbackUrl)}`;
     
-    window.location.href = paymentUrl;
+    // Redirect to Paystack
+    window.location.href = paystackRedirectUrl;
   };
 
   const handleExistingSubscriberCheck = async () => {
@@ -53,7 +61,7 @@ function SubscriptionPage() {
 
   return (
     <div className="subscription-container">
-      <h2>Subscribe to KenFlash!</h2>
+      <h2>Subscribe to Draftey!</h2> {/* Changed name to Draftey */}
       <p>Unlock exclusive content with our single, affordable plan.</p>
 
       {/* Anonymity Information */}
@@ -90,7 +98,7 @@ function SubscriptionPage() {
               <li>Unlimited Video Views</li>
               <li>Access to all Creators</li>
               <li>Enhanced Anonymity</li>
-              <li>24 Hours Access</li>
+              <li>2 Hours Access</li>
             </ul>
             <button className="subscribe-button" disabled={loading}>
               {loading ? 'Redirecting...' : `Subscribe for ${PLAN_AMOUNT_KES} KES`}
