@@ -13,8 +13,7 @@ const AVATAR_BUCKET = 'avatars';
 const CONTENT_FETCH_LIMIT = 5;
 // eslint-disable-next-line no-unused-vars
 const AD_INSERT_FREQUENCY = 3;
-// eslint-disable-next-line no-unused-vars
-const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3;
+const SCROLLS_BEFORE_SUBSCRIPTION_PROMPT = 3; // This is used, so the warning is a false positive
 const SESSION_PROMPT_KEY = 'mobileAppPromptShown';
 
 function MobileHomePage() {
@@ -106,7 +105,8 @@ function MobileHomePage() {
 
 
   const fetchContent = useCallback(async () => {
-    if (!user || isFetching.current || !hasMoreContent) return;
+    // CORRECTED: The guard should check for 'undefined', not '!user'
+    if (user === undefined || isFetching.current || !hasMoreContent) return;
     
     isFetching.current = true;
     setLoading(true);
@@ -195,8 +195,7 @@ function MobileHomePage() {
   useEffect(() => {
     if (user === undefined) return;
     fetchContent();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]); // CORRECTED: Removed fetchContent from dependencies
+  }, [user, fetchContent]);
 
 
   // Reset feed when subscription status changes
@@ -241,7 +240,7 @@ function MobileHomePage() {
 
   // Subscription prompt logic
   useEffect(() => {
-    if (!isVisitorSubscribed && scrollCount > 0 && !hasPromptBeenShownThisSession.current) {
+    if (!isVisitorSubscribed && scrollCount >= SCROLLS_BEFORE_SUBSCRIPTION_PROMPT && !hasPromptBeenShownThisSession.current) {
       setShowSubscriptionPrompt(true);
       hasPromptBeenShownThisSession.current = true;
       sessionStorage.setItem(SESSION_PROMPT_KEY, 'true');

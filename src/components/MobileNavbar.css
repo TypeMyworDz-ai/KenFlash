@@ -43,9 +43,10 @@
 
 /* NEW: Centered Camera Button for Creators */
 .mobile-navbar-camera-button {
-  position: absolute; /* Absolute positioning to center it */
+  position: absolute; /* Absolute positioning to center it relative to .mobile-navbar */
   left: 50%;
-  transform: translateX(-50%); /* Center horizontally */
+  top: 50%; /* Center vertically */
+  transform: translate(-50%, -50%); /* Center horizontally and vertically */
   background-color: var(--primary-color); /* Themed background */
   border: none;
   border-radius: 50%; /* Make it round */
@@ -58,11 +59,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: background-color 0.3s ease, transform 0.2s ease;
   z-index: 100; /* Ensure it's above other navbar elements */
+  /* Temporary Debug: Add a prominent border to see if it renders */
+  /* border: 2px solid red !important; */
 }
 
 .mobile-navbar-camera-button:hover {
   background-color: var(--primary-hover, #0056b3); /* Darker on hover */
-  transform: translateX(-50%) scale(1.05);
+  transform: translate(-50%, -50%) scale(1.05); /* Adjust transform for hover */
 }
 
 /* Styles for the camera icon image */

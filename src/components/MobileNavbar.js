@@ -6,11 +6,16 @@ import './MobileNavbar.css';
 
 function MobileNavbar() {
   // eslint-disable-next-line no-unused-vars
-  const { isLoggedIn, userRole, logout, user } = useAuth(); // Suppress warning for 'user'
+  const { isLoggedIn, userRole, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
+
+  // --- DEBUGGING LOG (Re-added) ---
+  // This will help us see the auth state when the navbar renders.
+  console.log('MobileNavbar Auth State:', { isLoggedIn, userRole });
+
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -37,7 +42,9 @@ function MobileNavbar() {
       if (userRole === 'admin') {
         return '/admin-dashboard';
       } else if (userRole === 'creator') {
-        return '/user-dashboard';
+        return '/user-dashboard'; // Correct path for creator dashboard
+      } else if (userRole === 'business') { // NEW: Handle business role for brand redirect
+        return '/ad-campaign-management';
       }
     }
     return '/';
@@ -101,7 +108,7 @@ function MobileNavbar() {
                 )}
                 {userRole === 'creator' && (
                   <>
-                    <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>My Dashboard</Link>
+                    <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Dashboard</Link> {/* UPDATED: Renamed "My Dashboard" to "Dashboard" */}
                     <Link to="/my-content" className="mobile-menu-item" onClick={closeAllMenus}>My Content</Link>
                     <button className="mobile-menu-item" onClick={handleCameraClick}>Upload Content</button>
                     <Link to="/my-views" className="mobile-menu-item" onClick={closeAllMenus}>My Views</Link>
