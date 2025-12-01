@@ -188,14 +188,15 @@ function MobileHomePage() {
       setLoading(false);
       isFetching.current = false;
     }
-  }, [currentPage, hasMoreContent, isVisitorSubscribed, getPublicUrl, user]); // CORRECTED: Re-added user to dependencies
+  }, [currentPage, hasMoreContent, isVisitorSubscribed, getPublicUrl, user]);
 
 
   // Effect to ensure user is loaded before fetching content
   useEffect(() => {
     if (user === undefined) return;
     fetchContent();
-  }, [user, fetchContent]); // CORRECTED: Added fetchContent to dependencies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // CORRECTED: Removed fetchContent from dependencies
 
 
   // Reset feed when subscription status changes
