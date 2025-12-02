@@ -35,7 +35,7 @@ function AdminDashboardPage() {
   return (
     <div className="admin-dashboard-container">
       <h2>Admin Dashboard</h2>
-      <p>Overview of administrative tasks for KenyaFlashing.</p>
+      <p>Overview of administrative tasks for Draftey.</p> {/* UPDATED: KenyaFlashing to Draftey */}
 
       <div className="admin-dashboard-grid">
         {/* Pending Approvals Card */}

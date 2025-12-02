@@ -32,9 +32,45 @@
   transition: color 0.3s ease;
 }
 
-/* REMOVED: Draftey Logo and Slogan styles from Navbar.css */
-/* .navbar-draftey-logo { ... } */
-/* .navbar-draftey-slogan { ... } */
+/* NEW: Centered Upload Button for Creators on Web Navbar */
+.navbar-center-upload-button {
+  position: absolute; /* Position absolutely to center it */
+  left: 50%;
+  transform: translateX(-50%); /* Center horizontally */
+  background-color: var(--primary-color); /* Themed background */
+  border: none;
+  border-radius: 25px; /* Pill shape */
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  z-index: 10; /* Ensure it's above other navbar elements if needed */
+  color: white; /* Text color */
+}
+
+.navbar-center-upload-button:hover {
+  background-color: var(--primary-hover, #0056b3);
+  transform: translateX(-50%) scale(1.02); /* Slight scale on hover */
+}
+
+/* Styles for the camera icon image within the button */
+.navbar-center-upload-button .camera-icon-img {
+  width: 20px; /* Adjust size of the image within the button */
+  height: 20px;
+  object-fit: contain;
+  filter: invert(100%); /* Make it white if your icon is black, or adjust as needed */
+}
+
+/* Styles for the slogan text within the button */
+.navbar-center-upload-button .upload-slogan {
+  font-size: 0.95em;
+  font-weight: 500;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
 
 .navbar-links {
   display: flex;
@@ -109,16 +145,6 @@
   z-index: 10;
   padding: 10px 0;
   margin-top: 5px;
-}
-
-.dropdown-item {
-  display: block;
-  padding: 10px 15px;
-  color: var(--text-color);
-  text-decoration: none;
-  font-size: 1em;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
 }
 
 .dropdown-item:hover {

@@ -37,7 +37,7 @@ import MyContentPage from './pages/MyContentPage';
 import AdminViewCreatorProfilePage from './pages/AdminViewCreatorProfilePage';
 import AdminAllCreatorsPage from './pages/AdminAllCreatorsPage';
 import AdminCreatorContentPage from './pages/AdminCreatorContentPage';
-import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage'; // CORRECTED PATH
+import AdminPaymentOverviewsPage from './pages/AdminPaymentOverviewsPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
 import AdCampaignManagementPage from './pages/AdCampaignManagementPage';
@@ -114,7 +114,8 @@ function App() {
                 <Route path="/messages" element={<CreatorMessagesPage />} />
                 <Route path="/admin-messages" element={<AdminMessagesPage />} />
                 <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-                <Route path="/admin-manage-ads" element={<AdCampaignManagementPage />} />
+                {/* CORRECTED: Route path for AdCampaignManagementPage */}
+                <Route path="/ad-campaign-management" element={<AdCampaignManagementPage />} />
                 <Route path="/profile/:userId" element={<UserProfileViewPage />} />
                 <Route path="/content/:contentId" element={<SingleContentPage />} />
                 <Route path="/subscribe" element={<SubscriptionPage />} />

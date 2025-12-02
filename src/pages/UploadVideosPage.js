@@ -96,7 +96,7 @@ function UploadVideosPage() {
   return (
     <div className="upload-videos-container">
       <h2>Upload Videos</h2>
-      <p>Share your amazing videos with KenyaFlashing!</p>
+      <p>Share your amazing videos with Draftey!</p> {/* UPDATED: KenyaFlashing to Draftey */}
 
       <form onSubmit={handleSubmit} className="upload-form">
         <div className="form-group">

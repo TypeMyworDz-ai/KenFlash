@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react'; // Added useEffect
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import './Navbar.css';
 
 function Navbar() {
-  const { isLoggedIn, userType, logout } = useAuth(); // Using userType from context
+  const { isLoggedIn, userType, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
@@ -46,24 +46,47 @@ function Navbar() {
       } else if (userType === 'creator' || userType === 'premium_creator') {
         return '/user-dashboard';
       } else if (userType === 'business') {
-        return '/admin-manage-ads';
+        return '/ad-campaign-management';
       }
     }
-    return '/'; // Default to homepage if not logged in or type not matched
+    return '/';
   };
+
+  // NEW: Handle camera icon click for creators on web app
+  const handleCameraClick = useCallback(() => {
+    if (isLoggedIn && (userType === 'creator' || userType === 'premium_creator')) {
+      navigate('/choose-upload-type'); // Navigate to choose upload type page for creators
+    } else if (!isLoggedIn) {
+      alert("Please log in as a creator to upload content.");
+      navigate('/login');
+    } else {
+      alert("Only creators can upload content.");
+    }
+  }, [isLoggedIn, userType, navigate]);
+
 
   return (
     <nav className="navbar">
+      {/* Home Icon on the left (SVG) */}
       <Link to={getBrandRedirectPath()} className="navbar-brand" onClick={closeAllDropdownsImmediately}>
         <svg className="home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
       </Link>
+
+      {/* NEW: Centered Camera Icon with Slogan for Creators */}
+      {(isLoggedIn && (userType === 'creator' || userType === 'premium_creator')) && (
+        <button className="navbar-center-upload-button" onClick={handleCameraClick}>
+          <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
+          <span className="upload-slogan">Post your drafts...</span>
+        </button>
+      )}
+
       <div className="navbar-links">
         {/* Draftey Business Link - Visible for Business and Admin */}
         {(isLoggedIn && (userType === 'business' || userType === 'admin')) && (
-          <Link to="/admin-manage-ads" className="navbar-item" onClick={closeAllDropdownsImmediately}>
+          <Link to="/ad-campaign-management" className="navbar-item" onClick={closeAllDropdownsImmediately}>
             Draftey Business
           </Link>
         )}

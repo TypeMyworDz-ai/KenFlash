@@ -6,14 +6,15 @@ import './MobileNavbar.css';
 
 function MobileNavbar() {
   // eslint-disable-next-line no-unused-vars
-  const { isLoggedIn, userRole, logout, user } = useAuth();
+  const { isLoggedIn, userType, logout, user } = useAuth(); // Correctly destructuring userType
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
 
-  // --- DEBUGGING LOG ---
-  console.log('MobileNavbar Auth State:', { isLoggedIn, userRole });
+  // --- DEBUGGING LOG (More explicit) ---
+  // This will help us see the exact values of auth state when the navbar renders.
+  console.log('MobileNavbar Auth State - isLoggedIn:', isLoggedIn, 'userType:', userType);
 
 
   const toggleMenu = () => {
@@ -38,11 +39,11 @@ function MobileNavbar() {
 
   const getBrandRedirectPath = () => {
     if (isLoggedIn) {
-      if (userRole === 'admin') {
+      if (userType === 'admin') {
         return '/admin-dashboard';
-      } else if (userRole === 'creator') {
+      } else if (userType === 'creator') { // Correctly using userType
         return '/user-dashboard';
-      } else if (userRole === 'business') {
+      } else if (userType === 'business') { // Correctly using userType
         return '/ad-campaign-management';
       }
     }
@@ -50,7 +51,8 @@ function MobileNavbar() {
   };
 
   const handleCameraClick = useCallback(() => {
-    if (isLoggedIn && userRole === 'creator') {
+    // Check userType here again for robustness, in case state is not immediate
+    if (isLoggedIn && userType === 'creator') { // Correctly using userType
       navigate('/mobile-upload-content');
     } else if (!isLoggedIn) {
       alert("Please log in as a creator to upload content.");
@@ -59,7 +61,7 @@ function MobileNavbar() {
       alert("Only creators can upload content.");
     }
     closeAllMenus();
-  }, [isLoggedIn, userRole, navigate]);
+  }, [isLoggedIn, userType, navigate]); // Correctly using userType in dependencies
 
 
   return (
@@ -71,10 +73,12 @@ function MobileNavbar() {
         </svg>
       </Link>
       
-      {/* Centered Camera Icon (ALWAYS DISPLAYED for debugging) */}
-      <button className="mobile-navbar-camera-button" onClick={handleCameraClick}> {/* REMOVED CONDITIONAL RENDERING */}
-        <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
-      </button>
+      {/* Centered Camera Icon for Creators (Image) - Conditional Rendering RE-INSTATED */}
+      {(isLoggedIn && userType === 'creator') && ( // Correctly using userType
+        <button className="mobile-navbar-camera-button" onClick={handleCameraClick}>
+          <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
+        </button>
+      )}
 
       {/* Hamburger menu on the right */}
       <button className="hamburger-menu" onClick={toggleMenu}>
@@ -90,7 +94,7 @@ function MobileNavbar() {
             </Link>
             {isLoggedIn ? (
               <>
-                {userRole === 'admin' && (
+                {userType === 'admin' && ( // Correctly using userType
                   <>
                     <Link to="/admin-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Admin Dashboard</Link>
                     <Link to="/admin-messages" className="mobile-menu-item" onClick={closeAllMenus}>Admin Messages</Link>
@@ -103,7 +107,7 @@ function MobileNavbar() {
                     <Link to="/admin-payment-overviews" className="mobile-menu-item" onClick={closeAllMenus}>Payment Overviews</Link>
                   </>
                 )}
-                {userRole === 'creator' && (
+                {userType === 'creator' && ( // Correctly using userType
                   <>
                     <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Dashboard</Link>
                     <Link to="/my-content" className="mobile-menu-item" onClick={closeAllMenus}>My Content</Link>
@@ -115,7 +119,7 @@ function MobileNavbar() {
                     <Link to="/profile-settings" className="mobile-menu-item" onClick={closeAllMenus}>Profile Settings</Link>
                   </>
                 )}
-                {userRole === 'business' && (
+                {userType === 'business' && ( // Correctly using userType
                   <Link to="/ad-campaign-management" className="mobile-menu-item" onClick={closeAllMenus}>Draftey Business</Link>
                 )}
                 <button onClick={handleLogout} className="mobile-menu-item logout-button">Logout</button>
@@ -138,8 +142,8 @@ function MobileNavbar() {
               </button>
               {isPolicyDropdownOpen && (
                 <div className="mobile-dropdown-menu">
-                  <Link to="/terms" className="mobile-dropdown-item" onClick={closeAllMenus}>Terms of Service</Link>
-                  <Link to="/privacy" className="mobile-dropdown-item" onClick={closeAllMenus}>Privacy Policy</Link>
+                  <Link to="/terms" className="mobile-menu-item" onClick={closeAllMenus}>Terms of Service</Link>
+                  <Link to="/privacy" className="mobile-menu-item" onClick={closeAllMenus}>Privacy Policy</Link>
                 </div>
               )}
             </div>

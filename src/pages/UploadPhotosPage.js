@@ -59,7 +59,6 @@ function UploadPhotosPage() {
         uploadedPhotoPaths.push(uploadData.path);
       }
 
-      // Debugging: Log uploadedPhotoPaths before mapping
       console.log('[UploadPhotosPage] uploadedPhotoPaths before map:', uploadedPhotoPaths);
 
       const photoMetadata = uploadedPhotoPaths.map(path => {
@@ -102,7 +101,7 @@ function UploadPhotosPage() {
   return (
     <div className="upload-photos-container">
       <h2>Upload Photos</h2>
-      <p>Share your amazing photos with KenyaFlashing!</p>
+      <p>Share your amazing photos with Draftey!</p> {/* UPDATED: KenyaFlashing to Draftey */}
 
       <form onSubmit={handleSubmit} className="upload-form">
         <div className="form-group">
