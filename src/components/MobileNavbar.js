@@ -5,17 +5,13 @@ import { useTheme } from '../context/ThemeContext';
 import './MobileNavbar.css';
 
 function MobileNavbar() {
-  // eslint-disable-next-line no-unused-vars
-  const { isLoggedIn, userType, logout, user } = useAuth(); // Correctly destructuring userType
+  const { isLoggedIn, userType, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
 
-  // --- DEBUGGING LOG (More explicit) ---
-  // This will help us see the exact values of auth state when the navbar renders.
   console.log('MobileNavbar Auth State - isLoggedIn:', isLoggedIn, 'userType:', userType);
-
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -41,9 +37,9 @@ function MobileNavbar() {
     if (isLoggedIn) {
       if (userType === 'admin') {
         return '/admin-dashboard';
-      } else if (userType === 'creator') { // Correctly using userType
+      } else if (userType === 'creator' || userType === 'premium_creator') {
         return '/user-dashboard';
-      } else if (userType === 'business') { // Correctly using userType
+      } else if (userType === 'business') {
         return '/ad-campaign-management';
       }
     }
@@ -51,9 +47,8 @@ function MobileNavbar() {
   };
 
   const handleCameraClick = useCallback(() => {
-    // Check userType here again for robustness, in case state is not immediate
-    if (isLoggedIn && userType === 'creator') { // Correctly using userType
-      navigate('/mobile-upload-content');
+    if (isLoggedIn && (userType === 'creator' || userType === 'premium_creator')) {
+      navigate('/mobile-upload-content'); // Navigate to choose upload type page for creators
     } else if (!isLoggedIn) {
       alert("Please log in as a creator to upload content.");
       navigate('/login');
@@ -61,7 +56,7 @@ function MobileNavbar() {
       alert("Only creators can upload content.");
     }
     closeAllMenus();
-  }, [isLoggedIn, userType, navigate]); // Correctly using userType in dependencies
+  }, [isLoggedIn, userType, navigate]);
 
 
   return (
@@ -73,12 +68,11 @@ function MobileNavbar() {
         </svg>
       </Link>
       
-      {/* Centered Camera Icon for Creators (Image) - Conditional Rendering RE-INSTATED */}
-      {(isLoggedIn && userType === 'creator') && ( // Correctly using userType
-        <button className="mobile-navbar-camera-button" onClick={handleCameraClick}>
-          <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
-        </button>
-      )}
+      {/* Centered Camera Icon for all users, with specific behavior on click */}
+      <button className="mobile-navbar-camera-button" onClick={handleCameraClick}>
+        <img src="/camera-icon.png" alt="Camera Icon" className="camera-icon-img" />
+        <span className="upload-slogan">Post your drafts...</span> {/* Added slogan */}
+      </button>
 
       {/* Hamburger menu on the right */}
       <button className="hamburger-menu" onClick={toggleMenu}>
@@ -94,12 +88,11 @@ function MobileNavbar() {
             </Link>
             {isLoggedIn ? (
               <>
-                {userType === 'admin' && ( // Correctly using userType
+                {userType === 'admin' && (
                   <>
                     <Link to="/admin-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Admin Dashboard</Link>
                     <Link to="/admin-messages" className="mobile-menu-item" onClick={closeAllMenus}>Admin Messages</Link>
                     <Link to="/admin-traffic" className="mobile-menu-item" onClick={closeAllMenus}>Admin Traffic</Link>
-                    <Link to="/ad-campaign-management" className="mobile-menu-item" onClick={closeAllMenus}>Manage Ads</Link>
                     <Link to="/admin-pending-creators" className="mobile-menu-item" onClick={closeAllMenus}>Pending Creators</Link>
                     <Link to="/admin-all-creators" className="mobile-menu-item" onClick={closeAllMenus}>All Creators</Link>
                     <Link to="/admin-content-moderation" className="mobile-menu-item" onClick={closeAllMenus}>Content Moderation</Link>
@@ -107,7 +100,14 @@ function MobileNavbar() {
                     <Link to="/admin-payment-overviews" className="mobile-menu-item" onClick={closeAllMenus}>Payment Overviews</Link>
                   </>
                 )}
-                {userType === 'creator' && ( // Correctly using userType
+                {userType === 'creator' && ( // Normal creator links (limited)
+                  <>
+                    <Link to="/my-content" className="mobile-menu-item" onClick={closeAllMenus}>My Content</Link>
+                    <button className="mobile-menu-item" onClick={handleCameraClick}>Upload Content</button>
+                    <Link to="/profile-settings" className="mobile-menu-item" onClick={closeAllMenus}>Profile Settings</Link>
+                  </>
+                )}
+                {userType === 'premium_creator' && ( // Premium creator links (all)
                   <>
                     <Link to="/user-dashboard" className="mobile-menu-item" onClick={closeAllMenus}>Dashboard</Link>
                     <Link to="/my-content" className="mobile-menu-item" onClick={closeAllMenus}>My Content</Link>
@@ -119,7 +119,7 @@ function MobileNavbar() {
                     <Link to="/profile-settings" className="mobile-menu-item" onClick={closeAllMenus}>Profile Settings</Link>
                   </>
                 )}
-                {userType === 'business' && ( // Correctly using userType
+                {(userType === 'business' || userType === 'admin') && (
                   <Link to="/ad-campaign-management" className="mobile-menu-item" onClick={closeAllMenus}>Draftey Business</Link>
                 )}
                 <button onClick={handleLogout} className="mobile-menu-item logout-button">Logout</button>

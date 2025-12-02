@@ -14,7 +14,7 @@ const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?
 
 function MobileUploadContentPage() {
   const navigate = useNavigate();
-  const { user, isLoggedIn, userRole, logout } = useAuth();
+  const { user, isLoggedIn, userType, logout } = useAuth();
 
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState(null);
@@ -28,12 +28,11 @@ function MobileUploadContentPage() {
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn || userRole !== 'creator') {
+    if (!isLoggedIn || (userType !== 'creator' && userType !== 'premium_creator')) {
       alert("Access Denied: You must be logged in as a creator to upload content.");
-      logout();
       navigate('/');
     }
-  }, [isLoggedIn, userRole, navigate, logout]);
+  }, [isLoggedIn, userType, navigate]);
 
   const clearSelection = useCallback(() => {
     setSelectedMedia(null);
@@ -46,7 +45,7 @@ function MobileUploadContentPage() {
   }, []);
 
   // eslint-disable-next-line no-unused-vars
-  const getPublicUrl = useCallback((path, bucketName = CONTENT_BUCKET) => { // Suppress warning
+  const getPublicUrl = useCallback((path, bucketName = CONTENT_BUCKET) => {
     if (!path) return null;
     const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
     return data.publicUrl;
@@ -111,17 +110,13 @@ function MobileUploadContentPage() {
         cameraOptions.mediaType = 'photo';
       } else {
         cameraOptions.mediaType = 'video';
-        alert("Direct video capture from camera is not fully supported with current setup. Please select from gallery for video.");
-        setIsProcessingMedia(false);
-        selectPhotoOrVideo(false);
-        return;
       }
 
-      const photo = await Camera.getPhoto(cameraOptions);
+      const media = await Camera.getPhoto(cameraOptions);
 
-      if (photo?.webPath) {
-        setSelectedMedia(photo);
-        setMediaPreviewUrl(photo.webPath);
+      if (media?.webPath) {
+        setSelectedMedia(media);
+        setMediaPreviewUrl(media.webPath);
         setMediaType(isPhoto ? 'photo' : 'video');
       } else {
         console.log('No media captured.');
@@ -133,8 +128,7 @@ function MobileUploadContentPage() {
     } finally {
       setIsProcessingMedia(false);
     }
-  }, [isProcessingMedia, selectPhotoOrVideo]);
-
+  }, [isProcessingMedia]);
 
   const uploadContent = useCallback(async () => {
     if (!selectedMedia || !user?.id) {
@@ -157,9 +151,11 @@ function MobileUploadContentPage() {
 
       let blob;
       if (Capacitor.isNativePlatform()) {
+        // Correctly read the file using the 'path' property from selectedMedia
+        // and specify the correct directory (e.g., Cache for temporary camera files)
         const response = await Filesystem.readFile({
           path: selectedMedia.path,
-          directory: Directory.Data,
+          directory: Directory.Cache, // Use Directory.Cache for files from Camera.getPhoto
           encoding: 'base64'
         });
         const byteCharacters = atob(response.data);
@@ -216,14 +212,14 @@ function MobileUploadContentPage() {
   }, [selectedMedia, user, title, caption, mediaType, clearSelection, navigate]);
 
 
-  if (!isLoggedIn || userRole !== 'creator' || user === undefined) {
+  if (!isLoggedIn || (userType !== 'creator' && userType !== 'premium_creator') || user === undefined) {
     return <div className="mobile-upload-container"><p>Checking access...</p></div>;
   }
 
   return (
     <div className="mobile-upload-container">
       <h2>Upload New Content</h2>
-      <p>Capture or select photos/videos to share with your audience.</p>
+      <p>Share your amazing content with Draftey!</p>
 
       {uploadError && <p className="error-message">{uploadError}</p>}
       {uploadSuccess && <p className="success-message">{uploadSuccess}</p>}
@@ -247,14 +243,20 @@ function MobileUploadContentPage() {
               <ion-icon name="image-outline"></ion-icon> Choose Photo
             </button>
             <button
+              onClick={() => takePhotoOrVideo(false)}
+              disabled={isProcessingMedia || uploading}
+              className="upload-button"
+            >
+              <ion-icon name="videocam-outline"></ion-icon> Take Video
+            </button>
+            <button
               onClick={() => selectPhotoOrVideo(false)}
               disabled={isProcessingMedia || uploading}
               className="upload-button"
             >
-              <ion-icon name="videocam-outline"></ion-icon> Choose Video
+              <ion-icon name="folder-open-outline"></ion-icon> Choose Video
             </button>
           </div>
-          <p className="note">Note: Direct video capture is not yet fully supported. Please select existing videos.</p>
         </div>
       ) : (
         <div className="media-preview-section">

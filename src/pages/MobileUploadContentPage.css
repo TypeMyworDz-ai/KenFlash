@@ -27,15 +27,38 @@
 }
 
 .error-message {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
+  color: white; /* Ensures text is clearly visible against the dark red */
+  background-color: #e74c3c; /* A more vibrant and alarming red */
+  border: 2px solid #c0392b; /* Thicker, darker border for emphasis */
+  padding: 15px 20px; /* Increased padding to make the error box larger */
+  border-radius: 10px; /* Slightly more rounded corners */
+  margin-bottom: 25px; /* More space below the error message */
   width: 100%;
   text-align: center;
+  font-weight: bold; /* Bold text for immediate attention */
+  font-size: 1.1em; /* Slightly larger font size */
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); /* More prominent shadow with red tint */
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; /* Adds a subtle shake animation */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
 
 .success-message {
   color: #28a745;

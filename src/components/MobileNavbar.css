@@ -49,18 +49,17 @@
   transform: translate(-50%, -50%); /* Center horizontally and vertically */
   background-color: var(--primary-color); /* Themed background */
   border: none;
-  border-radius: 50%; /* Make it round */
-  width: 45px; /* Size of the button */
-  height: 45px;
+  border-radius: 25px; /* Make it a pill shape for text */
+  height: 45px; /* Fixed height */
+  padding: 0 15px; /* Add horizontal padding for the slogan */
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px; /* Space between icon and slogan */
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: background-color 0.3s ease, transform 0.2s ease;
   z-index: 100; /* Ensure it's above other navbar elements */
-  /* Temporary Debug: Add a prominent border to see if it renders */
-  /* border: 2px solid red !important; */
 }
 
 .mobile-navbar-camera-button:hover {
@@ -70,10 +69,18 @@
 
 /* Styles for the camera icon image */
 .camera-icon-img {
-  width: 60%; /* Adjust size of the image within the button */
-  height: 60%;
+  width: 25px; /* Fixed width for the camera icon */
+  height: 25px; /* Fixed height for the camera icon */
   object-fit: contain;
   filter: invert(100%); /* Make it white if your icon is black, or adjust as needed */
+}
+
+/* NEW: Slogan for the camera button */
+.upload-slogan {
+  color: white; /* Slogan text color */
+  font-size: 0.9em; /* Adjust font size */
+  font-weight: 500; /* Adjust font weight */
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 

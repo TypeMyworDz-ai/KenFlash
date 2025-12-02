@@ -53,11 +53,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchCurrentUserProfile = async () => {
       console.log('--- AuthContext: Starting fetchCurrentUserProfile ---');
+      let wasAuthUserPresent = false; // Flag to track if authUser was successfully retrieved
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         console.log('AuthContext: supabase.auth.getUser() result:', authUser);
 
         if (authUser) {
+          wasAuthUserPresent = true; // Set flag
           setUser(authUser);
           console.log('AuthContext: Authenticated user ID:', authUser.id);
           
@@ -72,11 +74,13 @@ export const AuthProvider = ({ children }) => {
 
           if (profileError && profileError.code !== 'PGRST116') { // PGRST116 means no rows found
             console.error('AuthContext: Error fetching user profile from DB:', profileError.message);
-            // Fallback to viewer if profile not found or error
+            // Fallback to viewer if profile not found or error, but keep user logged in
             setUserType('viewer');
             setIsUserApproved(false);
-            setIsLoggedIn(false); // If profile fetching fails, assume not fully logged in
-            localStorage.removeItem('isLoggedIn');
+            localStorage.setItem('userType', 'viewer');
+            localStorage.setItem('isUserApproved', 'false');
+            setIsLoggedIn(true); // Keep isLoggedIn true if authUser was present
+            localStorage.setItem('isLoggedIn', 'true');
           } else if (profile) {
             console.log('AuthContext: Fetched profile user_type:', profile.user_type);
             console.log('AuthContext: Fetched profile is_approved:', profile.is_approved);
@@ -91,10 +95,11 @@ export const AuthProvider = ({ children }) => {
             console.warn('AuthContext: No profile found for authenticated user. Defaulting to viewer.');
             setUserType('viewer');
             setIsUserApproved(false);
-            setIsLoggedIn(false);
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userType');
-            localStorage.removeItem('isUserApproved');
+            // Keep isLoggedIn true if authUser was present
+            localStorage.setItem('userType', 'viewer');
+            localStorage.setItem('isUserApproved', 'false');
+            setIsLoggedIn(true); // Ensure isLoggedIn is true if authUser was present
+            localStorage.setItem('isLoggedIn', 'true');
           }
         } else {
           console.log('AuthContext: No authenticated user found. Clearing states.');
@@ -109,14 +114,25 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error('AuthContext: Error during initial user/profile fetch (catch block):', err.message);
-        // Ensure states are reset on error
-        setUser(null);
-        setUserType('viewer');
-        setIsUserApproved(false);
-        setIsLoggedIn(false);
-        localStorage.removeItem('userType');
-        localStorage.removeItem('isUserApproved');
-        localStorage.removeItem('isLoggedIn');
+        if (wasAuthUserPresent) {
+          // An error occurred AFTER authUser was found (likely profile fetch issue)
+          setUserType('viewer');
+          setIsUserApproved(false);
+          localStorage.setItem('userType', 'viewer');
+          localStorage.setItem('isUserApproved', 'false');
+          setIsLoggedIn(true); // Keep logged in
+          localStorage.setItem('isLoggedIn', 'true');
+          // Do not clear user or set isLoggedIn to false
+        } else {
+          // Error before or during authUser retrieval, or authUser was never present
+          setUser(null);
+          setUserType('viewer');
+          setIsUserApproved(false);
+          setIsLoggedIn(false);
+          localStorage.removeItem('userType');
+          localStorage.removeItem('isUserApproved');
+          localStorage.removeItem('isLoggedIn');
+        }
       } finally {
         console.log('--- AuthContext: Finished fetchCurrentUserProfile ---');
       }
@@ -125,7 +141,20 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('AuthContext: Supabase auth state changed event:', _event, 'Session:', session);
-      fetchCurrentUserProfile(); // Re-fetch profile on auth state change
+      // Only re-fetch profile if an actual session exists or was signed in/refreshed
+      if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || session) {
+        fetchCurrentUserProfile();
+      } else if (_event === 'SIGNED_OUT') {
+        // Explicitly handle sign out to clear all states
+        setUser(null);
+        setUserType('viewer');
+        setIsUserApproved(false);
+        setIsLoggedIn(false);
+        localStorage.removeItem('userType');
+        localStorage.removeItem('isUserApproved');
+        localStorage.removeItem('isLoggedIn');
+        console.log('AuthContext: Auth state changed to SIGNED_OUT. States cleared.');
+      }
     });
     
     fetchCurrentUserProfile(); // Initial fetch on component mount
@@ -150,6 +179,7 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: Triggering profile refetch after login...');
       // This will be handled by the onAuthStateChange listener, but a direct call can be a fallback
       // Alternatively, the onAuthStateChange listener is typically sufficient
+      // fetchCurrentUserProfile(); // Removed direct call to avoid potential race with onAuthStateChange
     }, 100); 
   };
 
@@ -196,22 +226,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    console.log('AuthContext: logout function called.');
+    console.log('AuthContext: logout function called from:', new Error().stack); // Added call stack log
     try {
       await supabase.auth.signOut();
       console.log('AuthContext: Supabase sign out successful.');
-      // Clear all auth-related states and local storage
-      setIsLoggedIn(false);
-      localStorage.removeItem('isLoggedIn');
-      setUserType('viewer');
-      localStorage.removeItem('userType');
-      setIsUserApproved(false);
-      localStorage.removeItem('isUserApproved');
-      setUser(null);
-      setIsVisitorSubscribed(false);
-      setVisitorEmail(null);
-      localStorage.removeItem('visitorEmail');
-      localStorage.removeItem('subscriptionExpiryTime');
+      // The onAuthStateChange listener will handle clearing states
     } catch (error) {
       console.error('AuthContext: Error during Supabase sign out:', error.message);
       // Even if Supabase sign out fails, clear local state for a clean logout experience
