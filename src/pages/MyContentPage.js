@@ -15,7 +15,7 @@ function MyContentPage() {
   const [isSlideshowOpen, setIsSlideshowOpen] = useState(false);
   const [currentSlideshowPhotos, setCurrentSlideshowPhotos] = useState([]);
   const [currentSlideshowCaption, setCurrentSlideshowCaption] = useState('');
-  const [creatorProfileType, setCreatorProfileType] = useState(null);
+  const [userProfileType, setUserProfileType] = useState(null); // Changed creatorProfileType to userProfileType
 
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
@@ -101,12 +101,12 @@ function MyContentPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('creator_type')
+          .select('user_type') // Changed creator_type to user_type
           .eq('id', creatorId)
           .single();
         
         if (profileError) throw profileError;
-        setCreatorProfileType(profileData.creator_type);
+        setUserProfileType(profileData.user_type); // Changed creatorProfileType to userProfileType
 
         const bucketName = 'content';
 
@@ -118,7 +118,7 @@ function MyContentPage() {
 
         const { data: contentData, error: contentError } = await supabase
           .from('content')
-          .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type, profiles(creator_type)')
+          .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type, profiles(user_type)') // Changed creator_type to user_type
           .eq('creator_id', creatorId)
           .order('created_at', { ascending: false });
 
@@ -148,7 +148,7 @@ function MyContentPage() {
               url: getPublicUrl(photo.storage_path),
               storagePath: photo.storage_path,
               creator_id: creatorId,
-              isPremiumContent: photo.profiles?.creator_type === 'premium_creator',
+              isPremiumContent: photo.profiles?.user_type === 'premium_creator', // Changed creator_type to user_type
             });
           });
 
@@ -169,7 +169,7 @@ function MyContentPage() {
               creator_id: creatorId,
               content_type: 'video',
               profiles: video.profiles,
-              isPremiumContent: video.profiles?.creator_type === 'premium_creator',
+              isPremiumContent: video.profiles?.user_type === 'premium_creator', // Changed creator_type to user_type
             });
           });
         }
@@ -195,7 +195,7 @@ function MyContentPage() {
 
 
   const openSlideshow = (item) => {
-    const isPremiumContent = creatorProfileType === 'premium_creator';
+    const isPremiumContent = userProfileType === 'premium_creator'; // Changed creatorProfileType to userProfileType
     
     const photosForSlideshow = item.photos.map(p => ({
       id: p.id,
@@ -225,7 +225,7 @@ function MyContentPage() {
   };
 
   const handleVideoPlay = (item) => {
-    const isPremiumContent = creatorProfileType === 'premium_creator';
+    const isPremiumContent = userProfileType === 'premium_creator'; // Changed creatorProfileType to userProfileType
     logView(item.id, item.creator_id, item.content_type, isPremiumContent);
   };
 

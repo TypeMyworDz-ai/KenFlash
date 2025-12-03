@@ -4,9 +4,11 @@ import './UserSignupPage.css';
 
 function UserSignupPage() {
   const [userType, setUserType] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(''); // State to hold error messages
 
   const handleSelectUserType = (type) => {
     setUserType(type);
+    setErrorMessage(''); // Clear any previous error when a new type is selected
   };
 
   return (
@@ -48,10 +50,12 @@ function UserSignupPage() {
               *Create an ad account to post and manage your campaigns.
             </p>
           </div>
-
         </div>
       ) : (
-        <UserSignupForm userType={userType} /> 
+        <>
+          {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Display error message */}
+          <UserSignupForm userType={userType} setErrorMessage={setErrorMessage} /> 
+        </>
       )}
     </div>
   );

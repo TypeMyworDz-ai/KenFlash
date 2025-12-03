@@ -113,7 +113,7 @@ function MobileHomePage() {
     setError(null);
 
     try {
-      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'normal_creator'] : ['normal_creator'];
+      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'creator'] : ['creator'];
       const from = currentPage * CONTENT_FETCH_LIMIT;
       const to = from + CONTENT_FETCH_LIMIT - 1;
 
@@ -121,10 +121,10 @@ function MobileHomePage() {
         .from('content')
         .select(`
           *, 
-          profiles!inner(id, nickname, avatar_path, creator_type),
+          profiles!inner(id, nickname, avatar_path, user_type),
           views_count:views(count)
-        `)
-        .in('profiles.creator_type', creatorTypesToFetch)
+        `) // Changed creator_type to user_type
+        .in('profiles.user_type', creatorTypesToFetch) // Changed creator_type to user_type
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -147,7 +147,7 @@ function MobileHomePage() {
             avatar_url: getPublicUrl(item.profiles.avatar_path, AVATAR_BUCKET) || null
           },
           views: item.views_count ? item.views_count[0].count : 0,
-          isPremiumContent: item.profiles.creator_type === 'premium_creator',
+          isPremiumContent: item.profiles.user_type === 'premium_creator', // Changed creator_type to user_type
         }));
 
         const now = new Date().toISOString();

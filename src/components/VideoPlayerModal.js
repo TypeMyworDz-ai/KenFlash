@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import './VideoPlayerModal.css';
 
-function VideoPlayerModal({ video, onClose, logView, creatorId, contentType, isPremiumContent }) { // NEW: Added logView, creatorId, contentType, isPremiumContent
+function VideoPlayerModal({ video, onClose, logView, creatorId, contentType, isPremiumContent }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -16,17 +16,21 @@ function VideoPlayerModal({ video, onClose, logView, creatorId, contentType, isP
     <div className="modal-overlay" onClick={onClose}>
       <div className="video-player-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="close-modal-button" onClick={onClose}>&times;</button>
-        <video
-          ref={videoRef}
-          src={video.url}
-          poster={video.thumbnailUrl}
-          controls
-          autoPlay
-          loop
-          className="video-player"
-        >
-          Your browser does not support the video tag.
-        </video>
+        <div className="video-container"> {/* This wrapper is now correctly defined in CSS */}
+          <video
+            ref={videoRef}
+            src={video.url}
+            poster={video.thumbnailUrl}
+            controls
+            autoPlay
+            loop
+            className="video-player"
+            controlsList="nodownload" /* NEW: Disables the download button */
+          >
+            Your browser does not support the video tag.
+          </video>
+          <div className="watermark-overlay"></div>
+        </div>
         {video.title && <h3 className="video-title">{video.title}</h3>}
         {video.creatorNickname && <p className="video-creator-name">By: {video.creatorNickname}</p>}
       </div>

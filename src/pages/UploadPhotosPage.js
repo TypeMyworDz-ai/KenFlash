@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
-import './UploadPhotosPage.css';
+// import './UploadPhotosPage.css'; // Commented out as per your clarification
 
 function UploadPhotosPage() {
   const navigate = useNavigate();
@@ -32,6 +32,26 @@ function UploadPhotosPage() {
         throw new Error('User not authenticated. Please log in.');
       }
       const creatorId = user.id;
+
+      // Fetch user's profile to check user_type and approval status
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_type, is_approved')
+        .eq('id', creatorId)
+        .single();
+
+      if (profileError || !profileData) {
+        throw new Error('Could not retrieve user profile. Please try again.');
+      }
+
+      // Prevent upload if premium_creator is not approved, as per previous logic.
+      // This check remains valid for preventing uploads from *unapproved* premium creators,
+      // even if content doesn't require further admin approval *after* being approved.
+      if (profileData.user_type === 'premium_creator' && !profileData.is_approved) {
+        setError('Premium creators must be approved by an admin before uploading content. Please wait for your verification to be processed.');
+        setLoading(false);
+        return;
+      }
 
       // Generate a group ID only if more than one photo is selected
       const groupId = selectedPhotos.length > 1 ? uuidv4() : null;
@@ -68,7 +88,7 @@ function UploadPhotosPage() {
           group_id: groupId,
           caption: caption || null,
           content_type: 'photo',
-          is_active: true,
+          is_active: true, // Reverted to true: content is immediately active
         };
         console.log('[UploadPhotosPage] Inside map - metadataItem before return:', metadataItem);
         return metadataItem;
@@ -91,7 +111,7 @@ function UploadPhotosPage() {
       setCaption('');
       navigate('/my-content');
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred during photo upload.');
+      setError(err.message || 'An unexpected error occurred during photo upload. Please ensure you are approved if you are a Premium Creator.');
       console.error('[UploadPhotosPage] Photo upload process error (caught):', err);
     } finally {
       setLoading(false);
@@ -101,7 +121,7 @@ function UploadPhotosPage() {
   return (
     <div className="upload-photos-container">
       <h2>Upload Photos</h2>
-      <p>Share your amazing photos with Draftey!</p> {/* UPDATED: KenyaFlashing to Draftey */}
+      <p>Share your amazing photos with Draftey!</p>
 
       <form onSubmit={handleSubmit} className="upload-form">
         <div className="form-group">

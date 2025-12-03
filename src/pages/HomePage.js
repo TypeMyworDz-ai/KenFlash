@@ -157,11 +157,12 @@ function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator'] : ['normal_creator'];
+      // Use 'creator' for normal creators and 'premium_creator' for premium content
+      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'creator'] : ['creator'];
 
       const { data: contentData, error: contentError } = await supabase
         .from('content')
-        .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, creator_type), views_count:views(count)')
+        .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, user_type), views_count:views(count)') // Changed creator_type to user_type
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -172,7 +173,7 @@ function HomePage() {
           ...item,
           views: item.views_count ? item.views_count[0].count : 0,
         }))
-        .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.creator_type));
+        .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.user_type)); // Changed creator_type to user_type
 
       const photos = contentWithProfilesAndViews.filter(item => item.content_type === 'photo');
       const videos = contentWithProfilesAndViews.filter(item => item.content_type === 'video');
@@ -269,7 +270,7 @@ function HomePage() {
   };
 
   const openSlideshow = (item) => {
-    const isPremium = item.profiles?.creator_type === 'premium_creator';
+    const isPremium = item.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
     
     logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
 
@@ -312,7 +313,7 @@ function HomePage() {
 
   // UPDATED: openVideoPlayer to store full context in currentVideo
   const openVideoPlayer = (videoItem) => {
-    const isPremium = videoItem.profiles?.creator_type === 'premium_creator';
+    const isPremium = videoItem.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
     logView(videoItem.id, videoItem.creator_id, videoItem.content_type, isPremium);
     
     setCurrentVideo({
@@ -410,7 +411,7 @@ function HomePage() {
         <>
           <div className="content-grid">
             {content.map((item) => (
-              <div key={`${item.type}-${item.id}`} className="content-card">
+              <div key={`$aspect_ratio_1-${item.id}`} className="content-card">
                 <div
                   className="content-media"
                   onClick={item.type === 'video' ? () => openVideoPlayer(item) : () => openSlideshow(item)}
@@ -433,6 +434,7 @@ function HomePage() {
                       Your browser does not support the video tag.
                     </video>
                   )}
+                  <div className="watermark-overlay"></div> {/* Watermark added here */}
                 </div>
 
                 <div className="content-creator-info">

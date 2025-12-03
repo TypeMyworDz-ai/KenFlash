@@ -298,6 +298,23 @@
   display: block;
 }
 
+/* NEW: Watermark Overlay - Single, conspicuous, bottom right */
+.watermark-overlay {
+  position: absolute;
+  bottom: 10px; /* Position from the bottom */
+  right: 10px; /* Position from the right */
+  width: 70px; /* Increased width of the watermark logo for prominence */
+  height: 70px; /* Increased height of the watermark logo for prominence */
+  background-image: url('../../public/draftey-logo.png'); /* Corrected path to your Draftey logo */
+  background-size: contain; /* Ensure the entire logo is visible */
+  background-repeat: no-repeat; /* Display a single logo */
+  background-position: center; /* Center the logo within its 70x70px area */
+  opacity: 0.3; /* Increased opacity for more conspicuousness */
+  pointer-events: none; /* Allows clicks to pass through to content-media */
+  z-index: 5; /* Ensure it's above the content but below any controls/overlays */
+}
+
+
 /* Remove content-overlay as view count is moving */
 /* .content-overlay { ... } */
 

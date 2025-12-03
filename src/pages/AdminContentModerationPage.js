@@ -74,8 +74,8 @@ function AdminContentModerationPage() {
             .from('content')
             .select(`
               id, created_at, creator_id, storage_path, thumbnail_path, title, caption, 
-              content_type, is_active, profiles(nickname, creator_type), views_count:views(count)
-            `)
+              content_type, is_active, profiles(nickname, user_type), views_count:views(count)
+            `) // Changed creator_type to user_type
             .order('created_at', { ascending: false });
 
           if (contentError) throw contentError;
@@ -85,7 +85,7 @@ function AdminContentModerationPage() {
           if (contentData) {
             contentData.forEach(item => {
                 const creatorNickname = item.profiles ? item.profiles.nickname : 'Unknown Creator';
-                const isPremiumContent = item.profiles?.creator_type === 'premium_creator';
+                const isPremiumContent = item.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
                 
                 if (item.content_type === 'photo' && item.group_id) {
                     return;

@@ -176,7 +176,7 @@ function UserProfileViewPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, nickname, bio, avatar_path, creator_type')
+          .select('id, nickname, bio, avatar_path, user_type') // Changed creator_type to user_type
           .eq('id', userId)
           .single();
 
@@ -185,7 +185,7 @@ function UserProfileViewPage() {
 
         setCreator(profileData);
 
-        if (profileData.creator_type === 'premium_creator' && !isVisitorSubscribed) {
+        if (profileData.user_type === 'premium_creator' && !isVisitorSubscribed) { // Changed creator_type to user_type
           setAccessDenied(true);
           setLoading(false);
           return;
@@ -218,7 +218,7 @@ function UserProfileViewPage() {
                   photos: [],
                   creator_id: userId,
                   content_type: 'photo',
-                  isPremiumContent: profileData.creator_type === 'premium_creator',
+                  isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
                   views: photo.views_count ? photo.views_count[0].count : 0,
                 };
               }
@@ -227,7 +227,7 @@ function UserProfileViewPage() {
                 url: getPublicUrl(photo.storage_path),
                 storagePath: photo.storage_path,
                 creator_id: userId,
-                isPremiumContent: profileData.creator_type === 'premium_creator',
+                isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
                 views: photo.views_count ? photo.views_count[0].count : 0,
               });
             } else {
@@ -240,7 +240,7 @@ function UserProfileViewPage() {
                 storagePath: photo.storage_path,
                 creator_id: userId,
                 content_type: 'photo',
-                isPremiumContent: profileData.creator_type === 'premium_creator',
+                isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
                 views: photo.views_count ? photo.views_count[0].count : 0,
               });
             }
@@ -261,7 +261,7 @@ function UserProfileViewPage() {
               storagePath: v.storage_path,
               creator_id: userId,
               content_type: 'video',
-              isPremiumContent: profileData.creator_type === 'premium_creator',
+              isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
               views: v.views_count ? v.views_count[0].count : 0,
             })),
             ...singlePhotos, // Ensure singlePhotos are included in processedContent
@@ -424,7 +424,7 @@ function UserProfileViewPage() {
                 ref={contentGridRef}
               >
                 {paginatedContent.map((item) => (
-                  <div key={`${item.type}-${item.id}`} className="content-card">
+                  <div key={`$aspect_ratio_1-${item.id}`} className="content-card">
                     <div
                       className="content-media"
                       onClick={item.type === 'video' ? () => openVideoPlayer(item) : () => openSlideshow(item)}

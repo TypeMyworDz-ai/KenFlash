@@ -1,193 +1,235 @@
-/* src/pages/UserSignupPage.css */
+/* src/components/UserSignupForm.css */
 
-.user-signup-page-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - var(--navbar-height, 60px)); /* Adjust for navbar height */
-  padding: 30px;
-  background-color: var(--background-color, #f0f2f5); /* Main background */
-  color: var(--text-color, #333);
-  box-sizing: border-box;
-}
-
-.signup-title {
-  font-size: 3em; /* Larger, more impactful title */
-  font-weight: 800; /* Extra bold */
-  color: var(--primary-color, #007bff); /* Strong primary color */
-  margin-bottom: 15px;
-  text-align: center;
-  letter-spacing: -0.02em; /* Slightly tighter letter spacing */
-}
-
-.signup-tagline {
-  font-size: 1.3em; /* More prominent tagline */
-  color: var(--text-color-secondary, #666); /* Secondary text color */
-  margin-bottom: 40px; /* More space before selection */
-  text-align: center;
-  max-width: 600px;
-  line-height: 1.6;
-}
-
-.user-type-selection {
-  background-color: var(--card-background, #ffffff); /* Card background */
-  border-radius: 15px; /* More rounded corners */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Softer, larger shadow */
-  padding: 40px; /* Generous padding */
-  max-width: 650px; /* Wider card */
+/* General form container styling */
+.signup-form-container {
+  background-color: var(--card-background, #ffffff);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 40px;
+  max-width: 650px;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 25px; /* Space between *each grouped option* */
-  align-items: center;
   box-sizing: border-box;
+  text-align: center;
+  margin-top: 20px; /* Space from the user type selection */
 }
 
-/* NEW: Wrapper for each button and its info text */
-.creator-option-wrapper {
+.signup-form-container .signup-title {
+  font-size: 2.5em; /* Slightly smaller than page title */
+  font-weight: 700;
+  color: var(--primary-color, #007bff);
+  margin-bottom: 10px;
+}
+
+.signup-form-container .signup-tagline {
+  font-size: 1.1em;
+  color: var(--text-color-secondary, #666);
+  margin-bottom: 30px;
+}
+
+.signup-form {
   display: flex;
   flex-direction: column;
+  gap: 20px; /* Space between form groups */
   align-items: center;
-  width: 100%; /* Ensure it takes full width within the selection card */
 }
 
-.selection-prompt {
-  font-size: 1.4em; /* Clearer prompt */
+.form-group {
+  width: 100%;
+  max-width: 400px; /* Constrain form input width */
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1em;
   font-weight: 600;
-  color: var(--heading-color, #333); /* Heading color */
-  margin-bottom: 15px; /* Space after the prompt */
-  text-align: center;
+  color: var(--text-color, #333); /* Ensure labels are clearly visible */
 }
 
-.user-type-button {
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="tel"],
+.form-group input[type="date"] {
   width: 100%;
-  padding: 18px 25px; /* Larger buttons */
+  padding: 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  font-size: 1em;
+  color: var(--text-color, #333);
+  background-color: var(--input-background, #f9f9f9);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.form-group input:focus {
+  border-color: var(--primary-color, #007bff);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.form-group input::placeholder {
+  color: var(--text-color-secondary, #aaa);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 400px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 5px;
+  transform: scale(1.2); /* Slightly larger checkbox */
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+  font-weight: normal;
+  color: var(--text-color, #333);
+  display: flex; /* Allow content inside label to align */
+  align-items: center;
+  flex-wrap: wrap; /* Allow text to wrap */
+}
+
+.policy-link {
+  color: var(--primary-color, #007bff);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.policy-link:hover {
+  color: var(--primary-color-hover, #0056b3);
+  text-decoration: underline;
+}
+
+.error-message {
+  color: #dc3545; /* A standard red for error messages */
+  font-size: 0.9em;
+  margin-top: 5px;
+  text-align: center;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  padding: 8px 15px;
+}
+
+.submit-button {
+  width: 100%;
+  max-width: 400px;
+  padding: 15px 25px;
+  background-color: var(--button-primary, #007bff);
+  color: white;
   border: none;
-  border-radius: 10px; /* Rounded buttons */
-  font-size: 1.25em; /* Larger, readable text */
+  border-radius: 8px;
+  font-size: 1.1em;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px; /* Space for potential icons */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
-  margin-bottom: 10px; /* Space between button and its info text */
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
 }
 
-/* Specific button styles */
-.user-type-button.normal-creator {
-  background-color: var(--button-success, #28a745); /* Green for free creators */
-  color: white;
-}
-
-.user-type-button.normal-creator:hover {
-  background-color: var(--button-success-hover, #218838);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-}
-
-.user-type-button.premium-creator {
-  background-color: var(--button-primary, #007bff); /* Blue for premium creators */
-  color: white;
-}
-
-.user-type-button.premium-creator:hover {
+.submit-button:hover:not(:disabled) {
   background-color: var(--button-primary-hover, #0056b3);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
 }
 
-.user-type-button.business {
-  background-color: var(--button-info, #17a2b8); /* Cyan for business */
-  color: white;
+.submit-button:disabled {
+  background-color: var(--button-disabled, #cccccc);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
-.user-type-button.business:hover {
-  background-color: var(--button-info-hover, #138496);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(23, 162, 184, 0.3);
+/* Specific error message for nickname */
+.error-message.nickname-error {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
 }
 
-/* Info text below buttons */
-.premium-info,
-.business-info {
-  font-size: 0.95em;
-  color: var(--text-color-secondary, #999);
-  margin-top: 0; /* Remove top margin as gap handles spacing */
-  margin-bottom: 0; /* Remove bottom margin as gap handles spacing */
-  text-align: center;
-  line-height: 1.4;
-  max-width: 80%; /* Constrain width for readability */
+/* Full width error message for general form errors */
+.error-message.full-width-error {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .user-signup-page-container {
-    padding: 20px;
+  .signup-form-container {
+    padding: 30px 20px;
+    margin-top: 15px;
   }
-  .signup-title {
-    font-size: 2.5em;
-    margin-bottom: 10px;
+  .signup-form-container .signup-title {
+    font-size: 2em;
   }
-  .signup-tagline {
-    font-size: 1.1em;
-    margin-bottom: 30px;
+  .signup-form-container .signup-tagline {
+    font-size: 1em;
+    margin-bottom: 20px;
   }
-  .user-type-selection {
-    padding: 30px;
-    gap: 20px;
+  .signup-form {
+    gap: 15px;
   }
-  .creator-option-wrapper {
-    gap: 8px; /* Smaller gap in wrapper on mobile */
+  .form-group label {
+    font-size: 0.95em;
   }
-  .selection-prompt {
-    font-size: 1.2em;
-    margin-bottom: 10px;
+  .form-group input {
+    padding: 10px;
+    font-size: 0.95em;
   }
-  .user-type-button {
-    padding: 15px 20px;
-    font-size: 1.1em;
-    margin-bottom: 8px; /* Smaller margin below button */
+  .submit-button {
+    padding: 12px 20px;
+    font-size: 1em;
   }
-  .premium-info,
-  .business-info {
+  .error-message {
+    font-size: 0.85em;
+    padding: 6px 10px;
+  }
+  .checkbox-group {
     font-size: 0.9em;
   }
 }
 
 @media (max-width: 480px) {
-  .user-signup-page-container {
-    padding: 15px;
-    min-height: calc(100vh - var(--navbar-height-mobile, 50px));
+  .signup-form-container {
+    padding: 20px 15px;
+    margin-top: 10px;
   }
-  .signup-title {
-    font-size: 2em;
+  .signup-form-container .signup-title {
+    font-size: 1.8em;
   }
-  .signup-tagline {
-    font-size: 1em;
-    margin-bottom: 25px;
+  .signup-form-container .signup-tagline {
+    font-size: 0.9em;
+    margin-bottom: 15px;
   }
-  .user-type-selection {
-    padding: 25px;
-    gap: 15px;
+  .signup-form {
+    gap: 12px;
   }
-  .creator-option-wrapper {
-    gap: 6px;
+  .form-group label {
+    font-size: 0.9em;
   }
-  .selection-prompt {
-    font-size: 1.1em;
+  .form-group input {
+    padding: 8px;
+    font-size: 0.9em;
   }
-  .user-type-button {
-    padding: 12px 18px;
-    font-size: 1em;
-    margin-bottom: 6px;
+  .submit-button {
+    padding: 10px 15px;
+    font-size: 0.95em;
   }
-  .premium-info,
-  .business-info {
+  .error-message {
+    font-size: 0.8em;
+    padding: 5px 8px;
+  }
+  .checkbox-group {
     font-size: 0.85em;
   }
 }

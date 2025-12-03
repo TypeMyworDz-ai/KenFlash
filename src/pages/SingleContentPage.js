@@ -107,15 +107,15 @@ function SingleContentPage() {
           .from('content')
           .select(`
             *,
-            profiles(id, nickname, creator_type)
-          `)
+            profiles(id, nickname, user_type)
+          `) // Changed creator_type to user_type
           .eq('id', contentId)
           .single();
 
         if (fetchError) throw fetchError;
         if (!contentData) throw new Error('Content item not found.');
 
-        const isPremium = contentData.profiles?.creator_type === 'premium_creator';
+        const isPremium = contentData.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
 
         if (isPremium && !isVisitorSubscribed) {
           setError("You must be subscribed to view this premium content.");

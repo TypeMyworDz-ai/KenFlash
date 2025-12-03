@@ -95,6 +95,7 @@
   height: 100%; /* Fill the card height */
   object-fit: cover; /* Cover the area, cropping if necessary */
   display: block;
+  position: relative; /* Crucial for positioning the watermark within this media area */
 }
 
 .mobile-ad-media {
@@ -103,6 +104,23 @@
   object-fit: cover;
   display: block;
 }
+
+/* NEW: Watermark Overlay for Mobile Content Items */
+.watermark-overlay {
+  position: absolute;
+  bottom: 15px; /* Position from the bottom of the media area */
+  right: 15px; /* Position from the right of the media area */
+  width: 80px; /* Width of the watermark logo */
+  height: 80px; /* Height of the watermark logo */
+  background-image: url('../../public/draftey-logo.png'); /* Path to your Draftey logo */
+  background-size: contain; /* Ensure the entire logo is visible */
+  background-repeat: no-repeat; /* Display a single logo */
+  background-position: center; /* Center the logo within its area */
+  opacity: 0.8; /* Increased opacity for clear visibility */
+  pointer-events: none; /* Allows clicks to pass through */
+  z-index: 5; /* Ensure it's above the content */
+}
+
 
 /* NEW: Styles for the bottom info bar (creator and views) */
 .mobile-content-info {
@@ -205,5 +223,12 @@
   .no-content-message,
   .error-message {
     height: 100vh;
+  }
+  .watermark-overlay {
+    width: 60px; /* Adjust size for smaller screens */
+    height: 60px;
+    bottom: 10px;
+    right: 10px;
+    opacity: 0.9; /* Make it more prominent on small screens */
   }
 }

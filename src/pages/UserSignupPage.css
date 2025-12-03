@@ -5,111 +5,207 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 60px); /* Adjust based on your Navbar height */
-  padding: 20px;
-  background-color: var(--background-color); /* Assuming a global theme variable */
-  color: var(--text-color); /* Assuming a global theme variable */
+  min-height: calc(100vh - var(--navbar-height, 60px)); /* Adjust for navbar height, using a CSS variable for flexibility */
+  padding: 40px 20px; /* Increased top/bottom padding */
+  background-color: var(--background-color, #eef1f5); /* Lighter, modern background */
+  color: var(--text-color, #333);
   text-align: center;
+  box-sizing: border-box;
 }
 
 .signup-title {
-  font-size: 2.5em;
-  margin-bottom: 10px;
-  color: var(--primary-color); /* You might want to define a primary color in your App.css */
+  font-size: 3.2em; /* Larger, more impactful title */
+  font-weight: 800; /* Extra bold */
+  color: var(--primary-color, #007bff); /* Strong primary color */
+  margin-bottom: 15px;
+  text-align: center;
+  letter-spacing: -0.03em; /* Tighter letter spacing for modern feel */
+  line-height: 1.1;
 }
 
 .signup-tagline {
-  font-size: 1.2em;
-  margin-bottom: 30px;
-  color: var(--secondary-text-color); /* Assuming a secondary text color */
+  font-size: 1.4em; /* More prominent tagline */
+  color: var(--text-color-secondary, #555); /* Slightly darker secondary text */
+  margin-bottom: 50px; /* More space before selection card */
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.6;
 }
 
 .creator-type-selection {
-  background-color: var(--card-background-color); /* Assuming a card background color */
-  border-radius: 10px;
-  padding: 40px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: var(--card-background, #ffffff); /* Card background */
+  border-radius: 20px; /* More rounded corners */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1); /* Softer, larger shadow */
+  padding: 50px; /* Generous padding */
+  max-width: 700px; /* Wider card */
   width: 100%;
-  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px; /* Space between each grouped option */
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.creator-option-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%; /* Ensure it takes full width within the selection card */
 }
 
 .selection-prompt {
-  font-size: 1.1em;
-  margin-bottom: 25px;
-  color: var(--text-color);
+  font-size: 1.5em; /* Clearer prompt */
+  font-weight: 700;
+  color: var(--heading-color, #222); /* Darker heading color */
+  margin-bottom: 20px; /* Space after the prompt */
+  text-align: center;
 }
 
-.creator-type-button {
+.user-type-button {
   width: 100%;
-  padding: 15px 20px;
-  margin-bottom: 15px;
+  padding: 20px 25px; /* Larger buttons */
   border: none;
-  border-radius: 8px;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  border-radius: 12px; /* More rounded buttons */
+  font-size: 1.3em; /* Larger, readable text */
   font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Space for potential icons */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
+  margin-bottom: 12px; /* Space between button and its info text */
 }
 
-.creator-type-button.normal {
-  background-color: #007bff; /* Example blue */
+/* Specific button styles */
+.user-type-button.normal-creator {
+  background-color: var(--button-success, #28a745); /* Green for free creators */
   color: white;
 }
 
-.creator-type-button.normal:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px);
+.user-type-button.normal-creator:hover {
+  background-color: var(--button-success-hover, #218838);
+  transform: translateY(-4px); /* More pronounced lift */
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.35); /* Larger, softer hover shadow */
 }
 
-.creator-type-button.premium {
-  background-color: #28a745; /* Example green */
+.user-type-button.premium-creator {
+  background-color: var(--button-primary, #007bff); /* Blue for premium creators */
   color: white;
 }
 
-.creator-type-button.premium:hover {
-  background-color: #218838;
-  transform: translateY(-2px);
+.user-type-button.premium-creator:hover {
+  background-color: var(--button-primary-hover, #0056b3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.35);
 }
 
-.premium-creator-option {
+.user-type-button.business {
+  background-color: var(--button-info, #17a2b8); /* Cyan for business */
+  color: white;
+}
+
+.user-type-button.business:hover {
+  background-color: var(--button-info-hover, #138496);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(23, 162, 184, 0.35);
+}
+
+/* Info text below buttons */
+.premium-info,
+.business-info {
+  font-size: 1em; /* Slightly larger info text */
+  color: var(--text-color-secondary, #777); /* Clearer secondary text */
+  margin-top: 0; /* Remove top margin as gap handles spacing */
+  margin-bottom: 0; /* Remove bottom margin as gap handles spacing */
+  text-align: center;
+  line-height: 1.5;
+  max-width: 85%; /* Constrain width for readability */
+}
+
+.error-message {
+  color: #dc3545; /* A standard red for error messages */
+  font-size: 1em; /* Normal font size */
   margin-top: 15px;
-}
-
-.premium-info {
-  font-size: 0.9em;
-  color: var(--secondary-text-color); /* Lighter text for informational notes */
-  margin-top: 10px;
-  line-height: 1.4;
-  text-align: left;
-  padding: 0 10px;
+  padding: 10px;
+  border: 1px solid #dc3545;
+  border-radius: 5px;
+  background-color: #f8d7da; /* Light red background for the error box */
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .user-signup-page-container {
-    padding: 15px;
+    padding: 30px 15px;
   }
-
   .signup-title {
-    font-size: 2em;
+    font-size: 2.8em;
   }
+  .signup-tagline {
+    font-size: 1.2em;
+    margin-bottom: 40px;
+  }
+  .creator-type-selection {
+    padding: 40px 30px;
+    gap: 25px;
+  }
+  .creator-option-wrapper {
+    gap: 10px;
+  }
+  .selection-prompt {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+  }
+  .user-type-button {
+    padding: 18px 20px;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+  .premium-info,
+  .business-info {
+    font-size: 0.95em;
+  }
+  .error-message {
+    font-size: 0.9em;
+    padding: 8px;
+  }
+}
 
+@media (max-width: 480px) {
+  .user-signup-page-container {
+    padding: 20px 10px;
+    min-height: calc(100vh - var(--navbar-height-mobile, 50px));
+  }
+  .signup-title {
+    font-size: 2.2em;
+  }
   .signup-tagline {
     font-size: 1em;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
   }
-
   .creator-type-selection {
     padding: 30px 20px;
+    gap: 20px;
   }
-
+  .creator-option-wrapper {
+    gap: 8px;
+  }
   .selection-prompt {
-    font-size: 1em;
-    margin-bottom: 20px;
+    font-size: 1.1em;
   }
-
-  .creator-type-button {
-    font-size: 1em;
-    padding: 12px 15px;
+  .user-type-button {
+    padding: 15px 18px;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+  }
+  .premium-info,
+  .business-info {
+    font-size: 0.9em;
+  }
+  .error-message {
+    font-size: 0.85em;
+    padding: 6px;
   }
 }

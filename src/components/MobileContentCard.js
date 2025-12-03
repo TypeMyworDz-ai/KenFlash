@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import './MobileContentCard.css';
+import './MobileContentCard.css'; // Ensure this CSS file exists and is linked
 
 const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/40';
 const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
@@ -78,6 +78,7 @@ function MobileContentCard({
             Your browser does not support the video tag.
           </video>
         )}
+        <div className="watermark-overlay"></div> {/* Watermark added here */}
       </div>
 
       <div className="mobile-content-info">

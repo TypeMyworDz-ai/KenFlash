@@ -22,7 +22,7 @@
 }
 
 .mobile-content-media {
-  position: relative;
+  position: relative; /* Crucial for positioning the watermark within this media area */
   width: 100%;
   padding-bottom: 120%; /* 4:5 aspect ratio for media (taller than wide) */
   cursor: pointer;
@@ -38,6 +38,22 @@
   height: 100%;
   object-fit: cover; /* Covers the area, cropping if necessary */
   display: block;
+}
+
+/* Watermark Overlay for Mobile Content Items */
+.watermark-overlay {
+  position: absolute;
+  bottom: 15px; /* Position from the bottom of the media area */
+  right: 15px; /* Position from the right of the media area */
+  width: 80px; /* Width of the watermark logo */
+  height: 80px; /* Height of the watermark logo */
+  background-image: url('../../public/draftey-logo.png'); /* Path to your Draftey logo */
+  background-size: contain; /* Ensure the entire logo is visible */
+  background-repeat: no-repeat; /* Display a single logo */
+  background-position: center; /* Center the logo within its area */
+  opacity: 0.8; /* Increased opacity for clear visibility */
+  pointer-events: none; /* Allows clicks to pass through */
+  z-index: 5; /* Ensure it's above the content */
 }
 
 /* New structure for content info and views */
@@ -93,16 +109,41 @@
 }
 
 .mobile-view-count {
-  font-size: 0.85em;
-  color: var(--secondary-text-color);
+  font-size: 0.95em; /* Slightly larger font for better visibility */
+  color: var(--secondary-text-color); /* Ensure a clear color */
   white-space: nowrap;
   flex-shrink: 0; /* Prevents count from shrinking */
-  display: flex; /* For icon and text alignment */
+  display: flex; /* Use flexbox to control order */
   align-items: center;
-  gap: 3px; /* Space between icon and number */
+  gap: 5px; /* Increased gap between count and icon */
+  order: 2; /* Ensure it comes after the creator info in the flex container */
 }
 
 .mobile-view-count::before {
+  content: ''; /* Remove the ::before eye icon */
+}
+
+.mobile-view-count::after { /* NEW: Add the eye icon using ::after for correct order */
   content: '👁'; /* Eye icon */
-  font-size: 0.8em;
+  font-size: 1.1em; /* Make the icon slightly larger and more prominent */
+  color: var(--secondary-text-color); /* Ensure color consistency */
+}
+
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+  .watermark-overlay {
+    width: 60px; /* Adjust size for smaller screens */
+    height: 60px;
+    bottom: 10px;
+    right: 10px;
+    opacity: 0.9; /* Make it more prominent on small screens */
+  }
+  .mobile-view-count {
+    font-size: 0.9em; /* Adjust font size for smaller screens */
+    gap: 3px;
+  }
+  .mobile-view-count::after {
+    font-size: 1em; /* Adjust icon size for smaller screens */
+  }
 }

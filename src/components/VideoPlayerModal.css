@@ -16,12 +16,13 @@
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  position: relative;
+  position: relative; /* Crucial for positioning the watermark */
   max-width: 90%;
   max-height: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* Center video vertically if space allows */
 }
 
 .close-modal-button {
@@ -46,8 +47,25 @@
   height: auto;
   max-height: 70vh; /* Max height relative to viewport */
   border-radius: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 15px; /* Space between video and title/creator info */
   display: block; /* Ensures no extra space below video */
+  object-fit: contain; /* Ensure entire video is visible */
+}
+
+/* NEW: Watermark Overlay for Video Player Modal - inside the video area */
+.watermark-overlay {
+  position: absolute;
+  bottom: 65px; /* Adjusted to be inside the video, above controls and modal padding */
+  right: 35px; /* Adjusted to be inside the video, accounting for modal padding */
+  width: 100px; /* Increased width for more conspicuousness */
+  height: 100px; /* Increased height for more conspicuousness */
+  background-image: url('../../public/draftey-logo.png'); /* Path to your Draftey logo */
+  background-size: contain; /* Ensure the entire logo is visible */
+  background-repeat: no-repeat; /* Display a single logo */
+  background-position: center; /* Center the logo within its area */
+  opacity: 0.8; /* Increased opacity for clear visibility */
+  pointer-events: none; /* Allows clicks to pass through */
+  z-index: 5; /* Ensure it's above the video but below controls */
 }
 
 .video-title {
@@ -61,4 +79,51 @@
   color: #cccccc;
   font-size: 1em;
   text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .video-player-modal-content {
+    padding: 15px;
+    max-width: 95%;
+    max-height: 95%;
+  }
+  .video-player {
+    max-height: 60vh;
+  }
+  .watermark-overlay {
+    width: 80px; /* Adjusted width for smaller screens */
+    height: 80px; /* Adjusted height for smaller screens */
+    bottom: 50px; /* Adjusted for smaller screens */
+    right: 25px; /* Adjusted for smaller screens */
+    opacity: 0.85; /* Slightly more conspicuous on smaller screens */
+  }
+  .video-title {
+    font-size: 1.3em;
+  }
+  .video-creator-name {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-player-modal-content {
+    padding: 10px;
+  }
+  .video-player {
+    max-height: 50vh;
+  }
+  .watermark-overlay {
+    width: 70px; /* Adjusted width for very small screens */
+    height: 70px; /* Adjusted height for very small screens */
+    bottom: 40px; /* Adjusted for very small screens */
+    right: 20px; /* Adjusted for very small screens */
+    opacity: 0.9; /* Even more conspicuous on very small screens */
+  }
+  .video-title {
+    font-size: 1.1em;
+  }
+  .video-creator-name {
+    font-size: 0.8em;
+  }
 }
