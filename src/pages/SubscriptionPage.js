@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './SubscriptionPage.css';
 
-// Paystack Hosted Payment Page URL - This should be configured in Paystack to point to your callback.
-// IMPORTANT: The actual Paystack URL you redirect to needs to be dynamic or configured to include callback_url
-// For now, we'll construct the callback_url to your /paystack-callback route.
-const PAYSTACK_HOSTED_PAGE_BASE_URL = 'https://paystack.shop/pay/2jeen70kmt'; // Base URL for your Paystack product
+const PAYSTACK_HOSTED_PAGE_BASE_URL = 'https://paystack.shop/pay/2jeen70kmt';
 const PLAN_AMOUNT_KES = 20;
 const PLAN_NAME = '2 Hour Plan';
 
@@ -27,16 +24,21 @@ function SubscriptionPage() {
     setLoading(true);
     setMessage(`Redirecting to Paystack for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) payment for ${email}...`);
 
-    // IMPORTANT: Construct the callback URL to your app's PaystackCallback route.
-    // This URL will receive Paystack's transaction reference.
-    // We also pass the email and planName as custom query parameters to our callback.
-    const callbackUrl = `${window.location.origin}/paystack-callback?subscription_email=${encodeURIComponent(email)}&plan_name=${encodeURIComponent(PLAN_NAME)}`;
+    // Store the email and plan name in localStorage
+    // HomePage will read these values after the Paystack redirect
+    try {
+      localStorage.setItem('pendingSubscriptionEmail', email);
+      localStorage.setItem('pendingPlanName', PLAN_NAME);
+      console.log('SubscriptionPage: Stored pending email and plan name to localStorage.');
+    } catch (error) {
+      console.error('Failed to write to localStorage:', error);
+      alert('Could not initiate subscription. Please ensure cookies and site data are enabled in your browser settings.');
+      setLoading(false);
+      return;
+    }
 
-    // Construct the Paystack hosted payment page URL
-    // You might need to adjust how your Paystack product URL handles custom parameters.
-    // A common way is to pass custom_fields or metadata in the Paystack initialization,
-    // but for a hosted page, we typically rely on its own parameters and our callback.
-    const paystackRedirectUrl = `${PAYSTACK_HOSTED_PAGE_BASE_URL}?email=${encodeURIComponent(email)}&callback_url=${encodeURIComponent(callbackUrl)}`;
+    // Construct the Paystack hosted payment page URL, passing the email
+    const paystackRedirectUrl = `${PAYSTACK_HOSTED_PAGE_BASE_URL}?email=${encodeURIComponent(email)}`;
     
     // Redirect to Paystack
     window.location.href = paystackRedirectUrl;

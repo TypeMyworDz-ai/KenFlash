@@ -17,7 +17,6 @@ import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
 import SingleContentPage from './pages/SingleContentPage';
 import SubscriptionPage from './pages/SubscriptionPage';
-import PaystackCallback from './pages/PaystackCallback';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
 import UploadPhotosPage from './pages/UploadPhotosPage';
 import UploadVideosPage from './pages/UploadVideosPage';
@@ -114,12 +113,10 @@ function App() {
                 <Route path="/messages" element={<CreatorMessagesPage />} />
                 <Route path="/admin-messages" element={<AdminMessagesPage />} />
                 <Route path="/admin-traffic" element={<AdminTrafficPage />} />
-                {/* CORRECTED: Route path for AdCampaignManagementPage */}
                 <Route path="/ad-campaign-management" element={<AdCampaignManagementPage />} />
                 <Route path="/profile/:userId" element={<UserProfileViewPage />} />
                 <Route path="/content/:contentId" element={<SingleContentPage />} />
                 <Route path="/subscribe" element={<SubscriptionPage />} />
-                <Route path="/paystack-callback" element={<PaystackCallback />} />
                 <Route path="/pay-for-ad/:campaignId" element={<PayForAdPage />} />
                 <Route path="/user-pending-approval" element={<UserPendingApprovalPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
