@@ -65,7 +65,7 @@ function AdminCreatorContentPage() {
         try {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('nickname, creator_type')
+            .select('nickname, user_type') // Changed creator_type to user_type
             .eq('id', creatorId)
             .single();
 
@@ -87,62 +87,68 @@ function AdminCreatorContentPage() {
 
           if (contentError) throw contentError;
 
-          const allContent = [];
+          const groupedContentMap = new Map(); // Use a Map for better grouping
 
           if (contentData) {
-            const photos = contentData.filter(item => item.content_type === 'photo');
-            const videos = contentData.filter(item => item.content_type === 'video');
+            contentData.forEach(item => {
+              // Get public URL for media and thumbnail
+              const itemUrl = getPublicUrl(item.storage_path);
+              let itemThumbnail = item.thumbnail_path
+                ? getPublicUrl(item.thumbnail_path)
+                : (item.content_type === 'video' ? DEFAULT_VIDEO_THUMBNAIL_PLACEHADER : itemUrl); // Use itemUrl as fallback for photo thumbnail
 
-            const photoGroups = {};
-            photos.forEach(photo => {
-              if (!photoGroups[photo.group_id]) {
-                photoGroups[photo.group_id] = {
-                  id: photo.group_id,
-                  type: 'photo_group',
-                  uploadDate: photo.created_at,
-                  caption: photo.caption,
-                  photos: [],
-                  storagePaths: [],
+              if (item.content_type === 'photo' && item.group_id) {
+                // Group photos
+                if (!groupedContentMap.has(item.group_id)) {
+                  groupedContentMap.set(item.group_id, {
+                    id: item.group_id, // Use group_id as the ID for the group
+                    type: 'photo_group',
+                    uploadDate: item.created_at,
+                    caption: item.caption, // Use the caption of the first photo in the group as group caption
+                    photos: [],
+                    storagePaths: [], // To store all storage paths for group deletion
+                    creator_id: creatorId,
+                    content_type: 'photo', // Group is considered 'photo' type
+                    isPremiumContent: profileData.user_type === 'premium_creator',
+                    views: item.views_count ? item.views_count[0].count : 0, // Sum up views later if needed, or take first
+                    is_active: item.is_active, // Take active status from one of the photos
+                  });
+                }
+                groupedContentMap.get(item.group_id).photos.push({
+                  id: item.id, // Individual photo ID
+                  url: itemUrl,
+                  storagePath: item.storage_path,
+                  caption: item.caption,
                   creator_id: creatorId,
-                  content_type: 'photo',
-                  isPremiumContent: profileData.creator_type === 'premium_creator',
-                  views: photo.views_count ? photo.views_count[0].count : 0,
-                };
+                  isPremiumContent: profileData.user_type === 'premium_creator',
+                  views: item.views_count ? item.views_count[0].count : 0,
+                });
+                groupedContentMap.get(item.group_id).storagePaths.push(item.storage_path);
+              } else {
+                // Single photos (group_id is null) and videos
+                groupedContentMap.set(item.id, { // Use item.id as the key for single items
+                  id: item.id,
+                  type: item.content_type,
+                  url: itemUrl,
+                  thumbnail: itemThumbnail,
+                  videoUrl: item.content_type === 'video' ? itemUrl : null, // Only for videos
+                  title: item.title,
+                  caption: item.caption,
+                  uploadDate: item.created_at,
+                  storagePath: item.storage_path,
+                  creator_id: creatorId,
+                  content_type: item.content_type,
+                  isPremiumContent: profileData.user_type === 'premium_creator',
+                  views: item.views_count ? item.views_count[0].count : 0,
+                  is_active: item.is_active,
+                });
               }
-              photoGroups[photo.group_id].photos.push({
-                id: photo.id,
-                url: getPublicUrl(photo.storage_path),
-                storagePath: photo.storage_path,
-                creator_id: creatorId,
-                isPremiumContent: profileData.creator_type === 'premium_creator',
-                views: photo.views_count ? photo.views_count[0].count : 0,
-              });
-              photoGroups[photo.group_id].storagePaths.push(photo.storage_path);
             });
-            Object.values(photoGroups).forEach(group => allContent.push(group));
 
-            videos.forEach(video => {
-              allContent.push({
-                id: video.id,
-                type: 'video',
-                thumbnail: video.thumbnail_path 
-                  ? getPublicUrl(video.thumbnail_path) 
-                  : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER,
-                videoUrl: getPublicUrl(video.storage_path),
-                title: video.title,
-                uploadDate: video.created_at,
-                caption: video.caption,
-                storagePath: video.storage_path,
-                creator_id: creatorId,
-                content_type: 'video',
-                isPremiumContent: profileData.creator_type === 'premium_creator',
-                views: video.views_count ? video.views_count[0].count : 0,
-              });
-            });
+            const finalContentList = Array.from(groupedContentMap.values());
+            finalContentList.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+            setCreatorContent(finalContentList);
           }
-
-          allContent.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-          setCreatorContent(allContent);
 
         } catch (err) {
           setError(err.message || 'Failed to fetch creator content.');
@@ -153,7 +159,7 @@ function AdminCreatorContentPage() {
       };
       fetchCreatorContent();
     }
-  }, [currentAdminEmail, creatorId, navigate]);
+  }, [currentAdminEmail, creatorId, navigate]); // Added navigate to dependencies as it's used in useEffect
 
   const handleTakeDownContent = async (itemId, itemType, storagePaths) => {
     if (!window.confirm(`Are you sure you want to permanently take down this ${itemType} (${itemId})? This will delete it from the database and storage.`)) {
@@ -162,6 +168,10 @@ function AdminCreatorContentPage() {
     setLoading(true);
     setError(null);
     try {
+      if (!itemId) { // IMPORTANT: Add a check for null/undefined itemId before proceeding
+        throw new Error("Content ID is missing, cannot take down.");
+      }
+
       const pathsToDelete = Array.isArray(storagePaths) ? storagePaths : [storagePaths];
       const { error: storageError } = await supabase.storage
         .from('content')
@@ -180,7 +190,7 @@ function AdminCreatorContentPage() {
         if (deleteItemError) throw deleteItemError;
       }
 
-      setCreatorContent(prevContent => prevContent.filter(item => item.id !== itemId && item.group_id !== itemId));
+      setCreatorContent(prevContent => prevContent.filter(item => item.id !== itemId && (item.type === 'photo_group' ? item.id !== itemId : true))); // Corrected filter for photo_group
       alert(`${itemType} ${itemId} taken down successfully!`);
 
     } catch (err) {

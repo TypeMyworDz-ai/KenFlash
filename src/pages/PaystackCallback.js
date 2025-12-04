@@ -21,70 +21,90 @@ function PaystackCallback() {
 
     const reference = searchParams.get('trxref') || searchParams.get('reference');
     const status = searchParams.get('status');
-    // NEW: Retrieve email and plan name directly from URL query parameters
     const subscriptionEmail = searchParams.get('subscription_email');
     const planNameFromUrl = searchParams.get('plan_name');
+
+    console.log('PaystackCallback: Starting verification and subscription process.');
+    console.log('PaystackCallback: Reference:', reference);
+    console.log('PaystackCallback: Status from URL:', status);
+    console.log('PaystackCallback: Subscription Email from URL:', subscriptionEmail);
+    console.log('PaystackCallback: Plan Name from URL:', planNameFromUrl);
 
     if (!reference) {
       setPaymentStatus('failed');
       setMessage('Payment reference not found. Please contact support.');
       setRedirecting(true);
       setTimeout(() => navigate('/subscribe'), 5000);
+      console.error('PaystackCallback: Payment reference missing from URL.');
       return;
     }
 
-    // Check if Paystack reported success or if a reference exists (indicating potential success)
     if (status === 'success' || reference) {
       setPaymentStatus('verifying');
       setMessage('Payment reference received. Updating your subscription...');
+      console.log('PaystackCallback: Payment status or reference indicates potential success.');
 
-      // PRIORITIZE retrieving email from URL, fallback to any email param Paystack might send
       const userEmail = subscriptionEmail || searchParams.get('email');
-      const currentPlanName = planNameFromUrl || DEFAULT_PLAN_NAME; // Use plan name from URL, fallback to default plan name string
+      const currentPlanName = planNameFromUrl || DEFAULT_PLAN_NAME;
+
+      console.log('PaystackCallback: Derived User Email:', userEmail);
+      console.log('PaystackCallback: Derived Plan Name:', currentPlanName);
 
       if (!userEmail) {
         setPaymentStatus('failed');
         setMessage('Could not retrieve subscriber email. Please contact support.');
         setRedirecting(true);
         setTimeout(() => navigate('/subscribe'), 5000);
+        console.error('PaystackCallback: User email missing for subscription.');
         return;
       }
 
       try {
         const now = new Date();
-        const expiryTime = new Date(now.getTime() + PLAN_DURATION_MS); // Use fixed duration for '2 Hour Plan'
+        const expiryTime = new Date(now.getTime() + PLAN_DURATION_MS);
+
+        const subscriptionData = {
+          email: userEmail,
+          plan: currentPlanName,
+          expiry_time: expiryTime.toISOString(),
+          created_at: now.toISOString(),
+          transaction_ref: reference,
+          status: 'active',
+        };
+
+        console.log('PaystackCallback: Attempting to insert subscription data:', subscriptionData);
 
         const { data, error } = await supabase.from('subscriptions').insert([
-          {
-            email: userEmail,
-            plan: currentPlanName, // Use dynamic plan name
-            expiry_time: expiryTime.toISOString(),
-            created_at: now.toISOString(),
-            transaction_ref: reference,
-            status: 'active',
-          },
+          subscriptionData,
         ]).select();
 
         if (error) {
-          console.error('Supabase subscription update error:', error);
-          throw new Error(error.message);
+          console.error('PaystackCallback: Supabase subscription INSERT ERROR (full error object):', error);
+          // Provide more specific error message based on Supabase error details
+          if (error.code === '23505') { // Unique constraint violation
+            throw new Error(`Duplicate entry for email '${userEmail}' or transaction reference '${reference}'.`);
+          } else if (error.message.includes('violates row-level security policy')) {
+            throw new Error('Database security policy denied subscription update. Please contact support.');
+          } else {
+            throw new Error(error.message);
+          }
         }
 
         if (data && data.length > 0) {
           setPaymentStatus('success');
           setMessage('Subscription activated successfully! Redirecting to homepage...');
-          subscribeVisitor(userEmail, currentPlanName); // Pass dynamic plan name
+          subscribeVisitor(userEmail, currentPlanName);
           setRedirecting(true);
-          // No longer need to remove 'pendingSubscriptionEmail' from localStorage
+          console.log('PaystackCallback: Subscription successfully activated and data returned:', data);
           setTimeout(() => navigate('/'), 3000);
         } else {
-          throw new Error('No data returned from subscription insert.');
+          throw new Error('No data returned from subscription insert despite no error.');
         }
 
       } catch (err) {
         setPaymentStatus('failed');
         setMessage(`Failed to activate subscription: ${err.message}. Please contact support with reference: ${reference}`);
-        console.error('Subscription activation failed:', err);
+        console.error('PaystackCallback: Subscription activation failed in catch block:', err);
         setRedirecting(true);
         setTimeout(() => navigate('/subscribe'), 5000);
       }
@@ -93,7 +113,9 @@ function PaystackCallback() {
       setMessage('Payment was not successful. Please try again or contact support.');
       setRedirecting(true);
       setTimeout(() => navigate('/subscribe'), 5000);
+      console.warn('PaystackCallback: Payment status not success and no reference found.');
     }
+    console.log('PaystackCallback: End of handleVerificationAndSubscription.');
   }, [searchParams, navigate, subscribeVisitor, redirecting]);
 
   useEffect(() => {
@@ -117,7 +139,7 @@ function PaystackCallback() {
   return (
     <div className="paystack-callback-container">
       <div className="status-card">
-        <div className="status-icon-wrapper"> {/* Added wrapper for styling */}
+        <div className="status-icon-wrapper">
           <div className={`status-icon ${getStatusClass()}`}>
             {getStatusIcon()}
           </div>
@@ -126,7 +148,7 @@ function PaystackCallback() {
         {paymentStatus === 'failed' && (
           <p>
             Please check your payment status on Paystack or{' '}
-            <a href="mailto:support@draftey.com">contact support</a>. {/* Changed email and brand */}
+            <a href="mailto:support@draftey.com">contact support</a>.
           </p>
         )}
         {redirecting && paymentStatus !== 'success' && (
