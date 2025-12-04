@@ -61,7 +61,7 @@ function SubscriptionPage() {
 
   return (
     <div className="subscription-container">
-      <h2>Subscribe to Draftey!</h2> {/* Changed name to Draftey */}
+      <h2>Subscribe to Draftey!</h2>
       <p>Unlock exclusive content with our single, affordable plan.</p>
 
       {/* Anonymity Information */}

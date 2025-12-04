@@ -67,7 +67,6 @@ function PaystackCallback() {
           email: userEmail,
           plan: currentPlanName,
           expiry_time: expiryTime.toISOString(),
-          created_at: now.toISOString(),
           transaction_ref: reference,
           status: 'active',
         };
@@ -85,6 +84,8 @@ function PaystackCallback() {
             throw new Error(`Duplicate entry for email '${userEmail}' or transaction reference '${reference}'.`);
           } else if (error.message.includes('violates row-level security policy')) {
             throw new Error('Database security policy denied subscription update. Please contact support.');
+          } else if (error.message.includes('new row violates check constraint')) {
+            throw new Error(`Plan '${currentPlanName}' is not valid. Please contact support.`);
           } else {
             throw new Error(error.message);
           }

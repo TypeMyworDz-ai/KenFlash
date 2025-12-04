@@ -189,6 +189,8 @@ export const AuthProvider = ({ children }) => {
 
     if (planName === '1 Day Plan') {
       expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+    } else if (planName === '2 Hour Plan') {
+      expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours
     } else {
       console.error("Unknown plan duration provided:", planName);
       return;
