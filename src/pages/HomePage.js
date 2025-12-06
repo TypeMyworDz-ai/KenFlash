@@ -42,9 +42,8 @@ function HomePage() {
   const [currentSlideshowIndex, setCurrentSlideshowIndex] = useState(0);
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
-
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [currentVideo, setCurrentVideo] = useState(null); // UPDATED: currentVideo will now store more context
+  const [currentVideo, setCurrentVideo] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalContentCount, setTotalContentCount] = useState(0);
@@ -84,8 +83,8 @@ function HomePage() {
         caption: sortedGroup[0].caption,
         creator_id: sortedGroup[0].creator_id,
         profiles: sortedGroup[0].profiles,
-        views: sortedGroup[0].views || 0, // Ensure views are passed from individual photos
-        content_type: 'photo', // Assuming a photo group is treated as 'photo' type for views
+        views: sortedGroup[0].views || 0,
+        content_type: 'photo',
       });
     });
 
@@ -164,12 +163,11 @@ function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      // Use 'creator' for normal creators and 'premium_creator' for premium content
       const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'creator'] : ['creator'];
 
       const { data: contentData, error: contentError } = await supabase
         .from('content')
-        .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, user_type), views_count:views(count)') // Changed creator_type to user_type
+        .select('id, storage_path, thumbnail_path, title, caption, creator_id, group_id, created_at, content_type, is_active, profiles(id, nickname, avatar_path, user_type), views_count:views(count)')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -180,7 +178,7 @@ function HomePage() {
           ...item,
           views: item.views_count ? item.views_count[0].count : 0,
         }))
-        .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.user_type)); // Changed creator_type to user_type
+        .filter(item => item.profiles && creatorTypesToFetch.includes(item.profiles.user_type));
 
       const photos = contentWithProfilesAndViews.filter(item => item.content_type === 'photo');
       const videos = contentWithProfilesAndViews.filter(item => item.content_type === 'video');
@@ -210,12 +208,20 @@ function HomePage() {
     }
   }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]);
 
-  // NEW: Handle Paystack callback - WITH FIXED DEPENDENCIES
+  // NEW: Handle Paystack callback - WITH ENHANCED DEBUGGING AND FIXED DEPENDENCIES
   useEffect(() => {
     const handlePaystackCallback = async () => {
       const status = searchParams.get('status');
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
+      
+      console.log('=== PAYSTACK CALLBACK DEBUG ===');
+      console.log('URL status parameter:', status);
+      console.log('localStorage pendingSubscriptionEmail:', subscriptionEmail);
+      console.log('localStorage pendingPlanName:', planName);
+      console.log('callbackProcessedRef.current:', callbackProcessedRef.current);
+      console.log('Full URL:', window.location.href);
+      console.log('================================');
       
       if (status === 'success' && subscriptionEmail && planName && !callbackProcessedRef.current) {
         callbackProcessedRef.current = true;
@@ -235,7 +241,6 @@ function HomePage() {
             throw new Error('Unknown plan name stored in localStorage.');
           }
           
-          // Generate a transaction reference since Paystack doesn't return one
           const transactionRef = `PAYSTACK_${subscriptionEmail.split('@')[0]}_${Date.now()}`;
           
           const subscriptionData = {
@@ -264,7 +269,6 @@ function HomePage() {
             setPaymentMessage('Subscription activated successfully! Content unlocked.');
             subscribeVisitor(subscriptionEmail, planName);
             
-            // Refresh content to show premium content
             fetchContent();
           } else {
             throw new Error('No data returned from subscription insert.');
@@ -274,18 +278,23 @@ function HomePage() {
           setPaymentStatus('failed');
           setPaymentMessage(`Failed to activate subscription: ${err.message}. Please contact support.`);
         } finally {
-          // Clean up localStorage
           localStorage.removeItem('pendingSubscriptionEmail');
           localStorage.removeItem('pendingPlanName');
           
-          // Clean URL after a delay (except on failure)
           setTimeout(() => {
+            navigate('/', { replace: true });
             if (paymentStatus !== 'failed') {
-              navigate('/', { replace: true });
               setPaymentStatus(null);
             }
           }, 4000);
         }
+      } else {
+        console.log('Callback conditions not met. Missing:', {
+          hasStatus: !!status,
+          hasEmail: !!subscriptionEmail,
+          hasPlan: !!planName,
+          notProcessed: !callbackProcessedRef.current
+        });
       }
     };
     
@@ -359,7 +368,7 @@ function HomePage() {
   };
 
   const openSlideshow = (item) => {
-    const isPremium = item.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
+    const isPremium = item.profiles?.user_type === 'premium_creator';
     
     logView(item.id, item.creator_id, item.type === 'photo_group' ? 'photo' : item.type, isPremium);
 
@@ -400,9 +409,8 @@ function HomePage() {
     setSlideshowContext({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
   };
 
-  // UPDATED: openVideoPlayer to store full context in currentVideo
   const openVideoPlayer = (videoItem) => {
-    const isPremium = videoItem.profiles?.user_type === 'premium_creator'; // Changed creator_type to user_type
+    const isPremium = videoItem.profiles?.user_type === 'premium_creator';
     logView(videoItem.id, videoItem.creator_id, videoItem.content_type, isPremium);
     
     setCurrentVideo({
@@ -411,9 +419,9 @@ function HomePage() {
       thumbnailUrl: videoItem.thumbnailUrl,
       title: videoItem.title,
       creatorNickname: videoItem.profiles?.nickname,
-      creator_id: videoItem.creator_id, // NEW: Pass creator_id
-      content_type: videoItem.content_type, // NEW: Pass content_type
-      isPremiumContent: isPremium, // NEW: Pass isPremiumContent
+      creator_id: videoItem.creator_id,
+      content_type: videoItem.content_type,
+      isPremiumContent: isPremium,
     });
     setShowVideoModal(true);
   };
@@ -462,7 +470,6 @@ function HomePage() {
 
   return (
     <div className="homepage-container">
-      {/* NEW: Payment Status Modal */}
       {paymentStatus && (
         <div className="modal-overlay">
           <div className="modal-content payment-status-modal">
@@ -534,7 +541,7 @@ function HomePage() {
                       Your browser does not support the video tag.
                     </video>
                   )}
-                  <div className="watermark-overlay"></div> {/* Watermark added here */}
+                  <div className="watermark-overlay"></div>
                 </div>
 
                 <div className="content-creator-info">
@@ -590,7 +597,7 @@ function HomePage() {
 
       {showVideoModal && (
         <VideoPlayerModal
-          video={currentVideo} // currentVideo now contains creator_id, content_type, isPremiumContent
+          video={currentVideo}
           onClose={closeVideoPlayer}
           logView={logView}
           creatorId={currentVideo?.creator_id || null}
