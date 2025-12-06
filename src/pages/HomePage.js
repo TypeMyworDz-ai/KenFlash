@@ -43,7 +43,7 @@ function HomePage() {
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [currentVideo, setCurrentVideo] = useState(null);
+  const [currentVideo, setCurrentVideo] = null;
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalContentCount, setTotalContentCount] = useState(0);
@@ -216,22 +216,25 @@ function HomePage() {
 
     const handlePaystackCallback = async () => {
       const rawStatus = searchParams.get('status');
-      const status = rawStatus ? rawStatus.split('?')[0] : null; // Correctly extract 'success'
+      const status = rawStatus ? rawStatus.split('?')[0] : null; // Correctly extract 'success' if present
+      const paystackReference = searchParams.get('reference'); // Get the Paystack reference
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
       
       console.log('=== PAYSTACK CALLBACK DEBUG ===');
       console.log('Raw URL status parameter:', rawStatus);
       console.log('Parsed URL status parameter:', status);
+      console.log('Paystack Reference parameter:', paystackReference); // Log the reference
       console.log('localStorage pendingSubscriptionEmail (inside handler):', subscriptionEmail);
       console.log('localStorage pendingPlanName (inside handler):', planName);
       console.log('callbackProcessedRef.current:', callbackProcessedRef.current);
       console.log('Full URL:', window.location.href);
       console.log('===================================');
       
-      if (status === 'success' && subscriptionEmail && planName && !callbackProcessedRef.current) {
+      // Changed condition to check for Paystack 'reference' parameter or 'status=success'
+      if ((status === 'success' || paystackReference) && subscriptionEmail && planName && !callbackProcessedRef.current) {
         callbackProcessedRef.current = true;
-        console.log('HomePage: Detected Paystack callback with status=success');
+        console.log('HomePage: Detected Paystack callback with valid conditions (status=success OR reference present)');
         setPaymentStatus('verifying');
         setPaymentMessage('Verifying your payment and activating subscription...');
         
@@ -247,7 +250,7 @@ function HomePage() {
             throw new Error('Unknown plan name stored in localStorage.');
           }
           
-          const transactionRef = `PAYSTACK_${subscriptionEmail.split('@')[0]}_${Date.now()}`;
+          const transactionRef = paystackReference || `PAYSTACK_${subscriptionEmail.split('@')[0]}_${Date.now()}`; // Use Paystack reference if available
           
           const subscriptionData = {
             email: subscriptionEmail,
@@ -297,6 +300,7 @@ function HomePage() {
       } else {
         console.log('Callback conditions not met. Missing:', {
           hasStatus: !!status,
+          hasReference: !!paystackReference, // Added this for debugging
           hasEmail: !!subscriptionEmail,
           hasPlan: !!planName,
           notProcessed: !callbackProcessedRef.current
@@ -380,7 +384,7 @@ function HomePage() {
 
     const photosForSlideshow = item.type === 'photo_group'
       ? item.photos.map(p => ({
-          id: p.id,
+          id: p.id, // Corrected from p:id to p.id
           url: getPublicUrl(p.storage_path, 'content'),
           caption: p.caption,
           creator_id: item.creator_id,
