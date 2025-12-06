@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PhotoSlideshowModal from '../components/PhotoSlideshowModal';
 import VideoPlayerModal from '../components/VideoPlayerModal';
@@ -12,12 +12,19 @@ const DEFAULT_AVATAR_PLACEHOLDER = 'https://via.placeholder.com/40';
 const DEFAULT_VIDEO_THUMBNAIL_PLACEHADER = 'https://via.placeholder.com/200x150?text=Video';
 
 function HomePage() {
-  const { isVisitorSubscribed } = useAuth();
+  const { isVisitorSubscribed, subscribeVisitor } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [content, setContent] = useState([]);
   const [advertisements, setAdvertisements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // New state for payment status
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const callbackProcessedRef = useRef(false);
 
   const [showAgeModal, setShowAgeModal] = useState(() => {
     return localStorage.getItem('ageVerified') !== 'true';
@@ -203,6 +210,88 @@ function HomePage() {
     }
   }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]);
 
+  // NEW: Handle Paystack callback - WITH FIXED DEPENDENCIES
+  useEffect(() => {
+    const handlePaystackCallback = async () => {
+      const status = searchParams.get('status');
+      const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
+      const planName = localStorage.getItem('pendingPlanName');
+      
+      if (status === 'success' && subscriptionEmail && planName && !callbackProcessedRef.current) {
+        callbackProcessedRef.current = true;
+        console.log('HomePage: Detected Paystack callback with status=success');
+        setPaymentStatus('verifying');
+        setPaymentMessage('Verifying your payment and activating subscription...');
+        
+        try {
+          const now = new Date();
+          let expiryTime;
+          
+          if (planName === '1 Day Plan') {
+            expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          } else if (planName === '2 Hour Plan') {
+            expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+          } else {
+            throw new Error('Unknown plan name stored in localStorage.');
+          }
+          
+          // Generate a transaction reference since Paystack doesn't return one
+          const transactionRef = `PAYSTACK_${subscriptionEmail.split('@')[0]}_${Date.now()}`;
+          
+          const subscriptionData = {
+            email: subscriptionEmail,
+            plan: planName,
+            expiry_time: expiryTime.toISOString(),
+            transaction_ref: transactionRef,
+            status: 'active',
+          };
+          
+          console.log('HomePage: Attempting to insert subscription data:', subscriptionData);
+          
+          const { data, error: insertError } = await supabase
+            .from('subscriptions')
+            .insert([subscriptionData])
+            .select();
+            
+          if (insertError) {
+            console.error('HomePage: Supabase subscription INSERT ERROR:', insertError);
+            throw insertError;
+          }
+          
+          if (data && data.length > 0) {
+            console.log('HomePage: Subscription successfully activated:', data);
+            setPaymentStatus('success');
+            setPaymentMessage('Subscription activated successfully! Content unlocked.');
+            subscribeVisitor(subscriptionEmail, planName);
+            
+            // Refresh content to show premium content
+            fetchContent();
+          } else {
+            throw new Error('No data returned from subscription insert.');
+          }
+        } catch (err) {
+          console.error('HomePage: Subscription activation failed:', err);
+          setPaymentStatus('failed');
+          setPaymentMessage(`Failed to activate subscription: ${err.message}. Please contact support.`);
+        } finally {
+          // Clean up localStorage
+          localStorage.removeItem('pendingSubscriptionEmail');
+          localStorage.removeItem('pendingPlanName');
+          
+          // Clean URL after a delay (except on failure)
+          setTimeout(() => {
+            if (paymentStatus !== 'failed') {
+              navigate('/', { replace: true });
+              setPaymentStatus(null);
+            }
+          }, 4000);
+        }
+      }
+    };
+    
+    handlePaystackCallback();
+  }, [searchParams, subscribeVisitor, navigate, fetchContent, paymentStatus]);
+
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
@@ -373,6 +462,17 @@ function HomePage() {
 
   return (
     <div className="homepage-container">
+      {/* NEW: Payment Status Modal */}
+      {paymentStatus && (
+        <div className="modal-overlay">
+          <div className="modal-content payment-status-modal">
+            <h2>{paymentStatus === 'verifying' ? 'Verifying Payment...' : paymentStatus === 'success' ? 'Success!' : 'Payment Failed'}</h2>
+            <p>{paymentMessage}</p>
+            {paymentStatus === 'failed' && <button onClick={() => setPaymentStatus(null)}>Close</button>}
+          </div>
+        </div>
+      )}
+      
       {showCookieConsent && (
         <div className="cookie-consent-banner">
           <p>We use cookies to enhance your experience. By continuing, you accept our use of cookies.</p>
