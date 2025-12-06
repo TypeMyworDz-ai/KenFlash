@@ -210,6 +210,10 @@ function HomePage() {
 
   // NEW: Handle Paystack callback - WITH ENHANCED DEBUGGING AND FIXED DEPENDENCIES
   useEffect(() => {
+    console.log('HomePage useEffect [searchParams, ...]: Effect triggered.');
+    console.log('HomePage useEffect: localStorage.getItem("pendingSubscriptionEmail") at effect start:', localStorage.getItem('pendingSubscriptionEmail'));
+    console.log('HomePage useEffect: localStorage.getItem("pendingPlanName") at effect start:', localStorage.getItem('pendingPlanName'));
+
     const handlePaystackCallback = async () => {
       const rawStatus = searchParams.get('status');
       const status = rawStatus ? rawStatus.split('?')[0] : null; // Correctly extract 'success'
@@ -219,8 +223,8 @@ function HomePage() {
       console.log('=== PAYSTACK CALLBACK DEBUG ===');
       console.log('Raw URL status parameter:', rawStatus);
       console.log('Parsed URL status parameter:', status);
-      console.log('localStorage pendingSubscriptionEmail:', subscriptionEmail);
-      console.log('localStorage pendingPlanName:', planName);
+      console.log('localStorage pendingSubscriptionEmail (inside handler):', subscriptionEmail);
+      console.log('localStorage pendingPlanName (inside handler):', planName);
       console.log('callbackProcessedRef.current:', callbackProcessedRef.current);
       console.log('Full URL:', window.location.href);
       console.log('===================================');

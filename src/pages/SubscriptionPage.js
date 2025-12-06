@@ -30,6 +30,9 @@ function SubscriptionPage() {
       localStorage.setItem('pendingSubscriptionEmail', email);
       localStorage.setItem('pendingPlanName', PLAN_NAME);
       console.log('SubscriptionPage: Stored pending email and plan name to localStorage.');
+      // Added logs to verify immediately after setting
+      console.log('SubscriptionPage: localStorage.pendingSubscriptionEmail after set:', localStorage.getItem('pendingSubscriptionEmail'));
+      console.log('SubscriptionPage: localStorage.pendingPlanName after set:', localStorage.getItem('pendingPlanName'));
     } catch (error) {
       console.error('Failed to write to localStorage:', error);
       alert('Could not initiate subscription. Please ensure cookies and site data are enabled in your browser settings.');
@@ -41,6 +44,7 @@ function SubscriptionPage() {
     const paystackRedirectUrl = `${PAYSTACK_HOSTED_PAGE_BASE_URL}?email=${encodeURIComponent(email)}`;
     
     // Redirect to Paystack
+    console.log('SubscriptionPage: Redirecting to Paystack...');
     window.location.href = paystackRedirectUrl;
   };
 
