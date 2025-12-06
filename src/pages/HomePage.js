@@ -211,17 +211,19 @@ function HomePage() {
   // NEW: Handle Paystack callback - WITH ENHANCED DEBUGGING AND FIXED DEPENDENCIES
   useEffect(() => {
     const handlePaystackCallback = async () => {
-      const status = searchParams.get('status');
+      const rawStatus = searchParams.get('status');
+      const status = rawStatus ? rawStatus.split('?')[0] : null; // Correctly extract 'success'
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
       
       console.log('=== PAYSTACK CALLBACK DEBUG ===');
-      console.log('URL status parameter:', status);
+      console.log('Raw URL status parameter:', rawStatus);
+      console.log('Parsed URL status parameter:', status);
       console.log('localStorage pendingSubscriptionEmail:', subscriptionEmail);
       console.log('localStorage pendingPlanName:', planName);
       console.log('callbackProcessedRef.current:', callbackProcessedRef.current);
       console.log('Full URL:', window.location.href);
-      console.log('================================');
+      console.log('===================================');
       
       if (status === 'success' && subscriptionEmail && planName && !callbackProcessedRef.current) {
         callbackProcessedRef.current = true;
