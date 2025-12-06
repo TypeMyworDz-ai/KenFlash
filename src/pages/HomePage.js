@@ -43,7 +43,7 @@ function HomePage() {
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [currentVideo, setCurrentVideo] = null;
+  const [currentVideo, setCurrentVideo] = useState(null); // CORRECTED: Reinstated useState(null)
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalContentCount, setTotalContentCount] = useState(0);
