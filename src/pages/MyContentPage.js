@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'; // NEW:
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import PhotoSlideshowModal from '../components/PhotoSlideshowModal';
+import VideoPlayerModal from '../components/VideoPlayerModal'; // Added VideoPlayerModal for better video viewing
 import './MyContentPage.css';
 
 // NEW: Default video thumbnail placeholder
@@ -15,13 +16,16 @@ function MyContentPage() {
   const [isSlideshowOpen, setIsSlideshowOpen] = useState(false);
   const [currentSlideshowPhotos, setCurrentSlideshowPhotos] = useState([]);
   const [currentSlideshowCaption, setCurrentSlideshowCaption] = useState('');
-  const [userProfileType, setUserProfileType] = useState(null); // Changed creatorProfileType to userProfileType
+  const [userProfileType, setUserProfileType] = useState(null);
+  
+  // For video modal
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState(null);
 
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
   // NEW: Ref to manage video elements for hover autoplay
   const videoRefs = useRef({});
-
 
   const logView = useCallback(async (contentId, creatorId, contentType, isPremiumContent) => {
     console.log('--- Attempting to log view (MyContentPage) ---');
@@ -83,7 +87,6 @@ function MyContentPage() {
     console.log('--- End log view attempt (MyContentPage) ---');
   }, [isVisitorSubscribed]);
 
-
   useEffect(() => {
     const fetchMyContent = async () => {
       setLoading(true);
@@ -101,12 +104,12 @@ function MyContentPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('user_type') // Changed creator_type to user_type
+          .select('user_type')
           .eq('id', creatorId)
           .single();
         
         if (profileError) throw profileError;
-        setUserProfileType(profileData.user_type); // Changed creatorProfileType to userProfileType
+        setUserProfileType(profileData.user_type);
 
         const bucketName = 'content';
 
@@ -116,65 +119,102 @@ function MyContentPage() {
           return data.publicUrl;
         };
 
+        // UPDATED: Fetch all content directly with no limit
         const { data: contentData, error: contentError } = await supabase
           .from('content')
-          .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type, profiles(user_type)') // Changed creator_type to user_type
+          .select('id, created_at, storage_path, thumbnail_path, title, caption, group_id, content_type, profiles(user_type)')
           .eq('creator_id', creatorId)
           .order('created_at', { ascending: false });
 
         if (contentError) throw contentError;
+        
+        console.log("Content data fetched:", contentData.length, "items");
 
         const allMyContent = [];
 
         if (contentData) {
+          // FIXED: Improved handling of photo groups
+          // Create a map to track which photos have been processed
+          const processedPhotoIds = new Set();
+          
+          // First process all photo groups
           const photoGroups = {};
-          const photos = contentData.filter(item => item.content_type === 'photo');
-
-          photos.forEach(photo => {
-            if (!photoGroups[photo.group_id]) {
-              photoGroups[photo.group_id] = {
-                id: photo.group_id,
-                type: 'photo_group',
-                uploadDate: photo.created_at,
-                caption: photo.caption,
-                photos: [],
+          
+          contentData.forEach(item => {
+            if (item.content_type === 'photo' && item.group_id) {
+              if (!photoGroups[item.group_id]) {
+                photoGroups[item.group_id] = {
+                  id: item.group_id,
+                  type: 'photo_group',
+                  uploadDate: item.created_at,
+                  caption: item.caption,
+                  photos: [],
+                  creator_id: creatorId,
+                  content_type: 'photo',
+                  profiles: item.profiles,
+                };
+              }
+              
+              photoGroups[item.group_id].photos.push({
+                id: item.id,
+                url: getPublicUrl(item.storage_path),
+                storagePath: item.storage_path,
                 creator_id: creatorId,
-                content_type: 'photo',
-                profiles: photo.profiles,
-              };
+                isPremiumContent: item.profiles?.user_type === 'premium_creator',
+              });
+              
+              // Mark this photo as processed
+              processedPhotoIds.add(item.id);
             }
-            photoGroups[photo.group_id].photos.push({
-              id: photo.id,
-              url: getPublicUrl(photo.storage_path),
-              storagePath: photo.storage_path,
-              creator_id: creatorId,
-              isPremiumContent: photo.profiles?.user_type === 'premium_creator', // Changed creator_type to user_type
-            });
           });
 
+          // Add all photo groups to content
           Object.values(photoGroups).forEach(group => allMyContent.push(group));
+          
+          // Process individual photos (those without a group_id)
+          contentData.forEach(item => {
+            if (item.content_type === 'photo' && !processedPhotoIds.has(item.id) && !item.group_id) {
+              allMyContent.push({
+                id: item.id,
+                type: 'photo',
+                url: getPublicUrl(item.storage_path),
+                thumbnail: getPublicUrl(item.storage_path),
+                title: item.caption || 'Photo',
+                uploadDate: item.created_at,
+                caption: item.caption,
+                storagePath: item.storage_path,
+                creator_id: creatorId,
+                content_type: 'photo',
+                profiles: item.profiles,
+                isPremiumContent: item.profiles?.user_type === 'premium_creator',
+              });
+            }
+          });
 
+          // Process videos
           const videos = contentData.filter(item => item.content_type === 'video');
           videos.forEach(video => {
             allMyContent.push({
               id: video.id,
               type: 'video',
-              // UPDATED: Use a default placeholder if thumbnail_path is null/invalid
               thumbnail: video.thumbnail_path ? getPublicUrl(video.thumbnail_path) : DEFAULT_VIDEO_THUMBNAIL_PLACEHADER,
               videoUrl: getPublicUrl(video.storage_path),
-              title: video.title,
+              title: video.title || 'Video',
               uploadDate: video.created_at,
               caption: video.caption,
               storagePath: video.storage_path,
               creator_id: creatorId,
               content_type: 'video',
               profiles: video.profiles,
-              isPremiumContent: video.profiles?.user_type === 'premium_creator', // Changed creator_type to user_type
+              isPremiumContent: video.profiles?.user_type === 'premium_creator',
             });
           });
         }
 
+        // Sort by upload date
         allMyContent.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+        console.log("Processed content items:", allMyContent.length);
+        
         setMyContent(allMyContent);
 
       } catch (err) {
@@ -193,18 +233,31 @@ function MyContentPage() {
     }
   }, [isLoggedIn, isVisitorSubscribed]);
 
-
   const openSlideshow = (item) => {
-    const isPremiumContent = userProfileType === 'premium_creator'; // Changed creatorProfileType to userProfileType
+    const isPremiumContent = userProfileType === 'premium_creator';
     
-    const photosForSlideshow = item.photos.map(p => ({
-      id: p.id,
-      url: p.url,
-      caption: item.caption,
-      creator_id: item.creator_id,
-      isPremiumContent: isPremiumContent,
-      type: 'photo',
-    }));
+    // Handle both photo groups and individual photos
+    let photosForSlideshow = [];
+    
+    if (item.type === 'photo_group' && item.photos) {
+      photosForSlideshow = item.photos.map(p => ({
+        id: p.id,
+        url: p.url,
+        caption: item.caption,
+        creator_id: item.creator_id,
+        isPremiumContent: isPremiumContent,
+        type: 'photo',
+      }));
+    } else if (item.type === 'photo') {
+      photosForSlideshow = [{
+        id: item.id,
+        url: item.url,
+        caption: item.caption,
+        creator_id: item.creator_id,
+        isPremiumContent: isPremiumContent,
+        type: 'photo',
+      }];
+    }
 
     setCurrentSlideshowPhotos(photosForSlideshow);
     setCurrentSlideshowCaption(item.caption);
@@ -223,9 +276,32 @@ function MyContentPage() {
     setCurrentSlideshowCaption('');
     setSlideshowContext({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
   };
+  
+  const openVideoModal = (item) => {
+    const isPremiumContent = userProfileType === 'premium_creator';
+    logView(item.id, item.creator_id, item.content_type, isPremiumContent);
+    
+    setCurrentVideo({
+      id: item.id,
+      url: item.videoUrl,
+      thumbnailUrl: item.thumbnail,
+      title: item.title,
+      caption: item.caption,
+      creator_id: item.creator_id,
+      content_type: item.content_type,
+      isPremiumContent: isPremiumContent,
+    });
+    
+    setIsVideoModalOpen(true);
+  };
+  
+  const closeVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setCurrentVideo(null);
+  };
 
   const handleVideoPlay = (item) => {
-    const isPremiumContent = userProfileType === 'premium_creator'; // Changed creatorProfileType to userProfileType
+    const isPremiumContent = userProfileType === 'premium_creator';
     logView(item.id, item.creator_id, item.content_type, isPremiumContent);
   };
 
@@ -246,13 +322,12 @@ function MyContentPage() {
     }
   };
 
-
   return (
     <div className="my-content-container">
       <h2>My Content</h2>
       <p>Here you can view all your uploaded photos and videos.</p>
 
-      {error && <p className="error-message">&gt;{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       {loading ? (
         <p>Loading your content...</p>
@@ -264,35 +339,54 @@ function MyContentPage() {
             <div key={item.id} className="content-card">
               {item.type === 'photo_group' ? (
                 <div className="photo-group-card-content" onClick={() => openSlideshow(item)}>
-                  <img src={item.photos[0].url} alt={item.caption || 'Photo group'} className="content-thumbnail" />
+                  <img 
+                    src={item.photos && item.photos.length > 0 ? item.photos[0].url : ''} 
+                    alt={item.caption || 'Photo group'} 
+                    className="content-thumbnail" 
+                  />
                   <div className="group-overlay">
                     <span className="group-icon">📸</span>
-                    <p>{item.photos.length} Photos</p>
+                    <p>{item.photos ? item.photos.length : 0} Photos</p>
                   </div>
                   <div className="content-details">
                     <h4>{item.caption || 'Photo Group'}</h4>
                     <p>Uploaded: {new Date(item.uploadDate).toLocaleDateString()}</p>
                   </div>
                 </div>
+              ) : item.type === 'photo' ? (
+                <div className="photo-card-content" onClick={() => openSlideshow(item)}>
+                  <img 
+                    src={item.url} 
+                    alt={item.caption || 'Photo'} 
+                    className="content-thumbnail" 
+                  />
+                  <div className="content-details">
+                    <h4>{item.caption || 'Photo'}</h4>
+                    <p>Uploaded: {new Date(item.uploadDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
               ) : (
-                // UPDATED: Video card with autoplay on hover and ref
+                // Video card with improved click handling
                 <div 
                   className="video-card-content"
-                  onMouseEnter={() => handleVideoMouseEnter(item.id)} // NEW: Autoplay on hover
-                  onMouseLeave={() => handleVideoMouseLeave(item.id)} // NEW: Pause on leave
+                  onMouseEnter={() => handleVideoMouseEnter(item.id)}
+                  onMouseLeave={() => handleVideoMouseLeave(item.id)}
+                  onClick={() => openVideoModal(item)}
                 >
                   <video
-                    ref={el => (videoRefs.current[item.id] = el)} // NEW: Attach ref
-                    controls
-                    src={item.videoUrl}
-                    poster={item.thumbnail} // Now uses the robust thumbnail
+                    ref={el => (videoRefs.current[item.id] = el)}
+                    poster={item.thumbnail}
                     className="content-thumbnail"
-                    muted // NEW: Muted for autoplay
-                    playsInline // NEW: For autoplay on iOS
+                    muted
+                    playsInline
                     onPlay={() => handleVideoPlay(item)}
                   >
+                    <source src={item.videoUrl} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
+                  <div className="play-overlay">
+                    <span className="play-icon">▶️</span>
+                  </div>
                   <div className="content-details">
                     <h4>{item.title || 'No Title'}</h4>
                     <p>Uploaded: {new Date(item.uploadDate).toLocaleDateString()}</p>
@@ -314,6 +408,17 @@ function MyContentPage() {
           creatorId={slideshowContext.creatorId}
           contentType={slideshowContext.contentType}
           isPremiumContent={slideshowContext.isPremiumContent}
+        />
+      )}
+      
+      {isVideoModalOpen && currentVideo && (
+        <VideoPlayerModal
+          video={currentVideo}
+          onClose={closeVideoModal}
+          logView={logView}
+          creatorId={currentVideo.creator_id}
+          contentType={currentVideo.content_type}
+          isPremiumContent={currentVideo.isPremiumContent}
         />
       )}
     </div>

@@ -43,7 +43,7 @@ function HomePage() {
   const [slideshowContext, setSlideshowContext] = useState({ creatorId: null, isPremiumContent: false, contentType: 'photo' });
 
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [currentVideo, setCurrentVideo] = useState(null); // CORRECTED: Reinstated useState(null)
+  const [currentVideo, setCurrentVideo] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalContentCount, setTotalContentCount] = useState(0);
@@ -155,6 +155,7 @@ function HomePage() {
     console.log('--- End log view attempt ---');
   }, [isVisitorSubscribed]);
 
+  // MODIFIED: Updated fetchContent to only show premium content for subscribers
   const fetchContent = useCallback(async () => {
     if (showAgeModal) {
       setLoading(false);
@@ -163,7 +164,10 @@ function HomePage() {
     setLoading(true);
     setError(null);
     try {
-      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'creator'] : ['creator'];
+      // MODIFIED: Change the creator types to fetch based on subscription status
+      const creatorTypesToFetch = isVisitorSubscribed 
+        ? ['premium_creator'] // Only fetch premium content for subscribers
+        : ['creator']; // Only fetch regular content for non-subscribers
 
       const { data: contentData, error: contentError } = await supabase
         .from('content')
@@ -208,37 +212,38 @@ function HomePage() {
     }
   }, [currentPage, showAgeModal, isVisitorSubscribed, getPublicUrl, groupPhotos]);
 
-  // NEW: Handle Paystack callback - WITH ENHANCED DEBUGGING AND FIXED DEPENDENCIES
+  // UPDATED: Handle Korapay callback instead of Paystack
   useEffect(() => {
     console.log('HomePage useEffect [searchParams, ...]: Effect triggered.');
     console.log('HomePage useEffect: localStorage.getItem("pendingSubscriptionEmail") at effect start:', localStorage.getItem('pendingSubscriptionEmail'));
     console.log('HomePage useEffect: localStorage.getItem("pendingPlanName") at effect start:', localStorage.getItem('pendingPlanName'));
 
-    const handlePaystackCallback = async () => {
-      const rawStatus = searchParams.get('status');
-      const status = rawStatus ? rawStatus.split('?')[0] : null; // Correctly extract 'success' if present
-      const paystackReference = searchParams.get('reference'); // Get the Paystack reference
+    const handleKorapayCallback = async () => {
+      // Check for status=success in URL
+      const status = searchParams.get('status');
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
       
-      console.log('=== PAYSTACK CALLBACK DEBUG ===');
-      console.log('Raw URL status parameter:', rawStatus);
-      console.log('Parsed URL status parameter:', status);
-      console.log('Paystack Reference parameter:', paystackReference); // Log the reference
+      console.log('=== KORAPAY CALLBACK DEBUG ===');
+      console.log('URL status parameter:', status);
       console.log('localStorage pendingSubscriptionEmail (inside handler):', subscriptionEmail);
       console.log('localStorage pendingPlanName (inside handler):', planName);
       console.log('callbackProcessedRef.current:', callbackProcessedRef.current);
       console.log('Full URL:', window.location.href);
-      console.log('===================================');
+      console.log('===========================');
       
-      // Changed condition to check for Paystack 'reference' parameter or 'status=success'
-      if ((status === 'success' || paystackReference) && subscriptionEmail && planName && !callbackProcessedRef.current) {
+      // Process only if status=success and we have the required localStorage data
+      if (status === 'success' && subscriptionEmail && planName && !callbackProcessedRef.current) {
         callbackProcessedRef.current = true;
-        console.log('HomePage: Detected Paystack callback with valid conditions (status=success OR reference present)');
+        console.log('HomePage: Detected Korapay callback with valid conditions (status=success)');
         setPaymentStatus('verifying');
         setPaymentMessage('Verifying your payment and activating subscription...');
         
         try {
+          // Log current Supabase session before INSERT
+          const { data: sessionData } = await supabase.auth.getSession();
+          console.log('HomePage: Supabase session before INSERT:', sessionData.session);
+
           const now = new Date();
           let expiryTime;
           
@@ -250,7 +255,7 @@ function HomePage() {
             throw new Error('Unknown plan name stored in localStorage.');
           }
           
-          const transactionRef = paystackReference || `PAYSTACK_${subscriptionEmail.split('@')[0]}_${Date.now()}`; // Use Paystack reference if available
+          const transactionRef = `KORAPAY_${subscriptionEmail.split('@')[0]}_${Date.now()}`;
           
           const subscriptionData = {
             email: subscriptionEmail,
@@ -287,6 +292,7 @@ function HomePage() {
           setPaymentStatus('failed');
           setPaymentMessage(`Failed to activate subscription: ${err.message}. Please contact support.`);
         } finally {
+          // Clear localStorage after processing
           localStorage.removeItem('pendingSubscriptionEmail');
           localStorage.removeItem('pendingPlanName');
           
@@ -299,8 +305,7 @@ function HomePage() {
         }
       } else {
         console.log('Callback conditions not met. Missing:', {
-          hasStatus: !!status,
-          hasReference: !!paystackReference, // Added this for debugging
+          hasStatus: status === 'success',
           hasEmail: !!subscriptionEmail,
           hasPlan: !!planName,
           notProcessed: !callbackProcessedRef.current
@@ -308,7 +313,7 @@ function HomePage() {
       }
     };
     
-    handlePaystackCallback();
+    handleKorapayCallback();
   }, [searchParams, subscribeVisitor, navigate, fetchContent, paymentStatus]);
 
   useEffect(() => {
@@ -384,7 +389,7 @@ function HomePage() {
 
     const photosForSlideshow = item.type === 'photo_group'
       ? item.photos.map(p => ({
-          id: p.id, // Corrected from p:id to p.id
+          id: p.id,
           url: getPublicUrl(p.storage_path, 'content'),
           caption: p.caption,
           creator_id: item.creator_id,
@@ -523,7 +528,9 @@ function HomePage() {
       {loading ? (
         <p>Loading content...</p>
       ) : content.length === 0 ? (
-        <p>No content available at the moment.</p>
+        <p>{isVisitorSubscribed ? 
+          "No premium content available at the moment." : 
+          "No content available at the moment."}</p>
       ) : (
         <>
           <div className="content-grid">
@@ -586,7 +593,7 @@ function HomePage() {
       {!isVisitorSubscribed && (
         <div className="subscribe-prompt bottom-prompt">
           <h3>Unlock Premium Content</h3>
-          <p>Subscribe to view exclusive content from premium creators!</p>
+          <p>Subscribe to view exclusive premium content from our featured creators!</p>
           <Link to="/subscribe" className="subscribe-button-homepage">
             Subscribe Now - 20 KES / 2 Hours
           </Link>

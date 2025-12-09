@@ -30,7 +30,7 @@ function ProfileSettingsPage() {
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
-          .select('bio, avatar_path, nickname') // Changed from avatar_url to avatar_path
+          .select('bio, avatar_path, nickname')
           .eq('id', authUser.id)
           .single();
 
@@ -39,10 +39,10 @@ function ProfileSettingsPage() {
         if (data) {
           setBio(data.bio || '');
           
-          if (data.avatar_path) { // Changed from avatar_url to avatar_path
+          if (data.avatar_path) {
             const { data: urlData } = supabase.storage
               .from('avatars')
-              .getPublicUrl(data.avatar_path); // Changed from avatar_url to avatar_path
+              .getPublicUrl(data.avatar_path);
             setPreviewUrl(urlData.publicUrl);
           } else {
             const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nickname || 'Creator')}&background=random&color=fff`;
@@ -86,39 +86,51 @@ function ProfileSettingsPage() {
     setError(null);
 
     try {
+      // Create an updates object to hold all profile changes
+      const updates = { bio };
+      
       // Upload avatar if changed
       if (avatarFile) {
+        console.log("Uploading new avatar file:", avatarFile.name);
         const fileName = `${authUserId}-${Date.now()}.${avatarFile.name.split('.').pop()}`;
         
+        // FIXED: Removed 'data: uploadData' as uploadData is not used, resolving the ESLint warning
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, avatarFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
-
-        // Update avatar_path in profiles
-        const { error: updateAvatarError } = await supabase
-          .from('profiles')
-          .update({ avatar_path: fileName }) // Changed from avatar_url to avatar_path
-          .eq('id', authUserId);
-
-        if (updateAvatarError) throw updateAvatarError;
+        if (uploadError) {
+          console.error("Avatar upload error:", uploadError);
+          throw uploadError;
+        }
+        
+        console.log("Avatar uploaded successfully:", fileName);
+        
+        // Add avatar_path to updates
+        updates.avatar_path = fileName;
       }
 
-      // Update bio
-      const { error: updateBioError } = await supabase
+      // Update profile with all changes in one operation
+      console.log("Updating profile with:", updates);
+      const { data, error: updateError } = await supabase
         .from('profiles')
-        .update({ bio })
-        .eq('id', authUserId);
+        .update(updates)
+        .eq('id', authUserId)
+        .select();
 
-      if (updateBioError) throw updateBioError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw updateError;
+      }
+      
+      console.log("Profile updated successfully:", data);
 
       // Redirect to My Profile page
       navigate('/my-profile');
     } catch (err) {
       setError(err.message || 'Failed to save profile');
       console.error('Error saving profile:', err);
-    } finally {
+      // Make sure to set saving to false if there's an error
       setSaving(false);
     }
   };

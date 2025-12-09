@@ -39,15 +39,16 @@ function MobileHomePage() {
   const isFetching = useRef(false);
   const hasPromptBeenShownThisSession = useRef(sessionStorage.getItem(SESSION_PROMPT_KEY) === 'true');
 
-  // Handle Paystack callback on mount (Android)
+  // Update to handle Korapay callback on mount (Android)
   useEffect(() => {
-    const handlePaystackCallback = async () => {
-      const reference = searchParams.get('reference');
+    const handleKorapayCallback = async () => {
+      // Check for status=success in URL
+      const status = searchParams.get('status');
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
 
-      if (reference && subscriptionEmail && planName && !paymentStatus) {
-        console.log('MobileHomePage: Detected Paystack callback with reference:', reference);
+      if (status === 'success' && subscriptionEmail && planName && !paymentStatus) {
+        console.log('MobileHomePage: Detected Korapay callback with status:', status);
         setPaymentStatus('verifying');
         setPaymentMessage('Verifying your payment and activating subscription...');
 
@@ -63,11 +64,13 @@ function MobileHomePage() {
             throw new Error('Unknown plan name stored in localStorage.');
           }
 
+          const transactionRef = `KORAPAY_${subscriptionEmail.split('@')[0]}_${Date.now()}`;
+
           const subscriptionData = {
             email: subscriptionEmail,
             plan: planName,
             expiry_time: expiryTime.toISOString(),
-            transaction_ref: reference,
+            transaction_ref: transactionRef,
             status: 'active',
           };
 
@@ -102,7 +105,7 @@ function MobileHomePage() {
       }
     };
 
-    handlePaystackCallback();
+    handleKorapayCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, subscribeVisitor, navigate]);
 
@@ -150,6 +153,7 @@ function MobileHomePage() {
     }
   }, [isVisitorSubscribed]);
 
+  // MODIFIED: Updated fetchContent to only show premium content for subscribers
   const fetchContent = useCallback(async () => {
     if (user === undefined || isFetching.current || !hasMoreContent || sessionRandomOffset === null) {
       return;
@@ -160,7 +164,10 @@ function MobileHomePage() {
     setError(null);
 
     try {
-      const creatorTypesToFetch = isVisitorSubscribed ? ['premium_creator', 'creator'] : ['creator'];
+      // MODIFIED: Change the creator types to fetch based on subscription status
+      const creatorTypesToFetch = isVisitorSubscribed 
+        ? ['premium_creator'] // Only fetch premium content for subscribers
+        : ['creator']; // Only fetch regular content for non-subscribers
       
       let currentOffset = (currentPage === 0) ? sessionRandomOffset : sessionRandomOffset + (currentPage * CONTENT_FETCH_LIMIT);
 
@@ -333,7 +340,11 @@ function MobileHomePage() {
       {loading && feedContent.length === 0 ? (
         <p className="loading-message">Loading content...</p>
       ) : feedContent.length === 0 && !error ? (
-        <p className="no-content-message">No content available. Check back later!</p>
+        <p className="no-content-message">
+          {isVisitorSubscribed ? 
+            "No premium content available. Check back later!" : 
+            "No content available. Check back later!"}
+        </p>
       ) : (
         <div className="content-feed">
           {feedContent.map((item, index) => {

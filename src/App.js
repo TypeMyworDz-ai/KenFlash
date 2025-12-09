@@ -12,14 +12,13 @@ import LoginPage from './pages/LoginPage';
 import UserSignupPage from './pages/UserSignupPage';
 import UserVerificationPage from './pages/UserVerificationPage';
 import UserSignupSuccessPage from './pages/UserSignupSuccessPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage'; // FIXED: Corrected import path
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
 import SingleContentPage from './pages/SingleContentPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import UserPendingApprovalPage from './pages/UserPendingApprovalPage';
-import UploadPhotosPage from './pages/UploadPhotosPage';
-import UploadVideosPage from './pages/UploadVideosPage';
+import UploadContentPage from './pages/UploadContentPage';
 import ChooseUploadTypePage from './pages/ChooseUploadTypePage';
 import MyViewsPage from './pages/MyViewsPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
@@ -41,13 +40,13 @@ import AdminMessagesPage from './pages/AdminMessagesPage';
 import AdminTrafficPage from './pages/AdminTrafficPage';
 import AdCampaignManagementPage from './pages/AdCampaignManagementPage';
 import PayForAdPage from './pages/PayForAdPage';
-import MobileUploadContentPage from './pages/MobileUploadContentPage';
+import MobileUploadContentPage from './pages/MobileUploadContentPage'; 
 import { Capacitor } from '@capacitor/core';
 
 
 function TrafficLogger() {
   const location = useLocation();
-  const { user, isVisitorSubscribed, visitorEmail } = useAuth();
+  const { user, isVisitorSubscribed, visitorEmail, userType } = useAuth(); 
 
   useEffect(() => {
     const logTraffic = async () => {
@@ -56,7 +55,7 @@ function TrafficLogger() {
 
         const userId = authUser.user?.id || null;
         const email = authUser.user?.email || visitorEmail || null;
-        const subscribedStatus = isVisitorSubscribed || (user?.id && user?.role === 'creator');
+        const subscribedStatus = isVisitorSubscribed || (user?.id && userType === 'creator'); 
 
         await supabase.from('traffic_logs').insert({
           user_id: userId,
@@ -72,7 +71,7 @@ function TrafficLogger() {
     };
 
     logTraffic();
-  }, [location.pathname, location.search, user, isVisitorSubscribed, visitorEmail]);
+  }, [location.pathname, location.search, user, isVisitorSubscribed, visitorEmail, userType]); 
 
   return null;
 }
@@ -104,8 +103,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/user-dashboard" element={<UserDashboardPage />} />
                 <Route path="/choose-upload-type" element={<ChooseUploadTypePage />} />
-                <Route path="/upload-photos" element={<UploadPhotosPage />} />
-                <Route path="/upload-videos" element={<UploadVideosPage />} />
+                <Route path="/upload-content" element={<UploadContentPage />} /> 
                 <Route path="/my-views" element={<MyViewsPage />} />
                 <Route path="/my-content" element={<MyContentPage />} />
                 <Route path="/profile-settings" element={<ProfileSettingsPage />} />

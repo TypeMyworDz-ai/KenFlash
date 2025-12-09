@@ -32,41 +32,46 @@
   color: var(--secondary-text-color);
 }
 
-/* No change needed for .normal-creator-grid - this is likely a class applied to dashboard-sections-grid */
-
 .dashboard-sections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  margin-bottom: 90px; /* INCREASED: More space below the cards */
-  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+  gap: 40px; 
+  margin-bottom: 90px;
+  align-items: stretch; 
 }
 
 .dashboard-card-link {
   text-decoration: none;
   color: inherit;
-  display: flex;
+  display: flex; 
+  width: 100%;
+  height: 100%;
+  border-radius: 12px; 
+  overflow: hidden; 
 }
 
 .dashboard-card {
   background-color: var(--card-background-color);
   border: 1px solid var(--border-color);
   border-top: 4px solid var(--primary-color);
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 12px; 
+  padding: 20px; /* This padding defines the space around the content AND the button */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease-in-out;
   cursor: pointer;
-  height: 100%;
+  width: 100%; 
+  height: 100%; 
+  min-height: 180px; 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   text-align: left;
+  box-sizing: border-box; 
 }
 
 .dashboard-card-link:hover .dashboard-card {
   transform: translateY(-8px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .dashboard-card-link.disabled-link {
@@ -89,16 +94,16 @@
 
 .dashboard-card h3 {
   color: var(--heading-color);
-  font-size: 1.6em;
-  margin-bottom: 15px;
+  font-size: 1.4em; 
+  margin-bottom: 12px;
   font-weight: 600;
 }
 
 .dashboard-card p {
   color: var(--secondary-text-color);
-  font-size: 1em;
-  line-height: 1.6;
-  margin-bottom: 25px;
+  font-size: 0.9em; 
+  line-height: 1.5;
+  margin-bottom: 20px;
   flex-grow: 1;
 }
 
@@ -118,17 +123,21 @@
 .dashboard-button {
   background-color: var(--button-background-color, #007bff);
   color: var(--button-text-color, white);
-  padding: 12px 25px;
+  /* MODIFIED: Removed horizontal padding from the button itself.
+     The horizontal spacing will now be provided by the .dashboard-card's padding. */
+  padding: 10px 0; 
   border: none;
-  border-radius: 6px;
-  font-size: 1.05em;
+  border-radius: 0 0 12px 12px; 
+  font-size: 0.95em; 
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s ease;
   text-decoration: none;
-  display: inline-block;
-  white-space: nowrap;
+  display: block; /* Ensure it takes full available width */
   margin-top: auto;
+  text-align: center;
+  width: 100%; /* This will now correctly fill the content area of the .dashboard-card */
+  box-sizing: border-box; /* Crucial for width:100% to include its own (vertical) padding */
 }
 
 .dashboard-button:hover {
@@ -150,7 +159,7 @@
   border-left: 4px solid var(--warning-border, #ffc107);
   padding: 20px;
   border-radius: 8px;
-  margin: 60px auto 40px auto; /* INCREASED: More space above and below the warning */
+  margin: 60px auto 40px auto;
   max-width: 900px;
   text-align: left;
   position: relative;
@@ -171,11 +180,11 @@
   color: var(--secondary-text-color);
 }
 
-/* Responsive */
-@media (max-width: 992px) {
+/* Responsive rules */
+@media (max-width: 1024px) {
   .dashboard-sections-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 30px; 
   }
 }
 
@@ -183,9 +192,8 @@
   .user-dashboard-container {
     padding: 20px;
   }
-
   .dashboard-sections-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr; 
+    gap: 25px; 
   }
 }

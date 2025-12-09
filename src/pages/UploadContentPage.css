@@ -1,0 +1,187 @@
+/* General container for the upload page */
+.upload-content-container {
+  text-align: center;
+  padding: 30px;
+  max-width: 800px; /* Max width for the form container */
+  margin: 0 auto;
+  position: relative;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-color);
+}
+
+.upload-content-container h2 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  font-size: 2.2em;
+  font-weight: 700;
+}
+
+.upload-content-container p {
+  color: var(--secondary-text-color);
+  font-size: 1em;
+  margin-bottom: 30px;
+}
+
+/* Styling for the upload form itself, resembling a card */
+.upload-form {
+  background-color: var(--card-background-color);
+  border: 1px solid var(--border-color);
+  border-top: 4px solid var(--upload-color, #4ecdc4); /* Consistent with upload card color */
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  margin-bottom: 40px;
+}
+
+/* Styling for individual form groups */
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--heading-color);
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  font-size: 1em;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  font-size: 1em;
+  box-sizing: border-box;
+  resize: vertical; /* Allow vertical resizing for textareas */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input[type="file"]:focus,
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.25);
+}
+
+.form-group input:disabled,
+.form-group textarea:disabled {
+  background-color: var(--disabled-background-color, #f2f2f2);
+  color: var(--disabled-text-color, #a0a0a0);
+  cursor: not-allowed;
+}
+
+.selected-files-info {
+  margin-top: 10px;
+  font-size: 0.95em;
+  color: var(--secondary-text-color);
+  font-style: italic;
+}
+
+.error-message {
+  color: var(--error-color, #dc3545);
+  background-color: var(--error-background, #f8d7da);
+  border: 1px solid var(--error-border, #f5c6cb);
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-top: 20px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.upload-button {
+  background-color: var(--button-background-color, #007bff);
+  color: var(--button-text-color, white);
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: 20px;
+  box-shadow: 0 4px 10px rgba(var(--button-background-color-rgb), 0.2);
+}
+
+.upload-button:hover:not(:disabled) {
+  background-color: var(--button-hover-color, #0056b3);
+  box-shadow: 0 6px 15px rgba(var(--button-background-color-rgb), 0.3);
+}
+
+.upload-button:disabled {
+  background-color: var(--disabled-button-color, #cccccc);
+  color: var(--disabled-text-color, #666);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.upload-message {
+  margin-top: 15px;
+  font-size: 1em;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .upload-content-container {
+    padding: 20px;
+    max-width: 100%; /* Allow container to take full width on smaller screens */
+  }
+
+  .upload-content-container h2 {
+    font-size: 1.8em;
+  }
+
+  .upload-content-container p {
+    font-size: 0.95em;
+  }
+
+  .upload-form {
+    padding: 20px;
+  }
+
+  .form-group label {
+    font-size: 1em;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .upload-button {
+    font-size: 0.95em;
+    padding: 10px 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-content-container {
+    padding: 15px;
+  }
+
+  .upload-content-container h2 {
+    font-size: 1.6em;
+  }
+
+  .upload-form {
+    padding: 15px;
+  }
+}

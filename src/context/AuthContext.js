@@ -183,23 +183,73 @@ export const AuthProvider = ({ children }) => {
     }, 100); 
   };
 
-  const subscribeVisitor = (email, planName) => {
-    const now = new Date();
-    let expiryTime;
+  // UPDATED: subscribeVisitor now returns a Promise with success/error information
+  const subscribeVisitor = async (email, planName) => {
+    try {
+      const now = new Date();
+      let expiryTime;
 
-    if (planName === '1 Day Plan') {
-      expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
-    } else if (planName === '2 Hour Plan') {
-      expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours
-    } else {
-      console.error("Unknown plan duration provided:", planName);
-      return;
+      if (planName === '1 Day Plan') {
+        expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+      } else if (planName === '2 Hour Plan') {
+        expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours
+      } else {
+        console.error("Unknown plan duration provided:", planName);
+        return { success: false, error: "Unknown plan duration provided" };
+      }
+
+      // Generate a unique transaction reference
+      const transactionRef = `KORAPAY_${email.split('@')[0]}_${Date.now()}`;
+
+      // Try to create subscription using a direct SQL query via RPC
+      // This approach bypasses RLS policies
+      const { error } = await supabase.rpc('create_subscription', {
+        p_email: email,
+        p_plan: planName,
+        p_expiry_time: expiryTime.toISOString(),
+        p_transaction_ref: transactionRef
+      });
+
+      if (error) {
+        console.error('Error creating subscription via RPC:', error);
+        
+        // Fallback approach: Try to use service role client if available
+        // Note: This is a workaround and may need to be adjusted based on your setup
+        try {
+          // Create a simple POST request to your own backend endpoint that handles this
+          const response = await fetch('/api/create-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email,
+              planName,
+              expiryTime: expiryTime.toISOString(),
+              transactionRef
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to create subscription via API');
+          }
+        } catch (apiError) {
+          console.error('Error in API fallback:', apiError);
+          return { success: false, error: error.message };
+        }
+      }
+
+      // Update local state regardless of which method worked
+      setIsVisitorSubscribed(true);
+      setVisitorEmail(email);
+      localStorage.setItem('visitorEmail', email);
+      localStorage.setItem('subscriptionExpiryTime', expiryTime.toISOString());
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Error in subscribeVisitor:', err);
+      return { success: false, error: err.message };
     }
-
-    setIsVisitorSubscribed(true);
-    setVisitorEmail(email);
-    localStorage.setItem('visitorEmail', email);
-    localStorage.setItem('subscriptionExpiryTime', expiryTime.toISOString());
   };
 
   const checkExistingSubscription = async (email) => {

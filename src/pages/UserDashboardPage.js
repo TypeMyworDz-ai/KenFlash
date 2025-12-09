@@ -5,46 +5,60 @@ import { supabase } from '../supabaseClient';
 import './UserDashboardPage.css';
 
 function UserDashboardPage() {
-  const { userRole, isUserApproved } = useAuth();
-  const [creatorType, setCreatorType] = useState(null);
+  const { user, userType, isUserApproved } = useAuth(); // Changed userRole to userType
+  const [profileUserType, setProfileUserType] = useState(null); // Renamed to avoid confusion with AuthContext's userType
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // Added error state
 
   useEffect(() => {
-    const fetchCreatorType = async () => {
+    const fetchProfileData = async () => { // Renamed function for clarity
+      setLoading(true);
+      setError(null); // Reset error on new fetch
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
         if (authUser?.id) {
-          const { data, error } = await supabase
+          const { data, error: profileError } = await supabase
             .from('profiles')
-            .select('creator_type')
+            // FIXED: Changed 'creator_type' to 'user_type' to match database schema
+            .select('user_type') 
             .eq('id', authUser.id)
             .single();
 
-          if (error) {
-            console.error('Error fetching creator type:', error.message);
-            setCreatorType(null);
+          if (profileError) {
+            console.error('Error fetching user profile type:', profileError.message);
+            setError('Failed to load user profile. Please try again.'); // Set user-friendly error
+            setProfileUserType(null);
           } else if (data) {
-            setCreatorType(data.creator_type);
+            setProfileUserType(data.user_type);
           }
+        } else {
+          // If no authUser, it means the user is not logged in or session expired
+          setError('You must be logged in to view the dashboard.');
+          setProfileUserType(null);
         }
       } catch (err) {
-        console.error('Error fetching creator type:', err.message);
-        setCreatorType(null);
+        console.error('Error in fetchProfileData:', err.message);
+        setError('An unexpected error occurred while loading your dashboard.');
+        setProfileUserType(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCreatorType();
-  }, []);
+    fetchProfileData();
+  }, [user]); // Added user to dependency array to refetch if user changes
 
   if (loading) {
-    return <div className="user-dashboard-container"><p>Loading...</p></div>;
+    return <div className="user-dashboard-container"><p>Loading dashboard...</p></div>; // More specific loading message
   }
 
-  // Normal Creator Dashboard
-  if (creatorType === 'normal_creator') {
+  if (error) {
+    return <div className="user-dashboard-container"><p className="error-message">{error}</p></div>; // Display error message
+  }
+
+  // Check if the user's profile type is 'creator' (assuming 'normal_creator' is now just 'creator')
+  if (profileUserType === 'creator') {
     return (
       <div className="user-dashboard-container">
         <h2>Welcome to Your Creator Dashboard!</h2>
@@ -89,12 +103,14 @@ function UserDashboardPage() {
     );
   }
 
-  // Premium Creator Dashboard
+  // Premium Creator Dashboard (or other authenticated user types like 'business' or 'admin')
+  // This section will now also cover 'premium_creator' if 'profileUserType' matches
+  // Using userType from AuthContext for display, as profileUserType is for fetching from DB
   return (
     <div className="user-dashboard-container">
-      <h2>Welcome to Your Creator Dashboard!</h2>
-      {userRole && <p>Logged in as: {userRole} ({isUserApproved ? 'Approved' : 'Pending Approval'})</p>}
-      <p>Here you can manage your photos, videos, views, and earnings.</p>
+      <h2>Welcome to Your Dashboard!</h2>
+      {userType && <p>Logged in as: {userType} ({isUserApproved ? 'Approved' : 'Pending Approval'})</p>}
+      <p>Here you can manage your content, views, and other settings.</p>
 
       <div className="dashboard-sections-grid">
         {/* My Content Card */}

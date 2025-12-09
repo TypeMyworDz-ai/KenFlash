@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.kenflash.app',
-  appName: 'KenFlash',
+  appId: 'app.draftey.app',
+  appName: 'Draftey',
   webDir: 'build'
 };
 

@@ -280,6 +280,62 @@
   font-weight: bold;
 }
 
+/* Payment Completed Section - NEW */
+.payment-completed-section {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f8ff 100%);
+  border: 1px solid #a8d9ff;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  margin: 30px auto;
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.payment-completed-section:hover {
+  box-shadow: 0 10px 30px rgba(0, 123, 255, 0.15);
+}
+
+.payment-completed-section h3 {
+  color: #007bff;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+}
+
+.payment-completed-section p {
+  font-size: 1em;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.payment-completed-button {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.payment-completed-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.payment-completed-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .subscription-container {
@@ -307,12 +363,12 @@
     font-size: 2.2em;
   }
 
-  .subscribe-button, .unlock-button, .back-to-subscribe-button {
+  .subscribe-button, .unlock-button, .back-to-subscribe-button, .payment-completed-button {
     padding: 12px 25px;
     font-size: 1.1em;
   }
 
-  .existing-subscriber-section {
+  .existing-subscriber-section, .payment-completed-section {
     padding: 30px;
   }
 }
@@ -334,16 +390,16 @@
     font-size: 2em;
   }
 
-  .subscribe-button, .unlock-button, .back-to-subscribe-button {
+  .subscribe-button, .unlock-button, .back-to-subscribe-button, .payment-completed-button {
     padding: 10px 20px;
     font-size: 1em;
   }
 
-  .existing-subscriber-section {
+  .existing-subscriber-section, .payment-completed-section {
     padding: 20px;
   }
 
-  .existing-subscriber-section h3 {
+  .existing-subscriber-section h3, .payment-completed-section h3 {
     font-size: 1.5em;
   }
 

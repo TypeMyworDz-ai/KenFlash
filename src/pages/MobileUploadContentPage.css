@@ -4,41 +4,47 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
-  max-width: 500px; /* Max width for mobile-like experience */
+  /* MODIFIED: Adjusted padding for better internal spacing */
+  padding: 30px 20px; 
+  max-width: 550px; /* Slightly increased max-width for a bit more room */
   margin: 70px auto 20px auto; /* Space from navbar */
-  background-color: var(--background-color);
+  background-color: var(--card-background-color); /* Use card background for consistency */
   color: var(--text-color);
-  min-height: calc(100vh - 90px); /* Adjust height for navbar */
+  min-height: calc(100vh - 120px); /* Adjusted height, considering top/bottom margins/nav */
   box-sizing: border-box;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 12px; /* Consistent with dashboard cards */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* More prominent shadow */
+  border: 1px solid var(--border-color); /* Add a subtle border */
 }
 
 .mobile-upload-container h2 {
   color: var(--primary-color);
-  margin-bottom: 10px;
+  margin-bottom: 15px; /* More space below heading */
+  font-size: 2em; /* Slightly larger heading */
+  font-weight: 700;
 }
 
 .mobile-upload-container p {
-  color: var(--text-color);
-  margin-bottom: 20px;
+  color: var(--secondary-text-color); /* Use secondary text color for descriptions */
+  margin-bottom: 25px; /* More space below description */
   text-align: center;
+  font-size: 0.95em; /* Consistent body text size */
 }
 
+/* Error message styling - already quite good, minor tweaks for color variables */
 .error-message {
-  color: white; /* Ensures text is clearly visible against the dark red */
-  background-color: #e74c3c; /* A more vibrant and alarming red */
-  border: 2px solid #c0392b; /* Thicker, darker border for emphasis */
-  padding: 15px 20px; /* Increased padding to make the error box larger */
-  border-radius: 10px; /* Slightly more rounded corners */
-  margin-bottom: 25px; /* More space below the error message */
+  color: var(--button-text-color, white); /* Use themed text color */
+  background-color: var(--error-color, #dc3545); /* Use themed error color */
+  border: 2px solid var(--error-border, #c0392b);
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 25px;
   width: 100%;
   text-align: center;
-  font-weight: bold; /* Bold text for immediate attention */
-  font-size: 1.1em; /* Slightly larger font size */
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); /* More prominent shadow with red tint */
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; /* Adds a subtle shake animation */
+  font-weight: bold;
+  font-size: 1.1em;
+  box-shadow: 0 4px 12px rgba(var(--error-color-rgb, 220, 53, 69), 0.4); /* Use themed RGB if available */
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   perspective: 1000px;
@@ -59,16 +65,17 @@
   }
 }
 
-
+/* Success message styling - align with overall theme */
 .success-message {
-  color: #28a745;
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
+  color: var(--success-color, #28a745);
+  background-color: var(--success-background, #d4edda);
+  border: 1px solid var(--success-border, #c3e6cb);
+  padding: 12px 15px; /* Adjusted padding */
+  border-radius: 8px; /* Consistent with other elements */
+  margin-bottom: 25px;
   width: 100%;
   text-align: center;
+  font-size: 1em; /* Consistent font size */
 }
 
 .upload-options {
@@ -76,7 +83,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 20px; /* Increased gap between options */
 }
 
 .upload-options h3 {
@@ -87,56 +94,68 @@
 .media-source-buttons {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px; /* Increased gap between buttons */
   width: 100%;
 }
 
+/* Primary upload button styling - consistent with dashboard buttons */
 .upload-button {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 12px 20px;
+  background-color: var(--button-background-color, #007bff);
+  color: var(--button-text-color, white);
+  padding: 14px 20px; /* Slightly more vertical padding for better touch target */
   border: none;
-  border-radius: 8px;
-  font-size: 1em;
+  border-radius: 8px; /* Consistent with other buttons/cards */
+  font-size: 1.05em; /* Consistent button font size */
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
+  box-shadow: 0 4px 10px rgba(var(--button-background-color-rgb), 0.2);
 }
 
 .upload-button:hover:not(:disabled) {
-  background-color: var(--primary-hover, #0056b3);
+  background-color: var(--button-hover-color, #0056b3);
+  box-shadow: 0 6px 15px rgba(var(--button-background-color-rgb), 0.3);
 }
 
 .upload-button:disabled {
-  background-color: #cccccc;
+  background-color: var(--disabled-button-color, #cccccc);
+  color: var(--disabled-text-color, #666);
   cursor: not-allowed;
   opacity: 0.7;
+  box-shadow: none;
 }
 
+/* Specific button variants if needed, aligned with theme */
 .upload-button.primary {
   background-color: var(--success-color, #28a745);
+  box-shadow: 0 4px 10px rgba(var(--success-color-rgb, 40, 167, 69), 0.2);
 }
 
 .upload-button.primary:hover:not(:disabled) {
   background-color: var(--success-hover, #218838);
+  box-shadow: 0 6px 15px rgba(var(--success-color-rgb, 40, 167, 69), 0.3);
 }
 
 .upload-button.secondary {
   background-color: var(--secondary-button-color, #6c757d);
+  box-shadow: 0 4px 10px rgba(var(--secondary-button-color-rgb, 108, 117, 125), 0.2);
 }
 
 .upload-button.secondary:hover:not(:disabled) {
   background-color: var(--secondary-button-hover, #5a6268);
+  box-shadow: 0 6px 15px rgba(var(--secondary-button-color-rgb, 108, 117, 125), 0.3);
 }
 
 .upload-options .note {
-  font-size: 0.85em;
+  font-size: 0.8em; /* Slightly smaller note text */
   color: var(--secondary-text-color);
   margin-top: 15px;
+  line-height: 1.5;
 }
 
 /* Media Preview Section */
@@ -145,14 +164,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 20px; /* Increased gap */
+  margin-top: 20px; /* Space above preview */
 }
 
 .media-preview-wrapper {
   width: 100%;
-  max-height: 300px; /* Limit preview height */
+  max-height: 350px; /* Slightly increased preview height */
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 10px; /* Slightly more rounded */
   border: 1px solid var(--border-color);
   display: flex;
   justify-content: center;
@@ -164,53 +184,155 @@
   width: 100%;
   height: auto;
   object-fit: contain;
+  border-radius: 8px; /* Inner rounding for image */
 }
 
 .form-group {
   width: 100%;
   text-align: left;
+  margin-bottom: 20px; /* Consistent spacing between form groups */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px; /* More space below label */
+  color: var(--heading-color); /* Use heading color for labels */
+  font-weight: 600;
+  font-size: 1em;
+}
+
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 12px; /* Increased padding for file input */
+  border: 1px solid var(--border-color);
+  border-radius: 8px; /* Consistent rounding */
+  background-color: var(--input-background-color);
   color: var(--text-color);
-  font-weight: 500;
+  font-size: 1em;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer; /* Indicate it's clickable */
 }
 
 .form-group input[type="text"],
 .form-group textarea {
   width: 100%;
-  padding: 10px;
+  padding: 12px; /* Increased padding */
   border: 1px solid var(--border-color);
-  border-radius: 5px;
+  border-radius: 8px; /* Consistent rounding */
   background-color: var(--input-background-color);
-  color: var(--input-text-color);
+  color: var(--input-text-color, var(--text-color)); /* Ensure text color is thematic */
   font-size: 1em;
   box-sizing: border-box;
-}
-
-.form-group textarea {
-  min-height: 80px;
   resize: vertical;
+  min-height: 100px; /* Slightly increased min-height for textareas */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group input[type="file"]:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.25);
 }
+
+.form-group input:disabled,
+.form-group textarea:disabled,
+.form-group input[type="file"]:disabled {
+  background-color: var(--disabled-background-color, #f8f8f8);
+  color: var(--disabled-text-color, #a0a0a0);
+  cursor: not-allowed;
+}
+
 
 .form-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 15px; /* Increased gap */
+  margin-top: 30px; /* More space above actions */
   width: 100%;
   justify-content: center;
 }
 
 /* Ionicons styling - if used */
 ion-icon {
-  font-size: 1.2em; /* Adjust icon size */
+  font-size: 1.3em; /* Slightly larger icon size */
+  vertical-align: middle;
+}
+
+/* Responsive Adjustments (Android focus) */
+@media (max-width: 768px) {
+  .mobile-upload-container {
+    padding: 25px 15px; /* Adjusted padding for smaller screens */
+    margin: 60px auto 15px auto; /* Adjust top margin for navbar, less bottom margin */
+    min-height: calc(100vh - 100px);
+    box-shadow: none; /* Remove shadow on very small screens for cleaner look */
+    border: none; /* Remove border on very small screens */
+  }
+
+  .mobile-upload-container h2 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+  }
+
+  .mobile-upload-container p {
+    font-size: 0.9em;
+    margin-bottom: 20px;
+  }
+
+  .upload-form {
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Lighter shadow for the form card */
+    border: 1px solid var(--border-color);
+  }
+
+  .form-group label {
+    font-size: 0.95em;
+  }
+
+  .upload-button {
+    font-size: 1em;
+    padding: 12px 15px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group input[type="file"] {
+    font-size: 0.95em;
+    padding: 10px;
+  }
+
+  .media-preview-wrapper {
+    max-height: 250px; /* Reduce preview height on small screens */
+  }
+
+  .error-message {
+    font-size: 1em;
+    padding: 12px 15px;
+    border-radius: 8px;
+  }
+
+  .success-message {
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-upload-container {
+    padding: 15px 10px;
+    margin: 50px auto 10px auto;
+  }
+
+  .mobile-upload-container h2 {
+    font-size: 1.6em;
+  }
+
+  .upload-form {
+    padding: 15px;
+  }
+
+  .upload-button {
+    font-size: 0.95em;
+    padding: 10px 12px;
+  }
 }

@@ -25,6 +25,9 @@ function UserProfileViewPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isAndroid, setIsAndroid] = useState(false);
+  
+  // Add state to track avatar URL
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_PLACEHOLDER);
 
   const [showSlideshowModal, setShowSlideshowModal] = useState(false);
   const [currentSlideshowPhotos, setCurrentSlideshowPhotos] = useState([]);
@@ -39,7 +42,6 @@ function UserProfileViewPage() {
   const touchEndX = useRef(0);
   const contentGridRef = useRef(null);
   const videoRefs = useRef({});
-
 
   useEffect(() => {
     setIsAndroid(Capacitor.isNativePlatform('android'));
@@ -66,7 +68,7 @@ function UserProfileViewPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const viewerEmailToLog = user?.email || localStorage.getItem('subscriberEmail') || null;
+      const viewerEmailToLog = user?.email || localStorage.getItem('visitorEmail') || null;
 
       console.log('Viewer Email (to log):', viewerEmailToLog);
 
@@ -115,7 +117,6 @@ function UserProfileViewPage() {
     }
     console.log('--- End log view attempt (UserProfileViewPage) ---');
   }, [isVisitorSubscribed]);
-
 
   useEffect(() => {
     if (allContent.length > 0) {
@@ -176,7 +177,7 @@ function UserProfileViewPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, nickname, bio, avatar_path, user_type') // Changed creator_type to user_type
+          .select('id, nickname, bio, avatar_path, user_type')
           .eq('id', userId)
           .single();
 
@@ -184,11 +185,28 @@ function UserProfileViewPage() {
         if (!profileData) throw new Error('Creator not found.');
 
         setCreator(profileData);
+        
+        // Fix avatar URL issue by explicitly setting it here
+        if (profileData.avatar_path) {
+          const avatarPublicUrl = getPublicUrl(profileData.avatar_path, 'avatars');
+          console.log("Avatar path:", profileData.avatar_path);
+          console.log("Avatar URL generated:", avatarPublicUrl);
+          setAvatarUrl(avatarPublicUrl || DEFAULT_AVATAR_PLACEHOLDER);
+        } else {
+          setAvatarUrl(DEFAULT_AVATAR_PLACEHOLDER);
+        }
 
-        if (profileData.user_type === 'premium_creator' && !isVisitorSubscribed) { // Changed creator_type to user_type
+        // Fix the subscription check logic
+        // Only set accessDenied if the creator is premium AND the visitor is NOT subscribed
+        if (profileData.user_type === 'premium_creator' && !isVisitorSubscribed) {
+          console.log("Setting access denied: Premium creator and visitor not subscribed");
           setAccessDenied(true);
           setLoading(false);
           return;
+        } else {
+          // Make sure to set accessDenied to false in all other cases
+          console.log("Access granted: Either not premium or visitor is subscribed");
+          setAccessDenied(false);
         }
 
         const { data: contentData, error: contentError } = await supabase
@@ -218,7 +236,7 @@ function UserProfileViewPage() {
                   photos: [],
                   creator_id: userId,
                   content_type: 'photo',
-                  isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
+                  isPremiumContent: profileData.user_type === 'premium_creator',
                   views: photo.views_count ? photo.views_count[0].count : 0,
                 };
               }
@@ -227,7 +245,7 @@ function UserProfileViewPage() {
                 url: getPublicUrl(photo.storage_path),
                 storagePath: photo.storage_path,
                 creator_id: userId,
-                isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
+                isPremiumContent: profileData.user_type === 'premium_creator',
                 views: photo.views_count ? photo.views_count[0].count : 0,
               });
             } else {
@@ -240,7 +258,7 @@ function UserProfileViewPage() {
                 storagePath: photo.storage_path,
                 creator_id: userId,
                 content_type: 'photo',
-                isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
+                isPremiumContent: profileData.user_type === 'premium_creator',
                 views: photo.views_count ? photo.views_count[0].count : 0,
               });
             }
@@ -261,10 +279,10 @@ function UserProfileViewPage() {
               storagePath: v.storage_path,
               creator_id: userId,
               content_type: 'video',
-              isPremiumContent: profileData.user_type === 'premium_creator', // Changed creator_type to user_type
+              isPremiumContent: profileData.user_type === 'premium_creator',
               views: v.views_count ? v.views_count[0].count : 0,
             })),
-            ...singlePhotos, // Ensure singlePhotos are included in processedContent
+            ...singlePhotos,
           ];
 
           processedContent.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
@@ -273,6 +291,7 @@ function UserProfileViewPage() {
 
       } catch (err) {
         setError(err.message || 'Failed to load creator profile.');
+        console.error('Error in fetchCreatorProfile:', err);
       } finally {
         setLoading(false);
       }
@@ -360,7 +379,6 @@ function UserProfileViewPage() {
     }
   };
 
-
   if (loading) {
     return (
       <div className="user-profile-view-container">
@@ -396,10 +414,15 @@ function UserProfileViewPage() {
       <button className="back-button" onClick={() => navigate(-1)}>← Back</button>
 
       <div className="profile-header">
+        {/* Use the explicitly set avatarUrl instead of calculating it inline */}
         <img
-          src={creator.avatar_path ? getPublicUrl(creator.avatar_path, 'avatars') : DEFAULT_AVATAR_PLACEHOLDER}
-          alt={creator.nickname}
+          src={avatarUrl}
+          alt={creator.nickname || 'Creator'}
           className="profile-image"
+          onError={(e) => {
+            console.log("Avatar image failed to load, using placeholder");
+            e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+          }}
         />
         <h1 className="profile-nickname">{creator.nickname || 'Creator'}</h1>
         {creator.bio && <p className="profile-bio">{creator.bio}</p>}
@@ -436,6 +459,10 @@ function UserProfileViewPage() {
                           src={item.url || (item.photos?.[0]?.url)}
                           alt={item.caption || 'Photo'}
                           className="content-thumbnail"
+                          onError={(e) => {
+                            console.log("Content thumbnail failed to load");
+                            e.target.src = DEFAULT_AVATAR_PLACEHOLDER;
+                          }}
                         />
                       ) : (
                         <video
