@@ -57,19 +57,19 @@ serve(async (req) => {
     });
   }
 
-  console.log(`Attempting to list recent Korapay transactions for diagnosis.`);
+  console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
   console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
 
   try {
-    // --- MODIFIED: Use /merchant/api/v1/pay-ins endpoint for listing transactions ---
+    // Use /merchant/api/v1/pay-ins endpoint to list transactions
     const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
     
-    // Add some query parameters to get recent successful KES transactions for debugging
+    // Query parameters to filter and limit results
     const listQueryParams = new URLSearchParams({
-        'limit': '10', // Fetch a few recent transactions
+        'limit': '50', // Fetch a reasonable number of recent transactions
         'currency': 'KES', // Filter by KES
         'status': 'success', // Only look for successful payments
-        // You can add date_from/date_to if needed, e.g., for the last hour
+        // You can add date_from/date_to if needed for a smaller window
         // 'date_from': new Date(Date.now() - 3600 * 1000).toISOString().split('.')[0] + 'Z', 
     });
 
@@ -111,18 +111,78 @@ serve(async (req) => {
       });
     }
 
-    // --- TEMPORARY: Instead of verifying, we'll return the list of transactions for inspection ---
-    // This part is for diagnosis only. We will revert/change this after we understand the data.
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Korapay transactions listed for diagnosis. Check logs!',
-      korapayTransactions: korapayListData.data, // Return the data array from Korapay's response
-      sentTransactionId: transactionId // Also return the transactionId we were looking for
-    }), {
+    // --- FINAL VERIFICATION LOGIC: Find matching transaction ---
+    let isPaymentSuccessful = false;
+    let korapayReference = null;
+    const expectedAmountInFloat = parseFloat(PLAN_AMOUNT_KES.toString()).toFixed(2); // Match Korapay's string format "20.00"
+
+    if (korapayListData && korapayListData.status === true && Array.isArray(korapayListData.data?.payins)) {
+        const foundTransaction = korapayListData.data.payins.find((tx: any) =>
+            tx.status === 'success' && // Ensure transaction is successful
+            tx.reference === transactionId && // Match our unique transaction ID (which Korapay calls 'reference')
+            tx.amount === expectedAmountInFloat && // Match the amount, ensuring string comparison for "20.00"
+            tx.currency === 'KES' // Confirm currency
+            // Korapay's /pay-ins endpoint response doesn't seem to have customer.email directly in the payin object
+            // So we rely on the transactionId and amount for now.
+        );
+
+        if (foundTransaction) {
+            isPaymentSuccessful = true;
+            korapayReference = foundTransaction.reference; // Use Korapay's reference from the response
+            console.log(`Payment confirmed successful by Korapay for reference: ${korapayReference}`);
+        } else {
+            console.warn(`Payment not found or not successful for transactionId: \${transactionId}. Filtered Korapay payins data:`, korapayListData.data.payins);
+        }
+    } else {
+        console.warn('Korapay API response did not indicate success or had unexpected structure for payins. Response:', korapayListData);
+    }
+
+    if (!isPaymentSuccessful) {
+      return new Response(JSON.stringify({ success: false, error: 'Payment not confirmed by Korapay. Please ensure payment was completed.' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 402, // Payment Required
+      });
+    }
+
+    // If payment is confirmed, record subscription in Supabase
+    const now = new Date();
+    let expiryTime;
+
+    if (planName === '1 Day Plan') {
+      expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    } else if (planName === '2 Hour Plan') {
+      expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    } else {
+      throw new Error('Unknown plan name received by Edge Function.');
+    }
+
+    const { data, error: insertError } = await supabase
+      .from('subscriptions')
+      .insert([
+        {
+          email: email,
+          plan: planName,
+          expiry_time: expiryTime.toISOString(),
+          transaction_ref: korapayReference || transactionId,
+          status: 'active',
+        },
+      ])
+      .select();
+
+    if (insertError) {
+      console.error('Supabase subscription INSERT error:', insertError);
+      return new Response(JSON.stringify({ success: false, error: 'Failed to record subscription in database' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    console.log('Subscription successfully recorded:', data);
+
+    return new Response(JSON.stringify({ success: true, message: 'Subscription activated' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
-    // --- END MODIFIED ---
 
   } catch (error) {
     console.error('Edge Function error:', error);
