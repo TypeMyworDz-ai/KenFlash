@@ -39,10 +39,9 @@ serve(async (req) => {
     });
   }
 
-  // MODIFIED: Destructure 'amount' from the request body
   const { transactionId, email, planName, amount } = await req.json();
 
-  if (!transactionId || !email || !planName || !amount) { // MODIFIED: Check for amount presence
+  if (!transactionId || !email || !planName || !amount) {
     return new Response(JSON.stringify({ error: 'Missing required parameters: transactionId, email, planName, amount' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
@@ -60,13 +59,13 @@ serve(async (req) => {
 
   console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
   console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
-  console.log(`Expected amount for verification: ${amount} KES`); // ADDED: Log the received amount
+  console.log(`Expected amount for verification (from client): ${amount} KES`);
 
   try {
     const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
     
-    // MODIFIED: Use the received 'amount' for comparison
-    const expectedAmountInFloat = parseFloat(amount.toString()).toFixed(2); // Ensure it's "20.00" string format
+    // MODIFIED: Use the received 'amount' directly for comparison, convert to float
+    const expectedAmountFromClient = parseFloat(amount.toString()); 
 
     const listQueryParams = new URLSearchParams({
         'limit': '50',
@@ -118,8 +117,8 @@ serve(async (req) => {
     if (korapayListData && korapayListData.status === true && Array.isArray(korapayListData.data?.payins)) {
         const foundTransaction = korapayListData.data.payins.find((tx: any) =>
             tx.status === 'success' && 
-            tx.reference === transactionId &&
-            tx.amount === expectedAmountInFloat && // MODIFIED: Use the received amount for comparison
+            tx.reference === transactionId && // Match our unique transaction ID
+            parseFloat(tx.amount) === expectedAmountFromClient && // MODIFIED: Direct float comparison
             tx.currency === 'KES'
         );
 
@@ -166,7 +165,7 @@ serve(async (req) => {
       .select();
 
     if (insertError) {
-      console.error('Supabase subscription INSERT error:', insertError);
+      console.error('Supabase subscription INSERT error::', insertError);
       return new Response(JSON.stringify({ success: false, error: 'Failed to record subscription in database' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
