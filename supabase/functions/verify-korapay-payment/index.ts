@@ -61,30 +61,29 @@ serve(async (req) => {
   console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
 
   try {
-    const korapayTransactionsEndpoint = 'https://api.korapay.com/v1/transactions';
-    // Removed query parameters for initial diagnosis
-    const korapayApiUrl = `${korapayTransactionsEndpoint}`; 
-    console.log(`Making GET request to Korapay API: ${korapayApiUrl}`);
+    // --- MODIFIED: Use the correct Korapay verification endpoint ---
+    const korapayVerificationEndpoint = `https://api.korapay.com/merchant/api/v1/charges/${transactionId}`; 
+    console.log(`Making GET request to Korapay API: ${korapayVerificationEndpoint}`);
 
-    const korapayVerifyResponse = await fetch(korapayApiUrl, {
-      method: 'GET',
+    const korapayVerifyResponse = await fetch(korapayVerificationEndpoint, {
+      method: 'GET', // As per documentation
       headers: {
         'Authorization': `Bearer ${KORAPAY_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
     });
 
-    console.log(`Korapay API HTTP Status: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`); // Log HTTP Status
+    console.log(`Korapay API HTTP Status: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
 
     const rawKorapayResponseText = await korapayVerifyResponse.text();
     console.log('Korapay API raw response text (before JSON parse):', rawKorapayResponseText);
 
-    if (!korapayVerifyResponse.ok) { // Check for non-2xx status codes
+    if (!korapayVerifyResponse.ok) {
       console.error(`Korapay API HTTP status error: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
       console.error('Korapay error response body (raw):', rawKorapayResponseText);
       return new Response(JSON.stringify({ success: false, error: `Korapay payment verification failed (HTTP Status: ${korapayVerifyResponse.status})` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500, // Or korapayVerifyResponse.status if it's a client error like 401/403
+        status: 500,
       });
     }
 
@@ -100,31 +99,33 @@ serve(async (req) => {
         status: 500,
       });
     }
+    // --- END MODIFIED ---
 
-    // --- Original verification logic (will be re-enabled/adjusted later) ---
     let isPaymentSuccessful = false;
     let korapayReference = null;
     const expectedAmountInMinorUnits = 20 * 100; // KES 20.00 * 100 = 2000
 
-    if (korapayData && Array.isArray(korapayData.data)) {
-        const foundTransaction = korapayData.data.find((tx: any) =>
-            tx.status === 'success' && 
-            tx.customer?.email === email && 
-            tx.payment_reference === transactionId &&
-            tx.amount === expectedAmountInMinorUnits 
-        );
+    // --- MODIFIED: Adjust parsing logic based on sample response ---
+    if (korapayData && korapayData.status === true && korapayData.data) {
+        const transactionData = korapayData.data;
+        // The sample response shows amount as string "10.00", so convert to number for comparison
+        const actualAmountPaid = parseFloat(transactionData.amount) * 100; // Assuming it's in major units in response
 
-        if (foundTransaction) {
+        if (transactionData.status === 'success' && 
+            transactionData.customer?.email === email && 
+            transactionData.reference === transactionId && // The response has 'reference' field
+            actualAmountPaid === expectedAmountInMinorUnits 
+        ) {
             isPaymentSuccessful = true;
-            korapayReference = foundTransaction.id;
+            korapayReference = transactionData.reference; // Use Korapay's reference from the response
             console.log(`Payment confirmed successful by Korapay for reference: ${korapayReference}`);
         } else {
-            console.warn(`Payment not found or not successful for transactionId: ${transactionId}. Filtered Korapay response data:`, korapayData.data);
+            console.warn(`Payment not found or not successful for transactionId: ${transactionId}. Korapay response data:`, transactionData);
         }
     } else {
-        console.warn('Korapay API response did not contain an array of transactions in data field or was unexpected. Response:', korapayData);
+        console.warn('Korapay API response did not indicate success or had unexpected structure. Response:', korapayData);
     }
-    // --- End original verification logic ---
+    // --- END MODIFIED parsing logic ---
 
     if (!isPaymentSuccessful) {
       return new Response(JSON.stringify({ success: false, error: 'Payment not confirmed by Korapay' }), {
