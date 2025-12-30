@@ -50,7 +50,6 @@ serve(async (req) => {
     const amountInMinorUnits = amount * 100; // Korapay expects amount in minor units (e.g., KES 20.00 -> 2000)
 
     // IMPORTANT: Set your actual app's homepage URL for the redirect.
-    // This is where Korapay will send the user back AFTER payment, with Korapay's 'reference' in the URL.
     const redirectUrl = 'https://ken-flash.vercel.app/'; // REPLACE with your actual production URL or 'http://localhost:3000' for local dev
     const notificationUrl = 'https://ken-flash.vercel.app/webhook-korapay'; // Optional: your webhook endpoint if you set one up
 
@@ -58,7 +57,7 @@ serve(async (req) => {
       amount: amountInMinorUnits,
       currency: 'KES', // Your currency
       reference: transactionId, // Use our generated transactionId as Korapay's 'reference'
-      description: `${planName} Content Access`,
+      // REMOVED: description: `${planName} Content Access`, // This field is not allowed
       redirect_url: redirectUrl,
       notification_url: notificationUrl, // Optional
       customer: {
