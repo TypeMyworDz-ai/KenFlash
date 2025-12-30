@@ -57,121 +57,72 @@ serve(async (req) => {
     });
   }
 
-  console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
+  console.log(`Attempting to list recent Korapay transactions for diagnosis.`);
   console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
 
   try {
-    // --- MODIFIED: Use the correct Korapay verification endpoint ---
-    const korapayVerificationEndpoint = `https://api.korapay.com/merchant/api/v1/charges/${transactionId}`; 
-    console.log(`Making GET request to Korapay API: ${korapayVerificationEndpoint}`);
+    // --- MODIFIED: Use /merchant/api/v1/pay-ins endpoint for listing transactions ---
+    const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
+    
+    // Add some query parameters to get recent successful KES transactions for debugging
+    const listQueryParams = new URLSearchParams({
+        'limit': '10', // Fetch a few recent transactions
+        'currency': 'KES', // Filter by KES
+        'status': 'success', // Only look for successful payments
+        // You can add date_from/date_to if needed, e.g., for the last hour
+        // 'date_from': new Date(Date.now() - 3600 * 1000).toISOString().split('.')[0] + 'Z', 
+    });
 
-    const korapayVerifyResponse = await fetch(korapayVerificationEndpoint, {
-      method: 'GET', // As per documentation
+    const korapayApiUrl = `${korapayListTransactionsEndpoint}?${listQueryParams.toString()}`;
+    console.log(`Making GET request to Korapay API (list transactions): ${korapayApiUrl}`);
+
+    const korapayResponse = await fetch(korapayApiUrl, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${KORAPAY_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
     });
 
-    console.log(`Korapay API HTTP Status: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
+    console.log(`Korapay API HTTP Status (list transactions): ${korapayResponse.status} ${korapayResponse.statusText}`);
 
-    const rawKorapayResponseText = await korapayVerifyResponse.text();
-    console.log('Korapay API raw response text (before JSON parse):', rawKorapayResponseText);
+    const rawKorapayResponseText = await korapayResponse.text();
+    console.log('Korapay API raw response text (list transactions, before JSON parse):', rawKorapayResponseText);
 
-    if (!korapayVerifyResponse.ok) {
-      console.error(`Korapay API HTTP status error: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
-      console.error('Korapay error response body (raw):', rawKorapayResponseText);
-      return new Response(JSON.stringify({ success: false, error: `Korapay payment verification failed (HTTP Status: ${korapayVerifyResponse.status})` }), {
+    if (!korapayResponse.ok) {
+      console.error(`Korapay API HTTP status error (list transactions): ${korapayResponse.status} ${korapayResponse.statusText}`);
+      console.error('Korapay error response body (list transactions, raw):', rawKorapayResponseText);
+      return new Response(JSON.stringify({ success: false, error: `Korapay list transactions failed (HTTP Status: ${korapayResponse.status})` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    let korapayData;
+    let korapayListData;
     try {
-      korapayData = JSON.parse(rawKorapayResponseText);
-      console.log('Korapay API raw response (JSON parsed):', JSON.stringify(korapayData, null, 2));
+      korapayListData = JSON.parse(rawKorapayResponseText);
+      console.log('Korapay API raw response (list transactions, JSON parsed):', JSON.stringify(korapayListData, null, 2));
     } catch (jsonError) {
-      console.error('Failed to parse Korapay API response as JSON:', jsonError);
-      console.error('Non-JSON Korapay response received:', rawKorapayResponseText);
-      return new Response(JSON.stringify({ success: false, error: 'Korapay returned non-JSON response' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      });
-    }
-    // --- END MODIFIED ---
-
-    let isPaymentSuccessful = false;
-    let korapayReference = null;
-    const expectedAmountInMinorUnits = 20 * 100; // KES 20.00 * 100 = 2000
-
-    // --- MODIFIED: Adjust parsing logic based on sample response ---
-    if (korapayData && korapayData.status === true && korapayData.data) {
-        const transactionData = korapayData.data;
-        // The sample response shows amount as string "10.00", so convert to number for comparison
-        const actualAmountPaid = parseFloat(transactionData.amount) * 100; // Assuming it's in major units in response
-
-        if (transactionData.status === 'success' && 
-            transactionData.customer?.email === email && 
-            transactionData.reference === transactionId && // The response has 'reference' field
-            actualAmountPaid === expectedAmountInMinorUnits 
-        ) {
-            isPaymentSuccessful = true;
-            korapayReference = transactionData.reference; // Use Korapay's reference from the response
-            console.log(`Payment confirmed successful by Korapay for reference: ${korapayReference}`);
-        } else {
-            console.warn(`Payment not found or not successful for transactionId: ${transactionId}. Korapay response data:`, transactionData);
-        }
-    } else {
-        console.warn('Korapay API response did not indicate success or had unexpected structure. Response:', korapayData);
-    }
-    // --- END MODIFIED parsing logic ---
-
-    if (!isPaymentSuccessful) {
-      return new Response(JSON.stringify({ success: false, error: 'Payment not confirmed by Korapay' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 402,
-      });
-    }
-
-    const now = new Date();
-    let expiryTime;
-
-    if (planName === '1 Day Plan') {
-      expiryTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    } else if (planName === '2 Hour Plan') {
-      expiryTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    } else {
-      throw new Error('Unknown plan name received by Edge Function.');
-    }
-
-    const { data, error: insertError } = await supabase
-      .from('subscriptions')
-      .insert([
-        {
-          email: email,
-          plan: planName,
-          expiry_time: expiryTime.toISOString(),
-          transaction_ref: korapayReference || transactionId,
-          status: 'active',
-        },
-      ])
-      .select();
-
-    if (insertError) {
-      console.error('Supabase subscription INSERT error:', insertError);
-      return new Response(JSON.stringify({ success: false, error: 'Failed to record subscription in database' }), {
+      console.error('Failed to parse Korapay API response (list transactions) as JSON:', jsonError);
+      console.error('Non-JSON Korapay response (list transactions) received:', rawKorapayResponseText);
+      return new Response(JSON.stringify({ success: false, error: 'Korapay list transactions returned non-JSON response' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    console.log('Subscription successfully recorded:', data);
-
-    return new Response(JSON.stringify({ success: true, message: 'Subscription activated' }), {
+    // --- TEMPORARY: Instead of verifying, we'll return the list of transactions for inspection ---
+    // This part is for diagnosis only. We will revert/change this after we understand the data.
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: 'Korapay transactions listed for diagnosis. Check logs!',
+      korapayTransactions: korapayListData.data, // Return the data array from Korapay's response
+      sentTransactionId: transactionId // Also return the transactionId we were looking for
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
+    // --- END MODIFIED ---
 
   } catch (error) {
     console.error('Edge Function error:', error);
