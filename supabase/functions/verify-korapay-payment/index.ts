@@ -58,23 +58,13 @@ serve(async (req) => {
   }
 
   console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
-  console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`); // Log part of the key for confirmation
+  console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
 
   try {
     const korapayTransactionsEndpoint = 'https://api.korapay.com/v1/transactions';
-    const expectedAmountInMinorUnits = 20 * 100; // KES 20.00 * 100 = 2000 (Korapay expects minor units)
-
-    const queryParams = new URLSearchParams({
-      'payment_reference': transactionId, 
-      'status': 'success', 
-      'customer_email': email, 
-      'amount': expectedAmountInMinorUnits.toString(), 
-      'currency': 'KES', 
-      'limit': '10', 
-    });
-
-    const korapayApiUrl = `${korapayTransactionsEndpoint}?${queryParams.toString()}`;
-    console.log(`Making GET request to Korapay API: ${korapayApiUrl}`); // Log the exact URL being called
+    // Removed query parameters for initial diagnosis
+    const korapayApiUrl = `${korapayTransactionsEndpoint}`; 
+    console.log(`Making GET request to Korapay API: ${korapayApiUrl}`);
 
     const korapayVerifyResponse = await fetch(korapayApiUrl, {
       method: 'GET',
@@ -84,22 +74,23 @@ serve(async (req) => {
       },
     });
 
-    // --- ADDED: Log raw response text before attempting JSON parse ---
+    console.log(`Korapay API HTTP Status: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`); // Log HTTP Status
+
     const rawKorapayResponseText = await korapayVerifyResponse.text();
     console.log('Korapay API raw response text (before JSON parse):', rawKorapayResponseText);
 
-    if (!korapayVerifyResponse.ok) {
+    if (!korapayVerifyResponse.ok) { // Check for non-2xx status codes
       console.error(`Korapay API HTTP status error: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
-      console.error('Korapay error response body (raw):', rawKorapayResponseText); // Log raw text on error
-      return new Response(JSON.stringify({ success: false, error: 'Korapay payment verification failed (HTTP error)' }), {
+      console.error('Korapay error response body (raw):', rawKorapayResponseText);
+      return new Response(JSON.stringify({ success: false, error: `Korapay payment verification failed (HTTP Status: ${korapayVerifyResponse.status})` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500, // Or korapayVerifyResponse.status if it's a client error like 401/403
       });
     }
 
     let korapayData;
     try {
-      korapayData = JSON.parse(rawKorapayResponseText); // Manually parse after logging raw text
+      korapayData = JSON.parse(rawKorapayResponseText);
       console.log('Korapay API raw response (JSON parsed):', JSON.stringify(korapayData, null, 2));
     } catch (jsonError) {
       console.error('Failed to parse Korapay API response as JSON:', jsonError);
@@ -109,10 +100,11 @@ serve(async (req) => {
         status: 500,
       });
     }
-    // --- END ADDED logging and manual JSON parsing ---
 
+    // --- Original verification logic (will be re-enabled/adjusted later) ---
     let isPaymentSuccessful = false;
     let korapayReference = null;
+    const expectedAmountInMinorUnits = 20 * 100; // KES 20.00 * 100 = 2000
 
     if (korapayData && Array.isArray(korapayData.data)) {
         const foundTransaction = korapayData.data.find((tx: any) =>
@@ -132,6 +124,7 @@ serve(async (req) => {
     } else {
         console.warn('Korapay API response did not contain an array of transactions in data field or was unexpected. Response:', korapayData);
     }
+    // --- End original verification logic ---
 
     if (!isPaymentSuccessful) {
       return new Response(JSON.stringify({ success: false, error: 'Payment not confirmed by Korapay' }), {
