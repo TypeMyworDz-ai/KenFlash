@@ -4,13 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
 import './SubscriptionPage.css';
 
-// Updated Korapay payment link
-const KORAPAY_PAYMENT_LINK = 'https://test-checkout.korapay.com/pay/8ktS0QEg93KewIn';
+// Client-side constants (will be sent to Edge Function)
 const PLAN_AMOUNT_KES = 20;
 const PLAN_NAME = '2 Hour Plan';
 
 // Get your Supabase project URL from your .env.local or environment variables
-// Ensure this matches the URL your Supabase project is deployed to
 const SUPABASE_PROJECT_URL = process.env.REACT_APP_SUPABASE_URL;
 
 function SubscriptionPage() {
@@ -30,37 +28,59 @@ function SubscriptionPage() {
     }
 
     setLoading(true);
-    setMessage(`Redirecting to payment for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) for ${email}...`);
+    setMessage(`Initiating payment for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) for ${email}...`);
 
-    const transactionId = uuidv4(); // Generate a unique transaction ID for this attempt
+    const transactionId = uuidv4(); // Our internal unique ID for this attempt
 
     try {
-      localStorage.setItem('pendingSubscriptionEmail', email);
-      localStorage.setItem('pendingPlanName', PLAN_NAME);
-      localStorage.setItem('pendingTransactionId', transactionId); // Store the unique transaction ID
-      console.log('Stored subscription info to localStorage:', { email, plan: PLAN_NAME, transactionId });
+      // Call the new Edge Function to initialize the Korapay charge
+      if (!SUPABASE_PROJECT_URL) {
+        throw new Error('Supabase Project URL is not defined in environment variables.');
+      }
+      const initializeChargeEdgeFunctionUrl = `${SUPABASE_PROJECT_URL}/functions/v1/initialize-korapay-charge`;
+
+      console.log('Calling Edge Function to initialize charge:', initializeChargeEdgeFunctionUrl, { email, planName: PLAN_NAME, amount: PLAN_AMOUNT_KES, transactionId });
+
+      const response = await fetch(initializeChargeEdgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          planName: PLAN_NAME,
+          amount: PLAN_AMOUNT_KES,
+          transactionId: transactionId,
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Initialize Charge Edge Function response:', result);
+
+      if (response.ok && result.success && result.checkoutUrl && result.korapayReference) {
+        // Store our internal transactionId AND Korapay's reference for later verification
+        localStorage.setItem('pendingSubscriptionEmail', email);
+        localStorage.setItem('pendingPlanName', PLAN_NAME);
+        localStorage.setItem('pendingTransactionId', transactionId); // Our internal ID
+        localStorage.setItem('korapayTransactionReference', result.korapayReference); // Korapay's reference
+        
+        console.log('Stored subscription info and Korapay reference to localStorage');
+
+        // Open the dynamic checkout URL received from the Edge Function
+        window.open(result.checkoutUrl, '_blank');
+        
+        setShowPaymentCompletedSection(true);
+        setMessage('A new tab has opened with the payment page. Please complete your payment there.');
+      } else {
+        throw new Error(result.error || 'Failed to initiate payment with Korapay.');
+      }
+
     } catch (error) {
-      console.error('Failed to write to localStorage:', error);
-      alert('Could not initiate subscription. Please ensure cookies are enabled.');
+      console.error('Payment initiation failed:', error);
+      setMessage(`Failed to initiate payment: ${error.message}. Please contact support.`);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const metadata = {
-      transaction_id: transactionId,
-      plan_name: PLAN_NAME,
-      user_email: email 
-    };
-    const encodedMetadata = encodeURIComponent(JSON.stringify(metadata));
-
-    const korapayUrlWithParams = `${KORAPAY_PAYMENT_LINK}?email=${encodeURIComponent(email)}&amount=${PLAN_AMOUNT_KES}&currency=KES&metadata=${encodedMetadata}`;
-
-    setShowPaymentCompletedSection(true);
-    
-    // Open payment link in a new tab with dynamic parameters
-    window.open(korapayUrlWithParams, '_blank');
-    
-    setLoading(false);
   };
 
   const handlePaymentCompleted = async () => {
@@ -70,38 +90,43 @@ function SubscriptionPage() {
     try {
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
-      const transactionId = localStorage.getItem('pendingTransactionId');
+      const transactionId = localStorage.getItem('pendingTransactionId'); // Our internal ID
+      const korapayTransactionReference = localStorage.getItem('korapayTransactionReference'); // Korapay's reference
 
-      if (!subscriptionEmail || !planName || !transactionId) {
-        throw new Error('Subscription information not found. Please try again.');
+      if (!subscriptionEmail || !planName || !transactionId || !korapayTransactionReference) {
+        throw new Error('Subscription information not found. Please try again or re-initiate payment.');
       }
 
-      // --- START OF MODIFIED BLOCK: Calling the Supabase Edge Function ---
+      // Call the existing verify-korapay-payment Edge Function
       if (!SUPABASE_PROJECT_URL) {
         throw new Error('Supabase Project URL is not defined in environment variables.');
       }
-      const edgeFunctionUrl = `${SUPABASE_PROJECT_URL}/functions/v1/verify-korapay-payment`;
+      const verifyPaymentEdgeFunctionUrl = `${SUPABASE_PROJECT_URL}/functions/v1/verify-korapay-payment`;
 
-      console.log('Calling Edge Function for verification:', edgeFunctionUrl, { subscriptionEmail, planName, transactionId });
+      console.log('Calling Edge Function for verification:', verifyPaymentEdgeFunctionUrl, { 
+        subscriptionEmail, 
+        planName, 
+        transactionId, // Our internal ID
+        korapayTransactionReference // Korapay's reference
+      });
 
-      const response = await fetch(edgeFunctionUrl, {
+      const response = await fetch(verifyPaymentEdgeFunctionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // No Authorization header needed if the Edge Function is deployed with --no-verify-jwt
         },
         body: JSON.stringify({
-          transactionId: transactionId,
+          transactionId: korapayTransactionReference, // Now send Korapay's reference for verification
           email: subscriptionEmail,
           planName: planName,
+          amount: PLAN_AMOUNT_KES, // Send amount for verification
         }),
       });
 
       const result = await response.json();
-      console.log('Edge Function response:', result);
+      console.log('Verify Payment Edge Function response:', result);
 
       if (response.ok && result.success) {
-        // Only activate subscription if Edge Function confirms payment
         setMessage('Payment verified. Subscription activated successfully! Redirecting to homepage...');
         subscribeVisitor(subscriptionEmail, planName); // Update local auth context
         
@@ -111,7 +136,6 @@ function SubscriptionPage() {
       } else {
         throw new Error(result.error || 'Payment verification failed. Please try again or contact support.');
       }
-      // --- END OF MODIFIED BLOCK ---
 
     } catch (err) {
       console.error('Failed to activate subscription:', err);
@@ -120,6 +144,7 @@ function SubscriptionPage() {
       localStorage.removeItem('pendingSubscriptionEmail');
       localStorage.removeItem('pendingPlanName');
       localStorage.removeItem('pendingTransactionId');
+      localStorage.removeItem('korapayTransactionReference'); // Clear Korapay's reference
       setVerifyingPayment(false);
     }
   };
@@ -206,7 +231,7 @@ function SubscriptionPage() {
                   <li>2 Hours Access</li>
                 </ul>
                 <button className="subscribe-button" disabled={loading}>
-                  {loading ? 'Redirecting...' : `Subscribe for ${PLAN_AMOUNT_KES} KES`}
+                  {loading ? 'Initiating...' : `Subscribe for ${PLAN_AMOUNT_KES} KES`}
                 </button>
               </div>
             </div>

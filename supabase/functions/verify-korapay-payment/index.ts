@@ -39,10 +39,11 @@ serve(async (req) => {
     });
   }
 
-  const { transactionId, email, planName } = await req.json();
+  // MODIFIED: Destructure 'amount' from the request body
+  const { transactionId, email, planName, amount } = await req.json();
 
-  if (!transactionId || !email || !planName) {
-    return new Response(JSON.stringify({ error: 'Missing required parameters: transactionId, email, planName' }), {
+  if (!transactionId || !email || !planName || !amount) { // MODIFIED: Check for amount presence
+    return new Response(JSON.stringify({ error: 'Missing required parameters: transactionId, email, planName, amount' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
@@ -59,18 +60,18 @@ serve(async (req) => {
 
   console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
   console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`);
+  console.log(`Expected amount for verification: ${amount} KES`); // ADDED: Log the received amount
 
   try {
-    // Use /merchant/api/v1/pay-ins endpoint to list transactions
     const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
     
-    // Query parameters to filter and limit results
+    // MODIFIED: Use the received 'amount' for comparison
+    const expectedAmountInFloat = parseFloat(amount.toString()).toFixed(2); // Ensure it's "20.00" string format
+
     const listQueryParams = new URLSearchParams({
-        'limit': '50', // Fetch a reasonable number of recent transactions
-        'currency': 'KES', // Filter by KES
-        'status': 'success', // Only look for successful payments
-        // You can add date_from/date_to if needed for a smaller window
-        // 'date_from': new Date(Date.now() - 3600 * 1000).toISOString().split('.')[0] + 'Z', 
+        'limit': '50',
+        'currency': 'KES',
+        'status': 'success',
     });
 
     const korapayApiUrl = `${korapayListTransactionsEndpoint}?${listQueryParams.toString()}`;
@@ -111,27 +112,23 @@ serve(async (req) => {
       });
     }
 
-    // --- FINAL VERIFICATION LOGIC: Find matching transaction ---
     let isPaymentSuccessful = false;
     let korapayReference = null;
-    const expectedAmountInFloat = parseFloat(PLAN_AMOUNT_KES.toString()).toFixed(2); // Match Korapay's string format "20.00"
 
     if (korapayListData && korapayListData.status === true && Array.isArray(korapayListData.data?.payins)) {
         const foundTransaction = korapayListData.data.payins.find((tx: any) =>
-            tx.status === 'success' && // Ensure transaction is successful
-            tx.reference === transactionId && // Match our unique transaction ID (which Korapay calls 'reference')
-            tx.amount === expectedAmountInFloat && // Match the amount, ensuring string comparison for "20.00"
-            tx.currency === 'KES' // Confirm currency
-            // Korapay's /pay-ins endpoint response doesn't seem to have customer.email directly in the payin object
-            // So we rely on the transactionId and amount for now.
+            tx.status === 'success' && 
+            tx.reference === transactionId &&
+            tx.amount === expectedAmountInFloat && // MODIFIED: Use the received amount for comparison
+            tx.currency === 'KES'
         );
 
         if (foundTransaction) {
             isPaymentSuccessful = true;
-            korapayReference = foundTransaction.reference; // Use Korapay's reference from the response
+            korapayReference = foundTransaction.reference;
             console.log(`Payment confirmed successful by Korapay for reference: ${korapayReference}`);
         } else {
-            console.warn(`Payment not found or not successful for transactionId: \${transactionId}. Filtered Korapay payins data:`, korapayListData.data.payins);
+            console.warn(`Payment not found or not successful for transactionId: ${transactionId}. Filtered Korapay payins data:`, korapayListData.data.payins);
         }
     } else {
         console.warn('Korapay API response did not indicate success or had unexpected structure for payins. Response:', korapayListData);
@@ -140,11 +137,10 @@ serve(async (req) => {
     if (!isPaymentSuccessful) {
       return new Response(JSON.stringify({ success: false, error: 'Payment not confirmed by Korapay. Please ensure payment was completed.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 402, // Payment Required
+        status: 402,
       });
     }
 
-    // If payment is confirmed, record subscription in Supabase
     const now = new Date();
     let expiryTime;
 
