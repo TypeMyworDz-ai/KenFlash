@@ -64,8 +64,8 @@ serve(async (req) => {
   try {
     const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
     
-    // MODIFIED: Use the received 'amount' directly for comparison, convert to float
-    const expectedAmountFromClient = parseFloat(amount.toString()); 
+    // MODIFIED: Calculate expected amount in Korapay's minor units, then format as string with two decimals
+    const expectedAmountFromClientFormatted = (Number(amount) * 100).toFixed(2); // e.g., 20 KES * 100 = 2000.00
 
     const listQueryParams = new URLSearchParams({
         'limit': '50',
@@ -115,12 +115,17 @@ serve(async (req) => {
     let korapayReference = null;
 
     if (korapayListData && korapayListData.status === true && Array.isArray(korapayListData.data?.payins)) {
-        const foundTransaction = korapayListData.data.payins.find((tx: any) =>
-            tx.status === 'success' && 
-            tx.reference === transactionId && // Match our unique transaction ID
-            parseFloat(tx.amount) === expectedAmountFromClient && // MODIFIED: Direct float comparison
-            tx.currency === 'KES'
-        );
+        const foundTransaction = korapayListData.data.payins.find((tx: any) => {
+            console.log(`  Checking tx.reference: ${tx.reference} === ${transactionId}`);
+            console.log(`  Checking tx.status: ${tx.status} === 'success'`);
+            console.log(`  Checking tx.amount: ${tx.amount} === ${expectedAmountFromClientFormatted}`);
+            console.log(`  Checking tx.currency: ${tx.currency} === 'KES'`);
+
+            return tx.status === 'success' && 
+                   tx.reference === transactionId && // Match our unique transaction ID
+                   tx.amount === expectedAmountFromClientFormatted && // MODIFIED: Direct string comparison of formatted amounts
+                   tx.currency === 'KES';
+        });
 
         if (foundTransaction) {
             isPaymentSuccessful = true;

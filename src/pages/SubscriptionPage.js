@@ -57,14 +57,15 @@ function SubscriptionPage() {
       const result = await response.json();
       console.log('Initialize Charge Edge Function response:', result);
 
-      if (response.ok && result.success && result.checkoutUrl && result.korapayReference) {
-        // Store our internal transactionId AND Korapay's reference for later verification
+      if (response.ok && result.success && result.checkoutUrl) {
+        // MODIFIED: Store OUR original transactionId as the Korapay reference for verification
+        // The 'result.korapayReference' from initialize-korapay-charge is the checkout URL path, not the actual transaction reference.
         localStorage.setItem('pendingSubscriptionEmail', email);
         localStorage.setItem('pendingPlanName', PLAN_NAME);
         localStorage.setItem('pendingTransactionId', transactionId); // Our internal ID
-        localStorage.setItem('korapayTransactionReference', result.korapayReference); // Korapay's reference
+        localStorage.setItem('korapayTransactionReference', transactionId); // Store OUR original UUID here for verification
         
-        console.log('Stored subscription info and Korapay reference to localStorage');
+        console.log('Stored subscription info and Korapay reference (our original transactionId) to localStorage');
 
         // Open the dynamic checkout URL received from the Edge Function
         window.open(result.checkoutUrl, '_blank');
@@ -91,7 +92,7 @@ function SubscriptionPage() {
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
       const transactionId = localStorage.getItem('pendingTransactionId'); // Our internal ID
-      const korapayTransactionReference = localStorage.getItem('korapayTransactionReference'); // Korapay's reference
+      const korapayTransactionReference = localStorage.getItem('korapayTransactionReference'); // This should now be OUR internal ID
 
       if (!subscriptionEmail || !planName || !transactionId || !korapayTransactionReference) {
         throw new Error('Subscription information not found. Please try again or re-initiate payment.');
@@ -106,8 +107,8 @@ function SubscriptionPage() {
       console.log('Calling Edge Function for verification:', verifyPaymentEdgeFunctionUrl, { 
         subscriptionEmail, 
         planName, 
-        transactionId, // Our internal ID
-        korapayTransactionReference // Korapay's reference
+        transactionId: korapayTransactionReference, // Send OUR original transactionId for verification
+        amount: PLAN_AMOUNT_KES 
       });
 
       const response = await fetch(verifyPaymentEdgeFunctionUrl, {
@@ -116,10 +117,10 @@ function SubscriptionPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          transactionId: korapayTransactionReference, // Now send Korapay's reference for verification
+          transactionId: korapayTransactionReference, // This is OUR internal UUID, which is Korapay's 'reference' in payins
           email: subscriptionEmail,
           planName: planName,
-          amount: PLAN_AMOUNT_KES, // Send amount for verification
+          amount: PLAN_AMOUNT_KES,
         }),
       });
 
@@ -128,7 +129,7 @@ function SubscriptionPage() {
 
       if (response.ok && result.success) {
         setMessage('Payment verified. Subscription activated successfully! Redirecting to homepage...');
-        subscribeVisitor(subscriptionEmail, planName); // Update local auth context
+        subscribeVisitor(subscriptionEmail, planName);
         
         setTimeout(() => {
           navigate('/');
@@ -144,7 +145,7 @@ function SubscriptionPage() {
       localStorage.removeItem('pendingSubscriptionEmail');
       localStorage.removeItem('pendingPlanName');
       localStorage.removeItem('pendingTransactionId');
-      localStorage.removeItem('korapayTransactionReference'); // Clear Korapay's reference
+      localStorage.removeItem('korapayTransactionReference');
       setVerifyingPayment(false);
     }
   };
