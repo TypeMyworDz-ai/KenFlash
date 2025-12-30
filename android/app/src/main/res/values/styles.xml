@@ -10,13 +10,16 @@
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="android:background">@null</item>
     </style>
 
-
-    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+    <!-- Splash Screen Theme - CORRECTED to use a Drawable for windowBackground -->
+    <style name="AppTheme.Launcher" parent="Theme.AppCompat.Light.NoActionBar"> <!-- Parent should be a NoActionBar theme -->
+        <item name="android:windowBackground">@drawable/splash_background</item> <!-- IMPORTANT: Now correctly references a Drawable -->
+        <item name="android:statusBarColor">@android:color/white</item> <!-- Optional: Match status bar color -->
+        <item name="android:navigationBarColor">@android:color/white</item> <!-- Optional: Match navigation bar color -->
     </style>
+
 </resources>

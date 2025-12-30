@@ -1,4 +1,4 @@
-package com.kenflash.app;
+package app.draftey.app;
 
 import com.getcapacitor.BridgeActivity;
 

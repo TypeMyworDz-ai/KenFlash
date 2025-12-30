@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// Removed the unused supabase import
+import { v4 as uuidv4 } from 'uuid';
 import './SubscriptionPage.css';
 
 // Updated Korapay payment link
 const KORAPAY_PAYMENT_LINK = 'https://test-checkout.korapay.com/pay/8ktS0QEg93KewIn';
 const PLAN_AMOUNT_KES = 20;
 const PLAN_NAME = '2 Hour Plan';
+
+// Get your Supabase project URL from your .env.local or environment variables
+// Ensure this matches the URL your Supabase project is deployed to
+const SUPABASE_PROJECT_URL = process.env.REACT_APP_SUPABASE_URL;
 
 function SubscriptionPage() {
   const navigate = useNavigate();
@@ -28,11 +32,13 @@ function SubscriptionPage() {
     setLoading(true);
     setMessage(`Redirecting to payment for ${PLAN_NAME} (${PLAN_AMOUNT_KES} KES) for ${email}...`);
 
-    // Store the email and plan name in localStorage
+    const transactionId = uuidv4(); // Generate a unique transaction ID for this attempt
+
     try {
       localStorage.setItem('pendingSubscriptionEmail', email);
       localStorage.setItem('pendingPlanName', PLAN_NAME);
-      console.log('Stored subscription info to localStorage');
+      localStorage.setItem('pendingTransactionId', transactionId); // Store the unique transaction ID
+      console.log('Stored subscription info to localStorage:', { email, plan: PLAN_NAME, transactionId });
     } catch (error) {
       console.error('Failed to write to localStorage:', error);
       alert('Could not initiate subscription. Please ensure cookies are enabled.');
@@ -40,46 +46,80 @@ function SubscriptionPage() {
       return;
     }
 
-    // Show payment completed section
+    const metadata = {
+      transaction_id: transactionId,
+      plan_name: PLAN_NAME,
+      user_email: email 
+    };
+    const encodedMetadata = encodeURIComponent(JSON.stringify(metadata));
+
+    const korapayUrlWithParams = `${KORAPAY_PAYMENT_LINK}?email=${encodeURIComponent(email)}&amount=${PLAN_AMOUNT_KES}&currency=KES&metadata=${encodedMetadata}`;
+
     setShowPaymentCompletedSection(true);
     
-    // Open payment link in a new tab
-    window.open(KORAPAY_PAYMENT_LINK, '_blank');
+    // Open payment link in a new tab with dynamic parameters
+    window.open(korapayUrlWithParams, '_blank');
     
     setLoading(false);
   };
 
   const handlePaymentCompleted = async () => {
     setVerifyingPayment(true);
-    setMessage('Activating your subscription...');
+    setMessage('Verifying your payment and activating subscription...');
     
     try {
       const subscriptionEmail = localStorage.getItem('pendingSubscriptionEmail');
       const planName = localStorage.getItem('pendingPlanName');
-      
-      if (!subscriptionEmail || !planName) {
+      const transactionId = localStorage.getItem('pendingTransactionId');
+
+      if (!subscriptionEmail || !planName || !transactionId) {
         throw new Error('Subscription information not found. Please try again.');
       }
-      
-      // Call the subscribeVisitor function from AuthContext instead of directly inserting
-      // This function should handle the database operations with proper permissions
-      const result = await subscribeVisitor(subscriptionEmail, planName);
-      
-      if (result.success) {
-        setMessage('Subscription activated successfully! Redirecting to homepage...');
+
+      // --- START OF MODIFIED BLOCK: Calling the Supabase Edge Function ---
+      if (!SUPABASE_PROJECT_URL) {
+        throw new Error('Supabase Project URL is not defined in environment variables.');
+      }
+      const edgeFunctionUrl = `${SUPABASE_PROJECT_URL}/functions/v1/verify-korapay-payment`;
+
+      console.log('Calling Edge Function for verification:', edgeFunctionUrl, { subscriptionEmail, planName, transactionId });
+
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // No Authorization header needed if the Edge Function is deployed with --no-verify-jwt
+        },
+        body: JSON.stringify({
+          transactionId: transactionId,
+          email: subscriptionEmail,
+          planName: planName,
+        }),
+      });
+
+      const result = await response.json();
+      console.log('Edge Function response:', result);
+
+      if (response.ok && result.success) {
+        // Only activate subscription if Edge Function confirms payment
+        setMessage('Payment verified. Subscription activated successfully! Redirecting to homepage...');
+        subscribeVisitor(subscriptionEmail, planName); // Update local auth context
         
         setTimeout(() => {
           navigate('/');
         }, 2000);
       } else {
-        throw new Error(result.error || 'Failed to activate subscription');
+        throw new Error(result.error || 'Payment verification failed. Please try again or contact support.');
       }
+      // --- END OF MODIFIED BLOCK ---
+
     } catch (err) {
       console.error('Failed to activate subscription:', err);
       setMessage(`Failed to activate subscription: ${err.message}. Please contact support.`);
     } finally {
       localStorage.removeItem('pendingSubscriptionEmail');
       localStorage.removeItem('pendingPlanName');
+      localStorage.removeItem('pendingTransactionId');
       setVerifyingPayment(false);
     }
   };
@@ -125,7 +165,7 @@ function SubscriptionPage() {
             onClick={handlePaymentCompleted}
             disabled={verifyingPayment}
           >
-            {verifyingPayment ? 'Activating...' : 'I\'ve Completed Payment'}
+            {verifyingPayment ? 'Verifying...' : 'I\'ve Completed Payment'}
           </button>
           <button 
             className="back-to-subscribe-button" 

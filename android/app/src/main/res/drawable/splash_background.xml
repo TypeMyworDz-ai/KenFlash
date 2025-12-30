@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background color of the splash screen -->
+    <item android:drawable="@android:color/white" /> <!-- Customize this background color -->
+
+    <!-- Your logo image, centered -->
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/draftey_logo"
+            android:width="120dp"
+            android:height="120dp" />
+    </item>
+
+</layer-list>
