@@ -9,29 +9,22 @@ const supabase = createClient(
 );
 
 serve(async (req) => {
-  // Define allowed origins for CORS
   const allowedOrigins = [
     'http://localhost:3000',
-    'https://ken-flash.vercel.app' // ADDED: Your Vercel domain
+    'https://ken-flash.vercel.app'
   ];
-
-  // Get the origin from the request headers
   const origin = req.headers.get('Origin');
-  let accessControlAllowOrigin = 'null'; // Default or a safe fallback
-
-  // If the request origin is in our allowed list, use it for the ACAO header
+  let accessControlAllowOrigin = 'null';
   if (origin && allowedOrigins.includes(origin)) {
     accessControlAllowOrigin = origin;
   }
 
-  // CORS Headers Configuration
   const corsHeaders = {
-    'Access-Control-Allow-Origin': accessControlAllowOrigin, // Dynamically set origin
-    'Access-Control-Allow-Methods': 'POST, OPTIONS', // Only allow POST for this function, and OPTIONS for preflight
+    'Access-Control-Allow-Origin': accessControlAllowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -65,6 +58,7 @@ serve(async (req) => {
   }
 
   console.log(`Verifying payment for transaction ID: ${transactionId} via Korapay API.`);
+  console.log(`Korapay Secret Key (first 5 chars): ${KORAPAY_SECRET_KEY.substring(0, 5)}...`); // Log part of the key for confirmation
 
   try {
     const korapayTransactionsEndpoint = 'https://api.korapay.com/v1/transactions';
@@ -79,7 +73,10 @@ serve(async (req) => {
       'limit': '10', 
     });
 
-    const korapayVerifyResponse = await fetch(`${korapayTransactionsEndpoint}?${queryParams.toString()}`, {
+    const korapayApiUrl = `${korapayTransactionsEndpoint}?${queryParams.toString()}`;
+    console.log(`Making GET request to Korapay API: ${korapayApiUrl}`); // Log the exact URL being called
+
+    const korapayVerifyResponse = await fetch(korapayApiUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${KORAPAY_SECRET_KEY}`,
@@ -87,18 +84,32 @@ serve(async (req) => {
       },
     });
 
+    // --- ADDED: Log raw response text before attempting JSON parse ---
+    const rawKorapayResponseText = await korapayVerifyResponse.text();
+    console.log('Korapay API raw response text (before JSON parse):', rawKorapayResponseText);
+
     if (!korapayVerifyResponse.ok) {
-      console.error(`Korapay API error: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
-      const errorBody = await korapayVerifyResponse.text();
-      console.error('Korapay error response:', errorBody);
-      return new Response(JSON.stringify({ success: false, error: 'Korapay payment verification failed' }), {
+      console.error(`Korapay API HTTP status error: ${korapayVerifyResponse.status} ${korapayVerifyResponse.statusText}`);
+      console.error('Korapay error response body (raw):', rawKorapayResponseText); // Log raw text on error
+      return new Response(JSON.stringify({ success: false, error: 'Korapay payment verification failed (HTTP error)' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    const korapayData = await korapayVerifyResponse.json();
-    console.log('Korapay API raw response:', JSON.stringify(korapayData, null, 2));
+    let korapayData;
+    try {
+      korapayData = JSON.parse(rawKorapayResponseText); // Manually parse after logging raw text
+      console.log('Korapay API raw response (JSON parsed):', JSON.stringify(korapayData, null, 2));
+    } catch (jsonError) {
+      console.error('Failed to parse Korapay API response as JSON:', jsonError);
+      console.error('Non-JSON Korapay response received:', rawKorapayResponseText);
+      return new Response(JSON.stringify({ success: false, error: 'Korapay returned non-JSON response' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    // --- END ADDED logging and manual JSON parsing ---
 
     let isPaymentSuccessful = false;
     let korapayReference = null;
