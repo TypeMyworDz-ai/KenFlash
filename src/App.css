@@ -1,3 +1,4 @@
+/* src/App.css */
 /* Base styles for HTML and Body */
 html, body {
   margin: 0;
@@ -25,6 +26,12 @@ body.light {
   --error-border: #f5c6cb;
   --error-text: #dc3545;
   --link-color: #007bff;
+
+  /* Variables for PaymentSuccessPage.css */
+  --color-background: var(--background-color);
+  --color-text: var(--text-color);
+  --color-primary: var(--primary-color);
+  --color-background-light: #ffffff; /* A distinct lighter background for the message */
 }
 
 /* Theme variables for Dark Mode */
@@ -44,6 +51,12 @@ body.dark {
   --error-border: #6a3d3f;
   --error-text: #ff6b6b;
   --link-color: #66b3ff;
+
+  /* Variables for PaymentSuccessPage.css */
+  --color-background: var(--background-color);
+  --color-text: var(--text-color);
+  --color-primary: var(--primary-color);
+  --color-background-light: #2c2c2c; /* A distinct lighter background for the message in dark mode */
 }
 
 /* Apply theme variables globally */
@@ -113,4 +126,3 @@ a {
 
 /* Additional elements in other components might need specific theming */
 /* This is a starting point, individual components' CSS will override/extend these */
-

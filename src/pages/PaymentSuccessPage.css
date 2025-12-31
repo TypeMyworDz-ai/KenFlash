@@ -19,7 +19,7 @@
     padding: 20px;
     border-radius: 10px;
     background-color: var(--color-background-light); /* A slightly different background for the message */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-shadow: 0 4px 15px rgba(7, 97, 34, 0.1); /* Subtle shadow for depth */
     line-height: 1.4;
 }
 

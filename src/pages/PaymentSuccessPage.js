@@ -5,7 +5,7 @@ import React from 'react';
 function PaymentSuccessPage() {
   return (
     <div className="payment-success-container">
-      <h2>Payment successful, now you can click on "I've Completed Payment" button.</h2>
+      <h2>Now click on "I've Completed Payment" button.</h2>
     </div>
   );
 }
