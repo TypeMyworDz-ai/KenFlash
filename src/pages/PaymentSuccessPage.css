@@ -13,63 +13,21 @@
 }
 
 .payment-success-container h2 {
-    font-size: 2.5em;
+    font-size: 3em; /* Larger font size for prominence */
     color: var(--color-primary); /* Use your app's primary color */
     margin-bottom: 20px;
-}
-
-.payment-success-container p {
-    font-size: 1.2em;
-    margin-bottom: 30px;
-    max-width: 600px;
-}
-
-.payment-success-container .loading-spinner {
-    border: 5px solid rgba(0, 0, 0, 0.1);
-    border-top: 5px solid var(--color-accent); /* Use your app's accent color */
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.payment-success-container button {
-    padding: 12px 25px;
-    font-size: 1.1em;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    background-color: var(--color-button-primary); /* Use your app's button primary color */
-    color: var(--color-button-text); /* Use your app's button text color */
-}
-
-.payment-success-container button:hover {
-    background-color: var(--color-button-primary-hover); /* Darker shade for hover */
-}
-
-.payment-success-container button:disabled {
-    background-color: var(--color-button-disabled);
-    cursor: not-allowed;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: var(--color-background-light); /* A slightly different background for the message */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    line-height: 1.4;
 }
 
 /* Optional: Add responsive styles if needed */
 @media (max-width: 768px) {
     .payment-success-container h2 {
-        font-size: 2em;
-    }
-    .payment-success-container p {
-        font-size: 1em;
-    }
-    .payment-success-container button {
-        padding: 10px 20px;
-        font-size: 1em;
+        font-size: 2.2em;
+        padding: 15px;
     }
 }
 
@@ -77,22 +35,14 @@
 /* Example:
 :root {
     --color-background: #f0f2f5;
+    --color-background-light: #ffffff; 
     --color-text: #333;
     --color-primary: #007bff;
-    --color-accent: #28a745;
-    --color-button-primary: #007bff;
-    --color-button-primary-hover: #0056b3;
-    --color-button-text: #fff;
-    --color-button-disabled: #cccccc;
 }
 .dark {
     --color-background: #1a1a1a;
+    --color-background-light: #2a2a2a;
     --color-text: #f0f0f0;
     --color-primary: #66b3ff;
-    --color-accent: #5cb85c;
-    --color-button-primary: #66b3ff;
-    --color-button-primary-hover: #4d94d1;
-    --color-button-text: #1a1a1a;
-    --color-button-disabled: #555555;
 }
 */
