@@ -64,8 +64,8 @@ serve(async (req) => {
   try {
     const korapayListTransactionsEndpoint = `https://api.korapay.com/merchant/api/v1/pay-ins`; 
     
-    // MODIFIED: Calculate expected amount in Korapay's minor units, then format as string with two decimals
-    const expectedAmountFromClientFormatted = (Number(amount) * 100).toFixed(2); // e.g., 20 KES * 100 = 2000.00
+    // Calculate expected amount for comparison (major units)
+    const expectedAmountForComparison = parseFloat(amount.toString()); // e.g., 20.00 (from client's 20)
 
     const listQueryParams = new URLSearchParams({
         'limit': '50',
@@ -115,16 +115,21 @@ serve(async (req) => {
     let korapayReference = null;
 
     if (korapayListData && korapayListData.status === true && Array.isArray(korapayListData.data?.payins)) {
+        console.log(`Starting search for transactionId: ${transactionId} with expected amount: ${expectedAmountForComparison}`);
         const foundTransaction = korapayListData.data.payins.find((tx: any) => {
-            console.log(`  Checking tx.reference: ${tx.reference} === ${transactionId}`);
-            console.log(`  Checking tx.status: ${tx.status} === 'success'`);
-            console.log(`  Checking tx.amount: ${tx.amount} === ${expectedAmountFromClientFormatted}`);
-            console.log(`  Checking tx.currency: ${tx.currency} === 'KES'`);
+            console.log(`  --- Checking transaction: reference=${tx.reference}, status=${tx.status}, amount=${tx.amount}, currency=${tx.currency} ---`);
+            const isStatusMatch = tx.status === 'success';
+            const isReferenceMatch = tx.reference === transactionId;
+            const isAmountMatch = parseFloat(tx.amount) === expectedAmountForComparison; // Direct float comparison of major units
+            const isCurrencyMatch = tx.currency === 'KES';
 
-            return tx.status === 'success' && 
-                   tx.reference === transactionId && // Match our unique transaction ID
-                   tx.amount === expectedAmountFromClientFormatted && // MODIFIED: Direct string comparison of formatted amounts
-                   tx.currency === 'KES';
+            console.log(`    Status Match: ${isStatusMatch} (tx.status='${tx.status}' vs 'success')`);
+            console.log(`    Reference Match: ${isReferenceMatch} (tx.reference='${tx.reference}' vs '${transactionId}')`);
+            console.log(`    Amount Match: ${isAmountMatch} (parseFloat(tx.amount)=${parseFloat(tx.amount)} vs ${expectedAmountForComparison})`);
+            console.log(`    Currency Match: ${isCurrencyMatch} (tx.currency='${tx.currency}' vs 'KES')`);
+
+            // MODIFIED: Removed email check as it's not in the /pay-ins response object
+            return isStatusMatch && isReferenceMatch && isAmountMatch && isCurrencyMatch;
         });
 
         if (foundTransaction) {

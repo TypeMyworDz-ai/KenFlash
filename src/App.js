@@ -12,7 +12,7 @@ import LoginPage from './pages/LoginPage';
 import UserSignupPage from './pages/UserSignupPage';
 import UserVerificationPage from './pages/UserVerificationPage';
 import UserSignupSuccessPage from './pages/UserSignupSuccessPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage'; // FIXED: Corrected import path
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboardPage from './pages/UserDashboardPage';
 import UserProfileViewPage from './pages/UserProfileViewPage';
 import SingleContentPage from './pages/SingleContentPage';
@@ -42,6 +42,9 @@ import AdCampaignManagementPage from './pages/AdCampaignManagementPage';
 import PayForAdPage from './pages/PayForAdPage';
 import MobileUploadContentPage from './pages/MobileUploadContentPage'; 
 import { Capacitor } from '@capacitor/core';
+
+// ADDED: Import the new PaymentSuccessPage
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 
 function TrafficLogger() {
@@ -129,6 +132,8 @@ function App() {
                 <Route path="/admin-creator-content/:creatorId" element={<AdminCreatorContentPage />} />
                 <Route path="/admin-payment-overviews" element={<AdminPaymentOverviewsPage />} />
                 <Route path="/mobile-upload-content" element={<MobileUploadContentPage />} />
+                {/* ADDED: New route for payment success page */}
+                <Route path="/payment-success" element={<PaymentSuccessPage />} />
               </Routes>
             </div>
           </div>

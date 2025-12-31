@@ -47,28 +47,28 @@ serve(async (req) => {
 
   try {
     const korapayInitializeChargeEndpoint = 'https://api.korapay.com/merchant/api/v1/charges/initialize';
-    const amountInMinorUnits = amount * 100; // Korapay expects amount in minor units (e.g., KES 20.00 -> 2000)
+    const amountToSendToKorapay = amount; // Send amount in major units directly to Korapay
 
-    // IMPORTANT: Set your actual app's homepage URL for the redirect.
-    const redirectUrl = 'https://ken-flash.vercel.app/'; // REPLACE with your actual production URL or 'http://localhost:3000' for local dev
+    // MODIFIED: Set the redirectUrl to your new PaymentSuccessPage
+    const redirectUrl = 'https://ken-flash.vercel.app/payment-success'; // This will be your new success page
+    // For local testing, you might temporarily use 'http://localhost:3000/payment-success'
     const notificationUrl = 'https://ken-flash.vercel.app/webhook-korapay'; // Optional: your webhook endpoint if you set one up
 
     const payload = {
-      amount: amountInMinorUnits,
-      currency: 'KES', // Your currency
+      amount: amountToSendToKorapay,
+      currency: 'KES',
       reference: transactionId, // Use our generated transactionId as Korapay's 'reference'
-      // REMOVED: description: `${planName} Content Access`, // This field is not allowed
       redirect_url: redirectUrl,
       notification_url: notificationUrl, // Optional
       customer: {
         email: email,
-        name: 'Draftey Customer', // You can pass a real name if available
+        name: 'Draftey Customer',
       },
-      metadata: { // You can pass additional metadata
+      metadata: {
         plan_name: planName,
         user_email: email,
       },
-      merchant_bears_cost: true, // Example: Merchant bears the cost
+      merchant_bears_cost: true,
     };
 
     console.log('Korapay Initialize Charge Payload:', JSON.stringify(payload, null, 2));
