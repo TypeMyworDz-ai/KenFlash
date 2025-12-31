@@ -49,24 +49,27 @@ serve(async (req) => {
     const korapayInitializeChargeEndpoint = 'https://api.korapay.com/merchant/api/v1/charges/initialize';
     const amountToSendToKorapay = amount; // Send amount in major units directly to Korapay
 
-    // MODIFIED: Set the redirectUrl to your new PaymentSuccessPage
-    const redirectUrl = 'https://ken-flash.vercel.app/payment-success'; // This will be your new success page
+    // MODIFIED: Simplified redirectUrl to just the path, Korapay appends its 'reference'
+    const redirectUrl = 'https://ken-flash.vercel.app/payment-success'; 
     // For local testing, you might temporarily use 'http://localhost:3000/payment-success'
+    // const redirectUrl = 'http://localhost:3000/payment-success';
+    
     const notificationUrl = 'https://ken-flash.vercel.app/webhook-korapay'; // Optional: your webhook endpoint if you set one up
 
     const payload = {
       amount: amountToSendToKorapay,
       currency: 'KES',
       reference: transactionId, // Use our generated transactionId as Korapay's 'reference'
-      redirect_url: redirectUrl,
+      redirect_url: redirectUrl, // This now includes our custom data
       notification_url: notificationUrl, // Optional
       customer: {
         email: email,
         name: 'Draftey Customer',
       },
-      metadata: {
+      metadata: { // You can pass additional metadata to Korapay if they support it for internal lookup
         plan_name: planName,
         user_email: email,
+        our_transaction_id: transactionId, // Also send our ID as metadata to Korapay
       },
       merchant_bears_cost: true,
     };
@@ -114,7 +117,7 @@ serve(async (req) => {
         success: true, 
         message: 'Charge initiated successfully',
         checkoutUrl: korapayData.data.checkout_url,
-        korapayReference: korapayData.data.reference // Korapay's reference for this transaction
+        korapayReference: korapayData.data.reference // Korapay's reference for this transaction (which is our transactionId)
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
